@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三账户管理 · 基层两年</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #1a1a1a;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+        h3 {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .account-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        .account-item .label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .account-item .amount {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .account-item .amount.survival { color: #2d7d46; }
+        .account-item .amount.stable { color: #b8860b; }
+        .account-item .amount.develop { color: #1a5c8a; }
+
+        .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .form-group input, .form-group select, .form-group button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            flex: 1;
+            min-width: 120px;
+        }
+        .form-group button {
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            flex: 0 0 auto;
+        }
+        .form-group button:hover { background: #333; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        th { color: #888; font-weight: 500; font-size: 12px; }
+        .date-cell {
+            font-size: 12px;
+            color: #555;
+            white-space: nowrap;
+        }
+        .delete-btn {
+            color: #c0392b;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .summary-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #555;
+        }
+        .summary-row span { margin-right: 16px; }
+
+        .empty-state {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        /* ===== 每月合计 ===== */
+        .inc, .pos { color: #2d7d46; }
+        .exp, .neg { color: #c0392b; }
+
+        .month-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .month-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+        .month-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        .month-balance {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .quick-add {
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 2px 8px;
+            color: #555;
+            line-height: 1.4;
+        }
+        .quick-add:hover { background: #f0f0f0; }
+        .month-body {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #777;
+        }
+        .month-body b { font-weight: 600; }
+        .month-detail {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #e5e5e5;
+            font-size: 12px;
+            color: #999;
+        }
+        .month-detail .sub {
+            color: #aaa;
+        }
+        .month-days {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .day-chip {
+            font-size: 11px;
+            color: #666;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 999px;
+            padding: 2px 9px;
+            white-space: nowrap;
+        }
+        .month-total {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+            padding: 10px 4px 0;
+            border-top: 2px solid #eee;
+            font-size: 13px;
+            color: #555;
+        }
+        .month-total b { font-weight: 600; }
+
+        .footer-note {
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .edit-date-input {
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 130px;
+            background: #fff;
+        }
+
+        .edit-subcategory {
+            font-size: 11px;
+            padding: 2px 4px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            background: #fff;
+            color: #666;
+            margin-top: 4px;
+            max-width: 100%;
+            display: block;
+        }
+
+        .account-cell-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .sub-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            margin-top: 3px;
+            white-space: nowrap;
+        }
+        .sub-badge.rigid { background: #eaf6ee; color: #2d7d46; }
+        .sub-badge.emotional { background: #fdf1e6; color: #c26f1e; }
+        .sub-badge.once { background: #eaeef6; color: #4a5c8a; }
+        .sub-badge.none { background: #f1f1f1; color: #999; }
+
+        /* 登录卡片 */
+        #auth-card {
+            max-width: 400px;
+            margin: 60px auto;
+        }
+        #auth-card input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        #auth-card button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: white;
+        }
+        .auth-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .auth-note {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 8px;
+        }
+        #logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            float: right;
+        }
+
+        @media (max-width: 480px) {
+            .accounts-grid { grid-template-columns: 1fr 1fr 1fr; }
+            .form-group input, .form-group select { min-width: 80px; font-size: 13px; }
+            .account-item .amount { font-size: 16px; }
+            .month-body { font-size: 12px; gap: 10px; }
+            .month-detail { font-size: 11px; }
+            .date-cell { font-size: 11px; }
+            .day-chip { font-size: 10px; }
+            .edit-date-input { font-size: 11px; max-width: 110px; }
+            .edit-subcategory { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== 登录卡片 ========== -->
+    <div class="card" id="auth-card" style="display:none;">
+        <h2 style="text-align:center;">🔐 三账户管理</h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <input type="email" id="auth-email" placeholder="邮箱">
+            <input type="password" id="auth-password" placeholder="密码（至少6位）">
+            <div class="auth-row">
+                <button id="login-btn" style="background:#1a1a1a;">登录</button>
+                <button id="register-btn" style="background:#2d7d46;">注册</button>
+            </div>
+            <div class="auth-note">注册后需到邮箱确认，再回来登录</div>
+        </div>
+    </div>
+
+    <!-- ========== 主内容 ========== -->
+    <div id="main-content" style="display:none;">
+        <!-- 三账户余额 -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h2 style="margin-bottom:0;">📊 三账户余额</h2>
+                <button id="logout-btn">退出登录</button>
+            </div>
+            <div class="accounts-grid">
+                <div class="account-item">
+                    <div class="label">🥣 生存账户</div>
+                    <div class="amount survival" id="balance-survival">0.00</div>
+                    <div style="font-size:12px;color:#999;">50-60%</div>
+                </div>
+                <div class="account-item">
+                    <div class="label">🛡️ 稳定账户</div>
+                    <div class="amount stable" id="balance-stable">0.00</div>
+                    <div style="font-size:12px;color:#999;">20-30%</div>
+                </div>
+                <div class="account-item">
+                    <div class="label">📈 发展账户</div>
+                    <div class="amount develop" id="balance-develop">0.00</div>
+                    <div style="font-size:12px;color:#999;">10-20%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记录支出 -->
+        <div class="card">
+            <h2>✏️ 记一笔支出</h2>
+            <div class="form-group">
+                <input type="number" id="expense-amount" placeholder="金额" step="0.01">
+                <select id="expense-account">
+                    <option value="survival">生存账户</option>
+                    <option value="stable">稳定账户</option>
+                    <option value="develop">发展账户</option>
+                </select>
+                <select id="expense-subcategory" title="生存账户分类">
+                    <option value="rigid">🥣 刚性生存</option>
+                    <option value="emotional">🎈 情绪消费</option>
+                    <option value="once">📦 一次性支出</option>
+                </select>
+                <input type="text" id="expense-desc" placeholder="用途（如：周末餐）">
+                <input type="date" id="expense-date" title="记账日期">
+                <button id="add-btn">记录</button>
+            </div>
+            <div style="font-size:13px;color:#999;margin-top:4px;">
+                💡 可手动选择日期补记历史支出，默认今天 · 生存账户支出需选择分类
+            </div>
+        </div>
+
+        <!-- 添加收入 -->
+        <div class="card">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <input type="number" id="income-amount" placeholder="收入金额" step="0.01" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;flex:1;min-width:120px;">
+                <input type="date" id="income-date" title="收入日期" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;flex:1;min-width:120px;">
+                <button id="income-btn" style="padding:8px 16px;background:#2d7d46;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:500;">💰 存入收入</button>
+                <button id="reset-btn" style="padding:8px 16px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:500;">🔄 重置所有数据</button>
+            </div>
+            <div style="font-size:13px;color:#999;margin-top:6px;">
+                默认分配：生存55% · 稳定25% · 发展20%（可根据你实际比例调整）
+            </div>
+        </div>
+
+        <!-- 支出明细 -->
+        <div class="card">
+            <h2>📋 支出明细</h2>
+            <div id="expense-list">
+                <div class="empty-state">还没有支出记录，开始记一笔吧</div>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:#888;" id="summary"></div>
+        </div>
+
+        <!-- 收入明细 -->
+        <div class="card">
+            <h2>💰 收入明细</h2>
+            <div id="income-list">
+                <div class="empty-state">还没有收入记录</div>
+            </div>
+        </div>
+
+        <!-- 每月合计 -->
+        <div class="card">
+            <h2>📅 每月合计</h2>
+            <div id="monthly-list">
+                <div class="empty-state">暂无月度记录</div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            数据自动同步 · 基层两年 · 三账户系统
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        /* ================= Supabase 配置 ================= */
+        const SUPABASE_URL = 'https://mtfqvszsqdijyzpwwhlg.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let realtimeChannel = null;
+        let lastLocalChange = 0; // 用于忽略自己操作触发的 realtime
+
+        /* ================= 常量 ================= */
+        const STORAGE_KEY = 'three_accounts_data';
+
+        const RATIOS = {
+            survival: 0.55,
+            stable: 0.25,
+            develop: 0.20
+        };
+
+        const ACCOUNT_LABEL = { survival: '生存', stable: '稳定', develop: '发展' };
+
+        const SUB_CATEGORIES = {
+            rigid:     { label: '刚性生存', icon: '🥣', cls: 'rigid' },
+            emotional: { label: '情绪消费', icon: '🎈', cls: 'emotional' },
+            once:      { label: '一次性支出', icon: '📦', cls: 'once' }
+        };
+
+        /* ================= 日期工具 ================= */
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function fmtDay(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+        function todayStr() { return fmtDay(new Date()); }
+        function currentMonthStr() { return todayStr().slice(0, 7); }
+        function isValidDay(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
+        function recordDay(r) { return isValidDay(r.day) ? r.day : 'unknown'; }
+        function recordMonth(r) { const d = recordDay(r); return d === 'unknown' ? 'unknown' : d.slice(0, 7); }
+        function dayLabel(day) {
+            if (!isValidDay(day)) return '未记录日期';
+            const p = day.split('-');
+            return p[0] + '年' + parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
+        }
+        function shortDay(day) {
+            if (!isValidDay(day)) return '未记录';
+            const p = day.split('-');
+            return parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
+        }
+        function monthLabel(key) {
+            if (key === 'unknown') return '未记录日期';
+            const m = key.match(/^(\d{4})-(\d{2})$/);
+            return m ? m[1] + '年' + parseInt(m[2], 10) + '月' : key;
+        }
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, c => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
+        /* ================= 数据层 ================= */
+        function getDefaultData() {
+            return {
+                income: 0,
+                incomeRecords: [],
+                balances: { survival: 0, stable: 0, develop: 0 },
+                expenses: []
+            };
+        }
+
+        let data = getDefaultData();
+
+        function saveLocalData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadLocalData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return getDefaultData();
+        }
+
+        /* ================= 云端同步 ================= */
+        async function syncFromCloud() {
+            if (!currentUser) return;
+            const { data: rows, error } = await supabase
+                .from('records')
+                .select('*')
+                .order('ts', { ascending: true });
+            if (error) { console.error('拉取失败', error); return; }
+
+            // 用云端数据重建本地结构
+            data = getDefaultData();
+            rows.forEach(r => {
+                if (r.type === 'income') {
+                    data.income += r.amount;
+                    data.incomeRecords.push({
+                        id: r.id,
+                        amount: r.amount,
+                        day: r.day,
+                        month: r.month,
+                        ts: r.ts,
+                        createdAt: new Date(r.created_at).toLocaleString('zh-CN')
+                    });
+                    data.balances.survival += r.amount * RATIOS.survival;
+                    data.balances.stable += r.amount * RATIOS.stable;
+                    data.balances.develop += r.amount * RATIOS.develop;
+                } else {
+                    data.balances[r.account] -= r.amount;
+                    data.expenses.push({
+                        id: r.id,
+                        amount: r.amount,
+                        account: r.account,
+                        subCategory: r.sub_category,
+                        desc: r.description,
+                        day: r.day,
+                        month: r.month,
+                        ts: r.ts,
+                        createdAt: new Date(r.created_at).toLocaleString('zh-CN')
+                    });
+                }
+            });
+            saveLocalData();
+            renderAll();
+        }
+
+        async function pushRecord(record) {
+            if (!currentUser) return null;
+            const { data: inserted, error } = await supabase.from('records').insert({
+                user_id: currentUser.id,
+                type: record.type,
+                amount: record.amount,
+                account: record.account || null,
+                sub_category: record.subCategory || null,
+                description: record.desc || null,
+                day: record.day || null,
+                month: record.month || null,
+                ts: record.ts
+            }).select().single();
+            if (error) { console.error('写入失败', error); return null; }
+            lastLocalChange = Date.now();
+            return inserted;
+        }
+
+        async function deleteRecord(cloudId) {
+            if (!currentUser) return;
+            await supabase.from('records').delete().eq('id', cloudId);
+            lastLocalChange = Date.now();
+        }
+
+        async function updateRecord(cloudId, updates) {
+            if (!currentUser) return;
+            await supabase.from('records').update(updates).eq('id', cloudId);
+            lastLocalChange = Date.now();
+        }
+
+        /* ================= 实时监听 ================= */
+        function setupRealtime() {
+            if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+            realtimeChannel = supabase
+                .channel('records-realtime')
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` },
+                    (payload) => {
+                        // 忽略自己刚做的修改（1.5秒内）
+                        if (Date.now() - lastLocalChange < 1500) return;
+                        console.log('云端有更新，重新同步', payload);
+                        syncFromCloud();
+                    }
+                )
+                .subscribe();
+        }
+
+        /* ================= 认证 ================= */
+        async function signIn(email, password) {
+            const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) { alert('登录失败：' + error.message); return false; }
+            currentUser = authData.user;
+            await syncFromCloud();
+            setupRealtime();
+            return true;
+        }
+
+        async function signUp(email, password) {
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) { alert('注册失败：' + error.message); return false; }
+            alert('注册成功！请到邮箱确认后登录。');
+            return true;
+        }
+
+        async function signOut() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+            location.reload();
+        }
+
+        /* ================= 业务操作（异步） ================= */
+        async function addIncome(amount, day) {
+            if (isNaN(amount) || amount <= 0) return false;
+            const now = Date.now();
+            const d = isValidDay(day) ? day : todayStr();
+            const record = {
+                type: 'income', amount, day: d, month: d.slice(0, 7), ts: now
+            };
+            const inserted = await pushRecord(record);
+            if (inserted) record.id = inserted.id;
+
+            data.income += amount;
+            data.incomeRecords.push({
+                ...record,
+                createdAt: new Date(now).toLocaleString('zh-CN')
+            });
+            data.balances.survival += amount * RATIOS.survival;
+            data.balances.stable += amount * RATIOS.stable;
+            data.balances.develop += amount * RATIOS.develop;
+            saveLocalData();
+            renderAll();
+            return true;
+        }
+
+        async function addExpense(amount, account, desc, day, subCategory) {
+            if (isNaN(amount) || amount <= 0) return false;
+            if (!data.balances[account] || data.balances[account] < amount) {
+                alert('⚠️ ' + ACCOUNT_LABEL[account] + '账户余额不足！');
+                return false;
+            }
+            if (account === 'survival' && (!subCategory || !SUB_CATEGORIES[subCategory])) {
+                alert('⚠️ 请选择生存账户的支出分类');
+                return false;
+            }
+            const now = Date.now();
+            const d = isValidDay(day) ? day : todayStr();
+            const record = {
+                type: 'expense',
+                amount,
+                account,
+                subCategory: account === 'survival' ? subCategory : null,
+                desc: desc || '未注明',
+                day: d,
+                month: d.slice(0, 7),
+                ts: now
+            };
+            const inserted = await pushRecord(record);
+            if (inserted) record.id = inserted.id;
+
+            data.balances[account] -= amount;
+            data.expenses.push({
+                ...record,
+                createdAt: new Date(now).toLocaleString('zh-CN')
+            });
+            saveLocalData();
+            renderAll();
+            return true;
+        }
+
+        async function deleteExpense(id) {
+            const index = data.expenses.findIndex(e => String(e.id) === String(id));
+            if (index === -1) return;
+            const item = data.expenses[index];
+            await deleteRecord(id);
+            data.balances[item.account] += item.amount;
+            data.expenses.splice(index, 1);
+            saveLocalData();
+            renderAll();
+        }
+
+        async function updateExpenseDate(id, newDate) {
+            const expense = data.expenses.find(e => String(e.id) === String(id));
+            if (!expense) return;
+            let day = null, month = null;
+            if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+                day = newDate; month = newDate.slice(0, 7);
+            }
+            await updateRecord(id, { day, month });
+            expense.day = day;
+            expense.month = month;
+            saveLocalData();
+            renderAll();
+        }
+
+        async function updateExpenseSubcategory(id, sub) {
+            const expense = data.expenses.find(e => String(e.id) === String(id));
+            if (!expense || expense.account !== 'survival') return;
+            const subCategory = (sub && SUB_CATEGORIES[sub]) ? sub : null;
+            await updateRecord(id, { sub_category: subCategory });
+            expense.subCategory = subCategory;
+            saveLocalData();
+            renderAll();
+        }
+
+        async function updateIncomeDate(id, newDate) {
+            const income = data.incomeRecords.find(r => String(r.id) === String(id));
+            if (!income) return;
+            let day = null, month = null;
+            if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+                day = newDate; month = newDate.slice(0, 7);
+            }
+            await updateRecord(id, { day, month });
+            income.day = day;
+            income.month = month;
+            saveLocalData();
+            renderAll();
+        }
+
+        async function resetAll() {
+            if (!confirm('确定要重置所有数据吗？此操作不可恢复。')) return;
+            if (currentUser) {
+                const { error } = await supabase.from('records').delete().eq('user_id', currentUser.id);
+                if (error) { alert('重置失败：' + error.message); return; }
+            }
+            data = getDefaultData();
+            saveLocalData();
+            renderAll();
+        }
+
+        /* ================= 渲染：每月合计 ================= */
+        function renderMonthly() {
+            const map = {};
+            function ensure(key) {
+                if (!map[key]) {
+                    map[key] = {
+                        month: key, income: 0, expense: 0, count: 0,
+                        byAccount: { survival: 0, stable: 0, develop: 0 },
+                        bySub: { rigid: 0, emotional: 0, once: 0 },
+                        days: {}
+                    };
+                }
+                return map[key];
+            }
+
+            data.incomeRecords.forEach(r => {
+                ensure(recordMonth(r)).income += r.amount;
+            });
+
+            data.expenses.forEach(e => {
+                const item = ensure(recordMonth(e));
+                item.expense += e.amount;
+                item.count += 1;
+                if (item.byAccount[e.account] !== undefined) {
+                    item.byAccount[e.account] += e.amount;
+                }
+                if (e.account === 'survival' && e.subCategory && item.bySub[e.subCategory] !== undefined) {
+                    item.bySub[e.subCategory] += e.amount;
+                }
+                const d = recordDay(e);
+                if (!item.days[d]) item.days[d] = { expense: 0, count: 0 };
+                item.days[d].expense += e.amount;
+                item.days[d].count += 1;
+            });
+
+            const listEl = document.getElementById('monthly-list');
+            const list = Object.values(map).sort((a, b) => {
+                if (a.month === 'unknown') return 1;
+                if (b.month === 'unknown') return -1;
+                return b.month.localeCompare(a.month);
+            });
+
+            if (list.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">暂无月度记录</div>';
+                return;
+            }
+
+            let totalIncome = 0, totalExpense = 0, html = '';
+
+            list.forEach(m => {
+                totalIncome += m.income;
+                totalExpense += m.expense;
+                const balance = m.income - m.expense;
+                const balCls = balance >= 0 ? 'pos' : 'neg';
+                const balSign = balance > 0 ? '+' : '';
+
+                const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
+                const dayHtml = dayKeys.length
+                    ? '<div class="month-days">' + dayKeys.map(k => {
+                        const d = m.days[k];
+                        const label = k === 'unknown' ? '未记录' : shortDay(k);
+                        return `<span class="day-chip">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
+                    }).join('') + '</div>'
+                    : '';
+
+                let survivalDetail = `生存 ${m.byAccount.survival.toFixed(2)}`;
+                if (m.byAccount.survival > 0) {
+                    survivalDetail += ` <span class="sub">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
+                }
+
+                html += `<div class="month-item">
+                    <div class="month-head">
+                        <span class="month-label">${monthLabel(m.month)}</span>
+                        <span style="display:flex;align-items:center;gap:8px;">
+                            <span class="month-balance ${balCls}">${balSign}${balance.toFixed(2)}</span>
+                            ${m.month !== 'unknown' ? `<button class="quick-add" data-month="${m.month}" title="补记该月支出">＋</button>` : ''}
+                        </span>
+                    </div>
+                    <div class="month-body">
+                        <span>收入 <b class="inc">${m.income.toFixed(2)}</b></span>
+                        <span>支出 <b class="exp">${m.expense.toFixed(2)}</b></span>
+                        <span style="color:#aaa;">${m.count} 笔</span>
+                    </div>
+                    <div class="month-detail">
+                        ${survivalDetail} · 稳定 ${m.byAccount.stable.toFixed(2)} · 发展 ${m.byAccount.develop.toFixed(2)}
+                    </div>
+                    ${dayHtml}
+                </div>`;
+            });
+
+            const totalBal = totalIncome - totalExpense;
+            html += `<div class="month-total">
+                <span>合计收入 <b class="inc">${totalIncome.toFixed(2)}</b></span>
+                <span>合计支出 <b class="exp">${totalExpense.toFixed(2)}</b></span>
+                <span>总结余 <b class="${totalBal >= 0 ? 'pos' : 'neg'}">${totalBal > 0 ? '+' : ''}${totalBal.toFixed(2)}</b></span>
+            </div>`;
+
+            listEl.innerHTML = html;
+
+            listEl.querySelectorAll('.quick-add').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const month = btn.dataset.month;
+                    const dateInput = document.getElementById('expense-date');
+                    dateInput.value = (month === currentMonthStr()) ? todayStr() : (month + '-01');
+                    document.getElementById('expense-amount').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById('expense-amount').focus();
+                });
+            });
+        }
+
+        /* ================= 渲染：总览 ================= */
+        function renderAll() {
+            document.getElementById('balance-survival').textContent = data.balances.survival.toFixed(2);
+            document.getElementById('balance-stable').textContent = data.balances.stable.toFixed(2);
+            document.getElementById('balance-develop').textContent = data.balances.develop.toFixed(2);
+
+            /* ----- 支出明细 ----- */
+            const expenseListEl = document.getElementById('expense-list');
+            if (data.expenses.length === 0) {
+                expenseListEl.innerHTML = '<div class="empty-state">还没有支出记录，开始记一笔吧</div>';
+            } else {
+                const sortedExpenses = [...data.expenses].sort((a, b) => {
+                    const da = recordDay(a), db = recordDay(b);
+                    if (da !== db) return db.localeCompare(da);
+                    return (b.ts || 0) - (a.ts || 0);
+                });
+
+                let html = `<table><thead><tr>
+                    <th>日期</th><th>账户 / 分类</th><th>用途</th><th>金额</th><th></th>
+                </tr></thead><tbody>`;
+
+                sortedExpenses.forEach(e => {
+                    const accountLabel = ACCOUNT_LABEL[e.account] || e.account;
+                    const dayVal = recordDay(e) === 'unknown' ? '' : recordDay(e);
+                    let accountCell = `<div class="account-cell-label">${esc(accountLabel)}</div>`;
+                    if (e.account === 'survival') {
+                        const cur = e.subCategory || '';
+                        accountCell += `<select class="edit-subcategory" data-id="${e.id}">
+                            <option value="" ${cur === '' ? 'selected' : ''}>— 未分类 —</option>
+                            ${Object.keys(SUB_CATEGORIES).map(k => 
+                                `<option value="${k}" ${cur === k ? 'selected' : ''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`
+                            ).join('')}
+                        </select>`;
+                    } else if (e.subCategory) {
+                        const sc = SUB_CATEGORIES[e.subCategory];
+                        if (sc) accountCell += `<span class="sub-badge ${sc.cls}">${sc.icon} ${sc.label}</span>`;
+                    }
+
+                    html += `<tr>
+                        <td><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
+                        <td>${accountCell}</td>
+                        <td>${esc(e.desc)}</td>
+                        <td>${e.amount.toFixed(2)}</td>
+                        <td><button class="delete-btn" data-id="${e.id}">✕</button></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                expenseListEl.innerHTML = html;
+
+                expenseListEl.querySelectorAll('.edit-expense-date').forEach(input => {
+                    input.addEventListener('change', function () {
+                        updateExpenseDate(this.dataset.id, this.value);
+                    });
+                });
+
+                expenseListEl.querySelectorAll('.edit-subcategory').forEach(sel => {
+                    sel.addEventListener('change', function () {
+                        updateExpenseSubcategory(this.dataset.id, this.value);
+                    });
+                });
+
+                expenseListEl.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        deleteExpense(this.dataset.id);
+                    });
+                });
+            }
+
+            /* ----- 收入明细 ----- */
+            const incomeListEl = document.getElementById('income-list');
+            if (data.incomeRecords.length === 0) {
+                incomeListEl.innerHTML = '<div class="empty-state">还没有收入记录</div>';
+            } else {
+                const sortedIncomes = [...data.incomeRecords].sort((a, b) => {
+                    const da = recordDay(a), db = recordDay(b);
+                    if (da !== db) return db.localeCompare(da);
+                    return (b.ts || 0) - (a.ts || 0);
+                });
+
+                let html = `<table><thead><tr>
+                    <th>日期</th><th>金额</th><th>分配</th>
+                </tr></thead><tbody>`;
+
+                sortedIncomes.forEach(r => {
+                    const dayVal = recordDay(r) === 'unknown' ? '' : recordDay(r);
+                    const survivalAmt = (r.amount * RATIOS.survival).toFixed(2);
+                    const stableAmt = (r.amount * RATIOS.stable).toFixed(2);
+                    const developAmt = (r.amount * RATIOS.develop).toFixed(2);
+                    html += `<tr>
+                        <td><input type="date" class="edit-date-input edit-income-date" data-id="${r.id}" value="${dayVal}"></td>
+                        <td>¥${r.amount.toFixed(2)}</td>
+                        <td style="font-size:12px;color:#888;">生存 ${survivalAmt} / 稳定 ${stableAmt} / 发展 ${developAmt}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                incomeListEl.innerHTML = html;
+
+                incomeListEl.querySelectorAll('.edit-income-date').forEach(input => {
+                    input.addEventListener('change', function () {
+                        updateIncomeDate(this.dataset.id, this.value);
+                    });
+                });
+            }
+
+            const totalExpense = data.expenses.reduce((sum, e) => sum + e.amount, 0);
+            const totalIncome = data.income;
+            document.getElementById('summary').textContent =
+                `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${totalIncome.toFixed(2)} · 剩余 ¥${(totalIncome - totalExpense).toFixed(2)}`;
+
+            renderMonthly();
+        }
+
+        /* ================= 认证界面控制 ================= */
+        function showLoginUI() {
+            document.getElementById('auth-card').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+        }
+
+        function showMainUI() {
+            document.getElementById('auth-card').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        /* ================= 启动 ================= */
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 默认填今天
+            document.getElementById('expense-date').value = todayStr();
+            document.getElementById('income-date').value = todayStr();
+
+            // 账户切换显示/隐藏子分类
+            const accountSel = document.getElementById('expense-account');
+            const subSel = document.getElementById('expense-subcategory');
+            function updateSubVisibility() {
+                if (accountSel.value === 'survival') {
+                    subSel.style.display = '';
+                    subSel.disabled = false;
+                } else {
+                    subSel.style.display = 'none';
+                    subSel.disabled = true;
+                }
+            }
+            accountSel.addEventListener('change', updateSubVisibility);
+            updateSubVisibility();
+
+            // 登录/注册按钮
+            document.getElementById('login-btn').addEventListener('click', async () => {
+                const email = document.getElementById('auth-email').value.trim();
+                const pwd = document.getElementById('auth-password').value;
+                if (!email || !pwd) return alert('请填写邮箱和密码');
+                if (await signIn(email, pwd)) {
+                    showMainUI();
+                }
+            });
+
+            document.getElementById('register-btn').addEventListener('click', async () => {
+                const email = document.getElementById('auth-email').value.trim();
+                const pwd = document.getElementById('auth-password').value;
+                if (!email || pwd.length < 6) return alert('密码至少6位');
+                await signUp(email, pwd);
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', signOut);
+
+            // 检查 session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showMainUI();
+                await syncFromCloud();
+                setupRealtime();
+            } else {
+                showLoginUI();
+            }
+
+            // 添加支出
+            document.getElementById('add-btn').addEventListener('click', async function () {
+                const amountInput = document.getElementById('expense-amount');
+                const accountSelect = document.getElementById('expense-account');
+                const subSelect = document.getElementById('expense-subcategory');
+                const descInput = document.getElementById('expense-desc');
+                const dateInput = document.getElementById('expense-date');
+
+                const amount = parseFloat(amountInput.value);
+                const account = accountSelect.value;
+                const desc = descInput.value.trim() || undefined;
+                const day = dateInput.value || todayStr();
+                const sub = (account === 'survival') ? subSelect.value : null;
+
+                if (await addExpense(amount, account, desc, day, sub)) {
+                    amountInput.value = '';
+                    descInput.value = '';
+                    amountInput.focus();
+                }
+            });
+
+            // 回车快速添加
+            document.getElementById('expense-amount').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') document.getElementById('add-btn').click();
+            });
+            document.getElementById('expense-desc').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') document.getElementById('add-btn').click();
+            });
+
+            // 添加收入
+            document.getElementById('income-btn').addEventListener('click', async function () {
+                const input = document.getElementById('income-amount');
+                const dateInput = document.getElementById('income-date');
+                const amount = parseFloat(input.value);
+                const day = dateInput.value || todayStr();
+                if (await addIncome(amount, day)) {
+                    input.value = '';
+                } else {
+                    alert('请输入有效的金额');
+                }
+            });
+
+            // 重置
+            document.getElementById('reset-btn').addEventListener('click', resetAll);
+        });
+    </script>
+</body>
+</html>
