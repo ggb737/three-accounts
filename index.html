@@ -428,6 +428,7 @@
         /* ================= Supabase 配置 ================= */
         const SUPABASE_URL = 'https://mtfqvszsqdijyzpwwhlg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
+        // 将原来的 supabase 变量名改为 sb，避免与全局库冲突
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
@@ -507,7 +508,7 @@
         /* ================= 云端同步 ================= */
         async function syncFromCloud() {
             if (!currentUser) return;
-            const { data: rows, error } = await supabase
+            const { data: rows, error } = await sb
                 .from('records')
                 .select('*')
                 .order('ts', { ascending: true });
@@ -550,7 +551,7 @@
 
         async function pushRecord(record) {
             if (!currentUser) return null;
-            const { data: inserted, error } = await supabase.from('records').insert({
+            const { data: inserted, error } = await sb.from('records').insert({
                 user_id: currentUser.id,
                 type: record.type,
                 amount: record.amount,
@@ -568,20 +569,20 @@
 
         async function deleteRecord(cloudId) {
             if (!currentUser) return;
-            await supabase.from('records').delete().eq('id', cloudId);
+            await sb.from('records').delete().eq('id', cloudId);
             lastLocalChange = Date.now();
         }
 
         async function updateRecord(cloudId, updates) {
             if (!currentUser) return;
-            await supabase.from('records').update(updates).eq('id', cloudId);
+            await sb.from('records').update(updates).eq('id', cloudId);
             lastLocalChange = Date.now();
         }
 
         /* ================= 实时监听 ================= */
         function setupRealtime() {
-            if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-            realtimeChannel = supabase
+            if (realtimeChannel) sb.removeChannel(realtimeChannel);
+            realtimeChannel = sb
                 .channel('records-realtime')
                 .on('postgres_changes',
                     { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` },
@@ -597,7 +598,7 @@
 
         /* ================= 认证 ================= */
         async function signIn(email, password) {
-            const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data: authData, error } = await sb.auth.signInWithPassword({ email, password });
             if (error) { alert('登录失败：' + error.message); return false; }
             currentUser = authData.user;
             await syncFromCloud();
@@ -606,16 +607,16 @@
         }
 
         async function signUp(email, password) {
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await sb.auth.signUp({ email, password });
             if (error) { alert('注册失败：' + error.message); return false; }
             alert('注册成功！请到邮箱确认后登录。');
             return true;
         }
 
         async function signOut() {
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             currentUser = null;
-            if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+            if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
             location.reload();
         }
 
@@ -730,7 +731,7 @@
         async function resetAll() {
             if (!confirm('确定要重置所有数据吗？此操作不可恢复。')) return;
             if (currentUser) {
-                const { error } = await supabase.from('records').delete().eq('user_id', currentUser.id);
+                const { error } = await sb.from('records').delete().eq('user_id', currentUser.id);
                 if (error) { alert('重置失败：' + error.message); return; }
             }
             data = getDefaultData();
@@ -1012,7 +1013,7 @@
             document.getElementById('logout-btn').addEventListener('click', signOut);
 
             // 检查 session
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 showMainUI();
