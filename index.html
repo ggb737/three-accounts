@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人管理系统 · 三账户 + 健康</title>
+    <title>个人管理系统 · 云端版</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -15,19 +15,11 @@
             color: #1a2e2a;
         }
         .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 10px rgba(0, 80, 60, 0.06);
+            background: #fff; border-radius: 16px; padding: 20px;
+            margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0, 80, 60, 0.06);
         }
-        h2 {
-            font-size: 18px; font-weight: 600; margin-bottom: 14px;
-            color: #0d3b2e; display: flex; align-items: center; gap: 6px;
-        }
-        h3 {
-            font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #1a5c47;
-        }
+        h2 { font-size: 18px; font-weight: 600; margin-bottom: 14px; color: #0d3b2e; display: flex; align-items: center; gap: 6px; }
+        h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #1a5c47; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
@@ -37,36 +29,24 @@
             font-size: 14px; background: #fafcfb; color: #1a2e2a; font-family: inherit;
         }
         .field textarea { resize: vertical; min-height: 50px; }
-        .field input:focus, .field select:focus, .field textarea:focus {
-            outline: none; border-color: #3a8f6e; background: #fff;
-        }
-        .btn {
-            padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px;
-            font-weight: 600; cursor: pointer; transition: all 0.15s;
-        }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #3a8f6e; background: #fff; }
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
         .btn-primary { background: #2d7d5a; color: #fff; }
         .btn-primary:hover { background: #236348; }
         .btn-primary:disabled { background: #c0d3cb; cursor: not-allowed; }
-        .btn-dark { background: #1a1a1a; color: #fff; }
-        .btn-dark:hover { background: #333; }
         .btn-ghost { background: #e8f2ee; color: #2d7d5a; }
         .btn-ghost:hover { background: #d5e9e0; }
         .btn-danger { background: #fdeaea; color: #c0392b; }
         .btn-danger:hover { background: #f8d7d7; }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
-
         .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
         .form-row input, .form-row select, .form-row button {
             padding: 8px 12px; border: 1px solid #d4e3dd; border-radius: 8px;
             font-size: 14px; background: #fafcfb; color: #1a2e2a; font-family: inherit;
             flex: 1; min-width: 120px;
         }
-        .form-row button {
-            background: #1a1a1a; color: white; border: none; cursor: pointer;
-            font-weight: 500; flex: 0 0 auto;
-        }
+        .form-row button { background: #1a1a1a; color: white; border: none; cursor: pointer; font-weight: 500; flex: 0 0 auto; }
         .form-row button:hover { background: #333; }
-
         .score-row { display: flex; gap: 6px; align-items: center; }
         .score-btn {
             flex: 1; padding: 6px 0; border: 1px solid #d4e3dd; border-radius: 6px;
@@ -74,197 +54,86 @@
         }
         .score-btn.active { background: #2d7d5a; color: #fff; border-color: #2d7d5a; }
         .score-btn:hover:not(.active) { background: #e8f2ee; }
-
         .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
         .chip {
             padding: 6px 12px; border-radius: 999px; font-size: 12px;
             background: #fafcfb; border: 1px solid #d4e3dd; color: #6b8a7e;
-            cursor: pointer; user-select: none; transition: all 0.15s;
-            font-family: inherit;
+            cursor: pointer; user-select: none; transition: all 0.15s; font-family: inherit;
         }
         .chip.active { background: #2d7d5a; color: #fff; border-color: #2d7d5a; font-weight: 600; }
         .chip:hover:not(.active) { background: #e8f2ee; }
-
-        .other-input {
-            margin-top: 8px;
-            padding: 8px 10px;
-            border: 1px solid #d4e3dd;
-            border-radius: 8px;
-            font-size: 13px;
-            background: #fff;
-            color: #1a2e2a;
-            font-family: inherit;
-            width: 100%;
-        }
+        .other-input { margin-top: 8px; padding: 8px 10px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; background: #fff; font-family: inherit; width: 100%; }
         .other-input:focus { outline: none; border-color: #3a8f6e; }
-
         .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
         .tag-good { background: #e0f2e8; color: #1a7a4a; }
         .tag-warn { background: #fef3e0; color: #b87000; }
         .tag-bad { background: #fdeaea; color: #c0392b; }
         .tag-neutral { background: #eaeef6; color: #4a5c8a; }
-
-        .list-item {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            padding: 10px 0; border-bottom: 1px solid #eef4f1; font-size: 13px; gap: 8px;
-        }
+        .list-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #eef4f1; font-size: 13px; gap: 8px; }
         .list-item:last-child { border-bottom: none; }
         .list-item .meta { color: #6b8a7e; font-size: 12px; }
         .list-item .main { flex: 1; }
-
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td {
-            padding: 8px 10px; text-align: left;
-            border-bottom: 1px solid #eee; vertical-align: top;
-        }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
         th { color: #888; font-weight: 500; font-size: 12px; }
-
         .exercise-week { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f7fbf9; border-radius: 10px; margin-bottom: 8px; }
         .exercise-day { text-align: center; font-size: 11px; color: #6b8a7e; }
         .exercise-day .dot {
             width: 28px; height: 28px; border-radius: 50%; background: #e8f2ee;
-            margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6b8a7e;
-            cursor: pointer;
+            margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6b8a7e; cursor: pointer;
         }
         .exercise-day .dot.done { background: #2d7d5a; color: #fff; font-weight: 600; }
         .exercise-day .dot.today { border: 2px solid #2d7d5a; }
         .exercise-day .dot.selected { box-shadow: 0 0 0 3px rgba(45,125,90,0.25); }
-
         .food-analysis { background: #f7fbf9; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #3a5c50; line-height: 1.6; margin-top: 10px; }
-        .food-analysis b { color: #1a5c47; }
         .macro-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 8px 0; background: #e0eae6; }
         .macro-bar .carb { background: #e8a838; }
         .macro-bar .protein { background: #3a8f6e; }
         .macro-bar .fat { background: #c4715c; }
-
-        .acne-card {
-            background: #fdf6f6; border-radius: 10px; padding: 12px;
-            margin-top: 10px; border-left: 3px solid #e8a8a8;
-        }
-        .acne-card .title {
-            font-size: 13px; font-weight: 600; color: #a14a4a; margin-bottom: 8px;
-        }
-
-        .ip-chat-container {
-            background: #f7fbf9; border-radius: 12px; padding: 16px;
-            max-height: 640px; overflow-y: auto;
-        }
+        .acne-card { background: #fdf6f6; border-radius: 10px; padding: 12px; margin-top: 10px; border-left: 3px solid #e8a8a8; }
+        .acne-card .title { font-size: 13px; font-weight: 600; color: #a14a4a; margin-bottom: 8px; }
+        .ip-chat-container { background: #f7fbf9; border-radius: 12px; padding: 16px; max-height: 640px; overflow-y: auto; }
         .ip-msg { display: flex; margin-bottom: 10px; }
         .ip-msg.sys { justify-content: flex-start; }
         .ip-msg.user { justify-content: flex-end; }
-        .ip-bubble {
-            max-width: 85%; padding: 9px 13px; border-radius: 14px;
-            font-size: 13px; line-height: 1.65;
-            white-space: pre-wrap; word-break: break-word;
-        }
-        .ip-msg.sys .ip-bubble {
-            background: #fff; color: #1a5c47;
-            border-left: 3px solid #2d7d5a; border-top-left-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
+        .ip-bubble { max-width: 85%; padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+        .ip-msg.sys .ip-bubble { background: #fff; color: #1a5c47; border-left: 3px solid #2d7d5a; border-top-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .ip-msg.user .ip-bubble { background: #2d7d5a; color: #fff; border-top-right-radius: 4px; }
         .ip-welcome { text-align: center; padding: 14px 0; }
         .ip-welcome-text { font-size: 13px; color: #3a5c50; margin-bottom: 12px; line-height: 1.7; }
-
-        .ip-step-card {
-            background: #fff; border-radius: 12px; padding: 16px; margin-top: 8px;
-            box-shadow: 0 2px 8px rgba(0,80,60,0.06);
-            border-left: 4px solid #2d7d5a;
-        }
-        .ip-step-title {
-            font-size: 14px; font-weight: 700; color: #0d3b2e;
-            margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eef4f1;
-        }
+        .ip-step-card { background: #fff; border-radius: 12px; padding: 16px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,80,60,0.06); border-left: 4px solid #2d7d5a; }
+        .ip-step-title { font-size: 14px; font-weight: 700; color: #0d3b2e; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eef4f1; }
         .ip-step-sys { font-size: 14px; color: #1a5c47; line-height: 1.7; margin-bottom: 8px; }
         .ip-step-bullets { list-style: none; padding: 0; margin: 8px 0; }
-        .ip-step-bullets li {
-            font-size: 13px; color: #3a5c50; line-height: 1.7;
-            padding-left: 18px; position: relative; margin-bottom: 4px;
-        }
-        .ip-step-bullets li::before {
-            content: '·'; position: absolute; left: 6px;
-            color: #2d7d5a; font-weight: bold; font-size: 18px;
-        }
-        .ip-step-note {
-            font-size: 12px; color: #6b8a7e; line-height: 1.7;
-            background: #f7fbf9; border-radius: 8px; padding: 10px 12px;
-            margin: 10px 0; border-left: 3px solid #a0bdb0;
-        }
+        .ip-step-bullets li { font-size: 13px; color: #3a5c50; line-height: 1.7; padding-left: 18px; position: relative; margin-bottom: 4px; }
+        .ip-step-bullets li::before { content: '·'; position: absolute; left: 6px; color: #2d7d5a; font-weight: bold; font-size: 18px; }
+        .ip-step-note { font-size: 12px; color: #6b8a7e; line-height: 1.7; background: #f7fbf9; border-radius: 8px; padding: 10px 12px; margin: 10px 0; border-left: 3px solid #a0bdb0; }
         .ip-field { margin-top: 10px; }
-        .ip-field label {
-            display: block; font-size: 12px; color: #3a5c50;
-            font-weight: 600; margin-bottom: 4px;
-        }
-        .ip-field textarea, .ip-field input {
-            width: 100%; padding: 8px 10px; border: 1px solid #d4e3dd;
-            border-radius: 8px; font-size: 13px; font-family: inherit;
-            background: #fafcfb; color: #1a2e2a; resize: vertical;
-        }
+        .ip-field label { display: block; font-size: 12px; color: #3a5c50; font-weight: 600; margin-bottom: 4px; }
+        .ip-field textarea, .ip-field input { width: 100%; padding: 8px 10px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fafcfb; color: #1a2e2a; resize: vertical; }
         .ip-field textarea { min-height: 50px; }
-        .ip-field textarea:focus, .ip-field input:focus {
-            outline: none; border-color: #3a8f6e; background: #fff;
-        }
+        .ip-field textarea:focus, .ip-field input:focus { outline: none; border-color: #3a8f6e; background: #fff; }
         .ip-step-options { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
-        .ip-opt-btn {
-            text-align: left; padding: 12px 14px; border: 1.5px solid #d4e3dd;
-            border-radius: 10px; background: #fafcfb; cursor: pointer;
-            font-size: 13px; color: #3a5c50; font-family: inherit;
-            transition: all 0.15s; line-height: 1.5;
-        }
+        .ip-opt-btn { text-align: left; padding: 12px 14px; border: 1.5px solid #d4e3dd; border-radius: 10px; background: #fafcfb; cursor: pointer; font-size: 13px; color: #3a5c50; font-family: inherit; transition: all 0.15s; line-height: 1.5; }
         .ip-opt-btn:hover { background: #e8f2ee; border-color: #a8cec0; }
-        .ip-opt-btn.selected {
-            background: #e0f2e8; border-color: #2d7d5a;
-            color: #1a5c47; font-weight: 600;
-        }
-        .ip-confirm-row {
-            display: flex; justify-content: space-between; align-items: center;
-            gap: 10px; margin-top: 14px; padding-top: 12px;
-            border-top: 1px dashed #d4e3dd; flex-wrap: wrap;
-        }
-        .ip-confirm-label {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 13px; color: #3a5c50; cursor: pointer; user-select: none;
-        }
+        .ip-opt-btn.selected { background: #e0f2e8; border-color: #2d7d5a; color: #1a5c47; font-weight: 600; }
+        .ip-confirm-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #d4e3dd; flex-wrap: wrap; }
+        .ip-confirm-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #3a5c50; cursor: pointer; user-select: none; }
         .ip-confirm-label input { width: 16px; height: 16px; cursor: pointer; }
-
-        .ip-report {
-            background: #fff; border: 1px solid #d4e3dd; border-radius: 12px;
-            padding: 16px; margin-top: 8px;
-            box-shadow: 0 2px 8px rgba(0,80,60,0.05);
-        }
-        .ip-report-title {
-            font-size: 14px; font-weight: 700; color: #1a5c47;
-            margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eef4f1;
-        }
-        .ip-report-section {
-            margin-bottom: 12px; font-size: 13px; color: #3a5c50; line-height: 1.8;
-        }
+        .ip-report { background: #fff; border: 1px solid #d4e3dd; border-radius: 12px; padding: 16px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,80,60,0.05); }
+        .ip-report-title { font-size: 14px; font-weight: 700; color: #1a5c47; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eef4f1; }
+        .ip-report-section { margin-bottom: 12px; font-size: 13px; color: #3a5c50; line-height: 1.8; }
         .ip-report-section b { color: #1a5c47; }
         .ip-report-section .kv { margin-bottom: 6px; }
-        .ip-report-section .kv .k {
-            font-weight: 600; color: #1a5c47;
-            display: block; font-size: 12px; margin-bottom: 2px;
-        }
-        .ip-report-section .kv .v {
-            color: #3a5c50; white-space: pre-wrap; word-break: break-word;
-        }
-        .ip-report-detail summary {
-            color: #2d7d5a; font-weight: 600; font-size: 13px;
-            cursor: pointer; padding: 6px 0;
-        }
+        .ip-report-section .kv .k { font-weight: 600; color: #1a5c47; display: block; font-size: 12px; margin-bottom: 2px; }
+        .ip-report-section .kv .v { color: #3a5c50; white-space: pre-wrap; word-break: break-word; }
+        .ip-report-detail summary { color: #2d7d5a; font-weight: 600; font-size: 13px; cursor: pointer; padding: 6px 0; }
         .ip-report-detail[open] summary { margin-bottom: 8px; }
-        .ip-conv-line {
-            font-size: 12px; color: #3a5c50;
-            margin-bottom: 6px; line-height: 1.6; white-space: pre-wrap;
-        }
-        .ip-conv-line .role {
-            font-weight: 600; color: #6b8a7e; margin-right: 4px;
-        }
-
+        .ip-conv-line { font-size: 12px; color: #3a5c50; margin-bottom: 6px; line-height: 1.6; white-space: pre-wrap; }
+        .ip-conv-line .role { font-weight: 600; color: #6b8a7e; margin-right: 4px; }
         .footer-note { text-align: center; font-size: 12px; color: #a0bdb0; margin: 24px 0 12px; }
         .empty-hint { color: #a0bdb0; font-size: 13px; text-align: center; padding: 16px 0; }
         .hidden { display: none; }
-
         .day-bar {
             background: linear-gradient(135deg, #2d7d5a, #1a5c47);
             color: #fff; border-radius: 16px; padding: 16px 20px;
@@ -272,525 +141,588 @@
             display: flex; align-items: center; justify-content: space-between;
             gap: 12px; flex-wrap: wrap;
         }
-        .day-bar .day-info { display: flex; align-items: center; gap: 12px; }
         .day-bar .day-big { font-size: 22px; font-weight: 700; }
         .day-bar .day-sub { font-size: 12px; opacity: 0.85; }
         .day-bar .day-nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .day-bar input[type="date"] {
-            padding: 8px 10px; border: none; border-radius: 8px;
-            font-size: 13px; background: rgba(255,255,255,0.95);
-            color: #1a2e2a; font-family: inherit; cursor: pointer;
-        }
-        .day-bar .day-btn {
-            background: rgba(255,255,255,0.2); color: #fff; border: none;
-            border-radius: 8px; padding: 8px 12px; font-size: 13px;
-            cursor: pointer; font-weight: 600;
-        }
+        .day-bar input[type="date"] { padding: 8px 10px; border: none; border-radius: 8px; font-size: 13px; background: rgba(255,255,255,0.95); color: #1a2e2a; font-family: inherit; cursor: pointer; }
+        .day-bar .day-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; font-weight: 600; }
         .day-bar .day-btn:hover { background: rgba(255,255,255,0.3); }
-
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
         .toolbar-actions { display: flex; gap: 8px; }
-
-        .app-nav {
-            display: flex; gap: 8px; margin-bottom: 16px;
-        }
-        .nav-btn {
-            flex: 1; padding: 12px; border: none; border-radius: 12px;
-            background: #e8f2ee; color: #2d7d5a; font-weight: 600;
-            cursor: pointer; font-size: 15px; transition: all 0.2s;
-        }
-        .nav-btn.active {
-            background: #2d7d5a; color: #fff;
-            box-shadow: 0 4px 12px rgba(45,125,90,0.3);
-        }
+        .app-nav { display: flex; gap: 8px; margin-bottom: 16px; }
+        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; background: #e8f2ee; color: #2d7d5a; font-weight: 600; cursor: pointer; font-size: 15px; transition: all 0.2s; }
+        .nav-btn.active { background: #2d7d5a; color: #fff; box-shadow: 0 4px 12px rgba(45,125,90,0.3); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        .edit-date-input {
-            padding: 4px 6px; font-size: 12px;
-            border: 1px solid #ddd; border-radius: 4px;
-            width: 100%; max-width: 130px; background: #fff;
-        }
-        .edit-subcategory {
-            font-size: 11px; padding: 2px 4px; border: 1px solid #e8e8e8;
-            border-radius: 4px; background: #fff; color: #666;
-            margin-top: 4px; max-width: 100%; display: block;
-        }
+        .edit-date-input { padding: 4px 6px; font-size: 12px; border: 1px solid #ddd; border-radius: 4px; width: 100%; max-width: 130px; background: #fff; }
+        .edit-subcategory { font-size: 11px; padding: 2px 4px; border: 1px solid #e8e8e8; border-radius: 4px; background: #fff; color: #666; margin-top: 4px; max-width: 100%; display: block; }
         .account-cell-label { font-size: 13px; font-weight: 500; }
-
-        .sub-badge {
-            display: inline-block; font-size: 10px;
-            padding: 1px 6px; border-radius: 999px;
-            margin-top: 3px; white-space: nowrap;
-        }
-        .sub-badge.rigid { background: #eaf6ee; color: #2d7d46; }
-        .sub-badge.emotional { background: #fdf1e6; color: #c26f1e; }
-        .sub-badge.once { background: #eaeef6; color: #4a5c8a; }
-
+        #auth-card { max-width: 400px; margin: 60px auto; }
+        #auth-card input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .auth-row { display: flex; gap: 10px; margin-top: 10px; }
+        .auth-row button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; font-size: 14px; }
+        .loading-overlay { text-align: center; padding: 60px 20px; color: #6b8a7e; }
         @media (max-width: 500px) {
             .grid-3 { grid-template-columns: 1fr 1fr; }
             body { padding: 10px; }
             .card { padding: 16px; border-radius: 12px; }
             .day-bar { padding: 14px 16px; }
             .day-bar .day-big { font-size: 18px; }
-            .ip-bubble { max-width: 90%; }
             .ip-chat-container { padding: 12px; max-height: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 顶部标签导航 -->
-    <div class="app-nav">
-        <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
-        <button class="nav-btn" data-tab="health">🌿 健康系统</button>
-    </div>
-
-    <!-- ================= TAB 1: 三账户 ================= -->
-    <div id="tab-accounts" class="tab-content active">
-
-        <div class="card">
-            <h2>📊 三账户余额</h2>
-            <div class="grid-3">
-                <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
-                    <div style="font-size:12px;color:#888;margin-bottom:4px;">🥣 生存账户</div>
-                    <div style="font-size:20px;font-weight:600;color:#2d7d46;" id="balance-survival">0.00</div>
-                    <div style="font-size:12px;color:#999;">50-60%</div>
-                </div>
-                <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
-                    <div style="font-size:12px;color:#888;margin-bottom:4px;">🛡️ 稳定账户</div>
-                    <div style="font-size:20px;font-weight:600;color:#b8860b;" id="balance-stable">0.00</div>
-                    <div style="font-size:12px;color:#999;">20-30%</div>
-                </div>
-                <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
-                    <div style="font-size:12px;color:#888;margin-bottom:4px;">📈 发展账户</div>
-                    <div style="font-size:20px;font-weight:600;color:#1a5c8a;" id="balance-develop">0.00</div>
-                    <div style="font-size:12px;color:#999;">10-20%</div>
-                </div>
+    <!-- ========== 登录卡片 ========== -->
+    <div class="card" id="auth-card" style="display:none;">
+        <h2 style="text-align:center;justify-content:center;">🔐 个人管理系统</h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <input type="email" id="auth-email" placeholder="邮箱">
+            <input type="password" id="auth-password" placeholder="密码（至少6位）">
+            <div class="auth-row">
+                <button id="login-btn" style="background:#1a1a1a;">登录</button>
+                <button id="register-btn" style="background:#2d7d5a;">注册</button>
             </div>
-        </div>
-
-        <div class="card">
-            <h2>✏️ 记一笔支出</h2>
-            <div class="form-row">
-                <input type="number" id="expense-amount" placeholder="金额" step="0.01">
-                <select id="expense-account">
-                    <option value="survival">生存账户</option>
-                    <option value="stable">稳定账户</option>
-                    <option value="develop">发展账户</option>
-                </select>
-                <select id="expense-subcategory" title="生存账户分类">
-                    <option value="rigid">🥣 刚性生存</option>
-                    <option value="emotional">🎈 情绪消费</option>
-                    <option value="once">📦 一次性支出</option>
-                </select>
-                <input type="text" id="expense-desc" placeholder="用途（如：周末餐）">
-                <input type="date" id="expense-date" title="记账日期">
-                <button id="add-btn">记录</button>
-            </div>
-            <div style="font-size:13px;color:#999;margin-top:4px;">
-                💡 生存账户支出需选择分类
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="form-row">
-                <input type="number" id="income-amount" placeholder="收入金额" step="0.01">
-                <input type="date" id="income-date" title="收入日期">
-                <button id="income-btn" style="background:#2d7d46;">💰 存入收入</button>
-                <button id="reset-accounts-btn" style="background:#e74c3c;">🔄 重置账户数据</button>
-            </div>
-            <div style="font-size:13px;color:#999;margin-top:6px;">
-                默认分配：生存55% · 稳定25% · 发展20%
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>📋 支出明细</h2>
-            <div id="expense-list"><div class="empty-hint">还没有支出记录，开始记一笔吧</div></div>
-            <div style="margin-top:12px;font-size:13px;color:#888;" id="accounts-summary"></div>
-        </div>
-
-        <div class="card">
-            <h2>💰 收入明细</h2>
-            <div id="income-list"><div class="empty-hint">还没有收入记录</div></div>
-        </div>
-
-        <div class="card">
-            <h2>📅 每月合计</h2>
-            <div id="monthly-list"><div class="empty-hint">暂无月度记录</div></div>
+            <div style="font-size:12px;color:#999;text-align:center;">注册后需到邮箱确认，再回来登录</div>
         </div>
     </div>
 
-    <!-- ================= TAB 2: 健康系统 ================= -->
-    <div id="tab-health" class="tab-content">
+    <!-- ========== Loading ========== -->
+    <div class="loading-overlay" id="loading-overlay">正在加载数据…</div>
 
-        <div class="day-bar">
-            <div class="day-info">
+    <!-- ========== 主内容 ========== -->
+    <div id="main-content" style="display:none;">
+        <div class="app-nav">
+            <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
+            <button class="nav-btn" data-tab="health">🌿 健康系统</button>
+        </div>
+
+        <!-- ===== 三账户 ===== -->
+        <div id="tab-accounts" class="tab-content active">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h2 style="margin-bottom:0;">📊 三账户余额</h2>
+                    <button class="btn btn-danger btn-sm" id="logout-btn">退出登录</button>
+                </div>
+                <div class="grid-3">
+                    <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:12px;color:#888;margin-bottom:4px;">🥣 生存账户</div>
+                        <div style="font-size:20px;font-weight:600;color:#2d7d46;" id="balance-survival">0.00</div>
+                    </div>
+                    <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:12px;color:#888;margin-bottom:4px;">🛡️ 稳定账户</div>
+                        <div style="font-size:20px;font-weight:600;color:#b8860b;" id="balance-stable">0.00</div>
+                    </div>
+                    <div style="background:#f8f9fa;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:12px;color:#888;margin-bottom:4px;">📈 发展账户</div>
+                        <div style="font-size:20px;font-weight:600;color:#1a5c8a;" id="balance-develop">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>✏️ 记一笔支出</h2>
+                <div class="form-row">
+                    <input type="number" id="expense-amount" placeholder="金额" step="0.01">
+                    <select id="expense-account">
+                        <option value="survival">生存账户</option>
+                        <option value="stable">稳定账户</option>
+                        <option value="develop">发展账户</option>
+                    </select>
+                    <select id="expense-subcategory">
+                        <option value="rigid">🥣 刚性生存</option>
+                        <option value="emotional">🎈 情绪消费</option>
+                        <option value="once">📦 一次性支出</option>
+                    </select>
+                    <input type="text" id="expense-desc" placeholder="用途">
+                    <input type="date" id="expense-date">
+                    <button id="add-btn">记录</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-row">
+                    <input type="number" id="income-amount" placeholder="收入金额" step="0.01">
+                    <input type="date" id="income-date">
+                    <button id="income-btn" style="background:#2d7d46;">💰 存入收入</button>
+                    <button id="reset-accounts-btn" style="background:#e74c3c;">🔄 重置账户</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 支出明细</h2>
+                <div id="expense-list"><div class="empty-hint">还没有支出记录</div></div>
+                <div style="margin-top:12px;font-size:13px;color:#888;" id="accounts-summary"></div>
+            </div>
+
+            <div class="card">
+                <h2>💰 收入明细</h2>
+                <div id="income-list"><div class="empty-hint">还没有收入记录</div></div>
+            </div>
+
+            <div class="card">
+                <h2>📅 每月合计</h2>
+                <div id="monthly-list"><div class="empty-hint">暂无月度记录</div></div>
+            </div>
+        </div>
+
+        <!-- ===== 健康系统 ===== -->
+        <div id="tab-health" class="tab-content">
+            <div class="day-bar">
                 <div>
                     <div class="day-big" id="day-label">今天</div>
                     <div class="day-sub" id="day-sub"></div>
                 </div>
+                <div class="day-nav">
+                    <button class="day-btn" id="day-prev">← 前一天</button>
+                    <input type="date" id="day-picker">
+                    <button class="day-btn" id="day-next">后一天 →</button>
+                    <button class="day-btn" id="day-today">回到今天</button>
+                </div>
             </div>
-            <div class="day-nav">
-                <button class="day-btn" id="day-prev">← 前一天</button>
-                <input type="date" id="day-picker">
-                <button class="day-btn" id="day-next">后一天 →</button>
-                <button class="day-btn" id="day-today">回到今天</button>
-            </div>
-        </div>
 
-        <div class="toolbar">
-            <div class="toolbar-actions">
-                <button class="btn btn-ghost btn-sm" id="export-btn">导出健康数据</button>
-                <button class="btn btn-ghost btn-sm" id="import-btn">导入健康数据</button>
-                <input type="file" id="import-file" accept=".json" style="display:none;">
-                <button class="btn btn-danger btn-sm" id="reset-health-btn">重置健康数据</button>
-            </div>
-        </div>
-
-        <!-- 睡眠管理 -->
-        <div class="card">
-            <h2>😴 睡眠管理</h2>
-            <div class="grid-2">
-                <div class="field"><label>入睡时间</label><input type="time" id="sleep-start"></div>
-                <div class="field"><label>醒来时间</label><input type="time" id="sleep-end"></div>
-            </div>
-            <div class="field">
-                <label>醒来后的感觉</label>
-                <select id="sleep-feeling">
-                    <option value="refreshed">😊 神清气爽</option>
-                    <option value="ok">😐 还行，有点困</option>
-                    <option value="tired">😫 疲惫，没睡够</option>
-                    <option value="groggy">😵 昏沉，起不来</option>
-                </select>
-            </div>
-            <div class="field"><label>备注</label><input type="text" id="sleep-note" placeholder="如：夜间醒了两次"></div>
-            <button class="btn btn-primary" id="sleep-save">记录睡眠</button>
-            <div id="sleep-history" style="margin-top:16px;"><div class="empty-hint">这一天还没有睡眠记录</div></div>
-        </div>
-
-        <!-- 能量管理 -->
-        <div class="card">
-            <h2>⚡ 能量管理</h2>
-
-            <h3>📊 能量监测</h3>
-            <div class="grid-2">
-                <div class="field"><label>上午能量（1-10）</label><div class="score-row" id="energy-am"></div></div>
-                <div class="field"><label>下午能量（1-10）</label><div class="score-row" id="energy-pm"></div></div>
-            </div>
-            <div class="field"><label>能量低谷/高峰备注</label><input type="text" id="energy-note" placeholder="如：午饭后困，傍晚精神好"></div>
-            <button class="btn btn-primary" id="energy-save">记录能量</button>
-            <div id="energy-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有能量记录</div></div>
-
-            <h3 style="margin-top:20px;">🔋 充电系统</h3>
-            <div class="grid-2">
-                <div class="field"><label>充电活动</label>
-                    <select id="charge-type">
-                        <option value="rest">🛌 休息/小睡</option>
-                        <option value="nature">🌿 接触自然</option>
-                        <option value="social">👥 社交/聊天</option>
-                        <option value="hobby">🎨 爱好/创作</option>
-                        <option value="exercise">🏃 轻度运动</option>
-                        <option value="food">🍵 好好吃饭</option>
-                        <option value="other">✨ 其他</option>
+            <div class="card">
+                <h2>😴 睡眠管理</h2>
+                <div class="grid-2">
+                    <div class="field"><label>入睡时间</label><input type="time" id="sleep-start"></div>
+                    <div class="field"><label>醒来时间</label><input type="time" id="sleep-end"></div>
+                </div>
+                <div class="field">
+                    <label>醒来后的感觉</label>
+                    <select id="sleep-feeling">
+                        <option value="refreshed">😊 神清气爽</option>
+                        <option value="ok">😐 还行，有点困</option>
+                        <option value="tired">😫 疲惫，没睡够</option>
+                        <option value="groggy">😵 昏沉，起不来</option>
                     </select>
                 </div>
-                <div class="field"><label>充电后能量变化（-5 ~ +5）</label><input type="number" id="charge-delta" min="-5" max="5" value="2"></div>
+                <div class="field"><label>备注</label><input type="text" id="sleep-note"></div>
+                <button class="btn btn-primary" id="sleep-save">记录睡眠</button>
+                <div id="sleep-history" style="margin-top:16px;"></div>
             </div>
-            <div class="field"><label>备注</label><input type="text" id="charge-note" placeholder="如：午后散步15分钟"></div>
-            <button class="btn btn-primary" id="charge-save">记录充电</button>
-            <div id="charge-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有充电记录</div></div>
 
-            <h3 style="margin-top:20px;">🧘 反内耗系统</h3>
-            <div id="ip-chat-container" class="ip-chat-container"></div>
-            <div id="ip-history" style="margin-top:16px;">
-                <div class="empty-hint">这一天还没有反内耗练习记录</div>
-            </div>
-        </div>
-
-        <!-- 运动 + 微运动 + 身体管理 -->
-        <div class="card">
-            <h2>🏃 运动</h2>
-            <div class="exercise-week" id="exercise-week"></div>
-            <div class="grid-2">
-                <div class="field"><label>运动类型</label>
-                    <select id="exercise-type">
-                        <option value="walk">🚶 散步</option>
-                        <option value="run">🏃 跑步</option>
-                        <option value="cycling">🚴 骑行</option>
-                        <option value="strength">🏋️ 力量</option>
-                        <option value="yoga">🧘 瑜伽/拉伸</option>
-                        <option value="ball">⚽ 球类</option>
-                        <option value="swim">🏊 游泳</option>
-                        <option value="other">✨ 其他</option>
-                    </select>
+            <div class="card">
+                <h2>⚡ 能量管理</h2>
+                <h3>📊 能量监测</h3>
+                <div class="grid-2">
+                    <div class="field"><label>上午能量（1-10）</label><div class="score-row" id="energy-am"></div></div>
+                    <div class="field"><label>下午能量（1-10）</label><div class="score-row" id="energy-pm"></div></div>
                 </div>
-                <div class="field"><label>时长（分钟）</label><input type="number" id="exercise-duration" placeholder="30" min="1"></div>
-            </div>
-            <div class="field"><label>感受 / 备注</label><input type="text" id="exercise-note" placeholder="如：跑完很轻松，膝盖无不适"></div>
-            <button class="btn btn-primary" id="exercise-save">记录运动</button>
-            <div id="exercise-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有运动记录</div></div>
+                <div class="field"><label>备注</label><input type="text" id="energy-note"></div>
+                <button class="btn btn-primary" id="energy-save">记录能量</button>
+                <div id="energy-history" style="margin-top:12px;"></div>
 
-            <!-- ============ 微运动管理 ============ -->
-            <h3 style="margin-top:24px;">🧘 微运动管理</h3>
-            <div class="field">
-                <label>体态问题（可多选）</label>
-                <div class="chip-row" id="posture-chips"></div>
-                <input type="text" id="posture-other" class="other-input hidden" placeholder="请说明其他体态问题…">
-            </div>
-            <div class="field">
-                <label>微运动习惯（可多选）</label>
-                <div class="chip-row" id="habit-chips"></div>
-                <input type="text" id="habit-other" class="other-input hidden" placeholder="请说明其他微运动习惯…">
-            </div>
-            <div class="field"><label>备注</label><input type="text" id="micro-note" placeholder="如：今天靠墙站了3次，每次2分钟"></div>
-            <button class="btn btn-primary" id="micro-save">记录微运动</button>
-            <div id="micro-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有微运动记录</div></div>
+                <h3 style="margin-top:20px;">🔋 充电系统</h3>
+                <div class="grid-2">
+                    <div class="field"><label>充电活动</label>
+                        <select id="charge-type">
+                            <option value="rest">🛌 休息/小睡</option>
+                            <option value="nature">🌿 接触自然</option>
+                            <option value="social">👥 社交</option>
+                            <option value="hobby">🎨 爱好</option>
+                            <option value="exercise">🏃 轻度运动</option>
+                            <option value="food">🍵 好好吃饭</option>
+                            <option value="other">✨ 其他</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>能量变化（-5 ~ +5）</label><input type="number" id="charge-delta" min="-5" max="5" value="2"></div>
+                </div>
+                <div class="field"><label>备注</label><input type="text" id="charge-note"></div>
+                <button class="btn btn-primary" id="charge-save">记录充电</button>
+                <div id="charge-history" style="margin-top:12px;"></div>
 
-            <!-- ============ 身体管理 ============ -->
-            <h3 style="margin-top:24px;">💗 身体管理</h3>
-            <div class="field">
-                <label>身体信号（可多选）</label>
-                <div class="chip-row" id="signal-chips"></div>
-                <input type="text" id="signal-other" class="other-input hidden" placeholder="请说明其他身体信号…">
+                <h3 style="margin-top:20px;">🧘 反内耗系统</h3>
+                <div id="ip-chat-container" class="ip-chat-container"></div>
+                <div id="ip-history" style="margin-top:16px;"></div>
             </div>
 
-            <div class="acne-card">
-                <div class="title">🫥 痘痘记录（选填）</div>
+            <div class="card">
+                <h2>🏃 运动</h2>
+                <div class="exercise-week" id="exercise-week"></div>
+                <div class="grid-2">
+                    <div class="field"><label>运动类型</label>
+                        <select id="exercise-type">
+                            <option value="walk">🚶 散步</option>
+                            <option value="run">🏃 跑步</option>
+                            <option value="cycling">🚴 骑行</option>
+                            <option value="strength">🏋️ 力量</option>
+                            <option value="yoga">🧘 瑜伽/拉伸</option>
+                            <option value="ball">⚽ 球类</option>
+                            <option value="swim">🏊 游泳</option>
+                            <option value="other">✨ 其他</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>时长（分钟）</label><input type="number" id="exercise-duration" min="1"></div>
+                </div>
+                <div class="field"><label>备注</label><input type="text" id="exercise-note"></div>
+                <button class="btn btn-primary" id="exercise-save">记录运动</button>
+                <div id="exercise-history" style="margin-top:12px;"></div>
+
+                <h3 style="margin-top:24px;">🧘 微运动管理</h3>
+                <div class="field">
+                    <label>体态问题</label>
+                    <div class="chip-row" id="posture-chips"></div>
+                    <input type="text" id="posture-other" class="other-input hidden" placeholder="其他体态问题…">
+                </div>
+                <div class="field">
+                    <label>微运动习惯</label>
+                    <div class="chip-row" id="habit-chips"></div>
+                    <input type="text" id="habit-other" class="other-input hidden" placeholder="其他微运动习惯…">
+                </div>
+                <div class="field"><label>备注</label><input type="text" id="micro-note"></div>
+                <button class="btn btn-primary" id="micro-save">记录微运动</button>
+                <div id="micro-history" style="margin-top:12px;"></div>
+
+                <h3 style="margin-top:24px;">💗 身体管理</h3>
+                <div class="field">
+                    <label>身体信号</label>
+                    <div class="chip-row" id="signal-chips"></div>
+                    <input type="text" id="signal-other" class="other-input hidden" placeholder="其他身体信号…">
+                </div>
+
+                <div class="acne-card">
+                    <div class="title">🫥 痘痘记录（选填）</div>
+                    <div class="grid-3">
+                        <div class="field"><label>位置</label>
+                            <select id="acne-location">
+                                <option value="">无</option>
+                                <option value="forehead">额头</option>
+                                <option value="nose">鼻子</option>
+                                <option value="cheek">脸颊</option>
+                                <option value="chin">下巴</option>
+                                <option value="back">背部</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>类型</label>
+                            <select id="acne-type">
+                                <option value="">无</option>
+                                <option value="red">红肿</option>
+                                <option value="whitehead">白头</option>
+                                <option value="blackhead">黑头</option>
+                                <option value="closed">闭口</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>严重（1-5）</label><input type="number" id="acne-severity" min="1" max="5"></div>
+                    </div>
+                    <div class="field" id="acne-location-other-field" style="display:none;">
+                        <label>位置（其他）</label>
+                        <input type="text" id="acne-location-other">
+                    </div>
+                    <div class="field" style="margin-bottom:0;"><label>痘痘备注</label><input type="text" id="acne-note"></div>
+                </div>
+
+                <div class="field" style="margin-top:10px;"><label>身体信号备注</label><input type="text" id="signal-note"></div>
+                <button class="btn btn-primary" id="signal-save">记录身体信号</button>
+                <div id="body-history" style="margin-top:12px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>🥗 饮食与营养</h2>
                 <div class="grid-3">
-                    <div class="field"><label>位置</label>
-                        <select id="acne-location">
-                            <option value="">无</option>
-                            <option value="forehead">额头</option>
-                            <option value="nose">鼻子</option>
-                            <option value="cheek">脸颊</option>
-                            <option value="chin">下巴</option>
-                            <option value="back">背部</option>
-                            <option value="other">其他</option>
-                        </select>
-                    </div>
-                    <div class="field"><label>类型</label>
-                        <select id="acne-type">
-                            <option value="">无</option>
-                            <option value="red">红肿</option>
-                            <option value="whitehead">白头</option>
-                            <option value="blackhead">黑头</option>
-                            <option value="closed">闭口</option>
-                        </select>
-                    </div>
-                    <div class="field"><label>严重程度（1-5）</label>
-                        <input type="number" id="acne-severity" min="1" max="5" placeholder="3">
-                    </div>
+                    <div class="field"><label>早餐</label><input type="text" id="meal-breakfast"></div>
+                    <div class="field"><label>午餐</label><input type="text" id="meal-lunch"></div>
+                    <div class="field"><label>晚餐</label><input type="text" id="meal-dinner"></div>
                 </div>
-                <div class="field" id="acne-location-other-field" style="display:none;">
-                    <label>痘痘位置（其他）</label>
-                    <input type="text" id="acne-location-other" placeholder="请说明具体位置…">
+                <div class="grid-2">
+                    <div class="field"><label>饮水（杯）</label><input type="number" id="water-cups" min="0"></div>
+                    <div class="field"><label>零食/加餐</label><input type="text" id="snack"></div>
                 </div>
-                <div class="field" style="margin-bottom:0;"><label>痘痘备注</label>
-                    <input type="text" id="acne-note" placeholder="如：下巴附近，有点疼">
-                </div>
+                <button class="btn btn-primary" id="meal-save">记录饮食并分析</button>
+                <div class="food-analysis hidden" id="food-analysis"></div>
+                <div id="meal-history" style="margin-top:12px;"></div>
             </div>
 
-            <div class="field" style="margin-top:10px;"><label>身体信号备注</label>
-                <input type="text" id="signal-note" placeholder="如：今天肩颈特别酸，可能坐太久了">
+            <div class="card">
+                <h2>🤖 AI 每日分析</h2>
+                <details style="margin-bottom:10px;">
+                    <summary style="cursor:pointer;color:#2d7d5a;font-weight:600;font-size:13px;">⚙️ API 配置</summary>
+                    <div style="margin-top:10px;">
+                        <div class="field"><label>API Key</label><input type="password" id="ai-api-key" placeholder="sk-..."></div>
+                        <div class="field"><label>API 地址</label><input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions"></div>
+                        <div class="field"><label>模型</label><input type="text" id="ai-model" value="deepseek-chat"></div>
+                        <button class="btn btn-ghost btn-sm" id="ai-save-config">保存配置</button>
+                    </div>
+                </details>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                    <button class="btn btn-primary" id="ai-analyze-btn">✨ 生成今日分析</button>
+                    <button class="btn btn-ghost btn-sm" id="ai-clear-btn">清除今日分析</button>
+                </div>
+                <div id="ai-result"><div class="empty-hint">还没有今日分析</div></div>
             </div>
-            <button class="btn btn-primary" id="signal-save">记录身体信号</button>
-            <div id="body-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有身体信号记录</div></div>
         </div>
 
-        <!-- 饮食与营养 -->
-        <div class="card">
-            <h2>🥗 饮食与营养</h2>
-            <div class="grid-3">
-                <div class="field"><label>早餐</label><input type="text" id="meal-breakfast" placeholder="如：燕麦+鸡蛋"></div>
-                <div class="field"><label>午餐</label><input type="text" id="meal-lunch" placeholder="如：米饭+青菜+鸡胸"></div>
-                <div class="field"><label>晚餐</label><input type="text" id="meal-dinner" placeholder="如：杂粮粥+豆腐"></div>
-            </div>
-            <div class="grid-2">
-                <div class="field"><label>饮水（杯）</label><input type="number" id="water-cups" placeholder="8" min="0"></div>
-                <div class="field"><label>零食/加餐</label><input type="text" id="snack" placeholder="如：坚果一小把"></div>
-            </div>
-            <button class="btn btn-primary" id="meal-save">记录饮食并分析</button>
-            <div class="food-analysis hidden" id="food-analysis"></div>
-            <div id="meal-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有饮食记录</div></div>
-        </div>
-
-        <!-- ============ AI 每日分析 ============ -->
-        <div class="card">
-            <h2>🤖 AI 每日分析</h2>
-            <div style="font-size:12px;color:#6b8a7e;margin-bottom:10px;">
-                配置一次 API Key，之后每天点「生成分析」即可
-            </div>
-
-            <details style="margin-bottom:10px;">
-                <summary style="cursor:pointer;color:#2d7d5a;font-weight:600;font-size:13px;">⚙️ API 配置（点击展开）</summary>
-                <div style="margin-top:10px;">
-                    <div class="field">
-                        <label>API Key</label>
-                        <input type="password" id="ai-api-key" placeholder="sk-...">
-                    </div>
-                    <div class="field">
-                        <label>API 地址</label>
-                        <input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions">
-                    </div>
-                    <div class="field">
-                        <label>模型</label>
-                        <input type="text" id="ai-model" value="deepseek-chat">
-                    </div>
-                    <button class="btn btn-ghost btn-sm" id="ai-save-config">保存配置</button>
-                    <span style="font-size:12px;color:#a0bdb0;margin-left:8px;">仅保存在本机浏览器</span>
-                </div>
-            </details>
-
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                <button class="btn btn-primary" id="ai-analyze-btn">✨ 生成今日分析</button>
-                <button class="btn btn-ghost btn-sm" id="ai-clear-btn">清除今日分析</button>
-            </div>
-
-            <div id="ai-result">
-                <div class="empty-hint">还没有今日分析，点上方按钮生成</div>
-            </div>
-        </div>
+        <div class="footer-note">数据自动同步 · 云端存储</div>
     </div>
 
-    <div class="footer-note">个人管理系统 · 数据保存在浏览器本地 · 建议定期导出备份</div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        /* ================= Supabase 配置 ================= */
+        const SUPABASE_URL = 'https://mtfqvszsqdijyzpwwhlg.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let realtimeChannel = null;
+        let lastLocalChange = 0;
+        let loading = false;
+
         /* ================= 工具函数 ================= */
         function pad2(n) { return String(n).padStart(2, '0'); }
         function fmtDay(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
         function todayStr() { return fmtDay(new Date()); }
-        function currentMonthStr() { return todayStr().slice(0, 7); }
         function isValidDay(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
-        function addDays(dateStr, delta) {
-            const d = new Date(dateStr + 'T00:00:00');
-            d.setDate(d.getDate() + delta);
-            return fmtDay(d);
-        }
-        function weekdayLabel(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
-            return ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][d.getDay()];
-        }
-        function fullDayLabel(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
-            return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
-        }
-        function esc(s) {
-            return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-            ));
-        }
+        function addDays(dateStr, delta) { const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + delta); return fmtDay(d); }
+        function weekdayLabel(dateStr) { const d = new Date(dateStr + 'T00:00:00'); return ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][d.getDay()]; }
+        function fullDayLabel(dateStr) { const d = new Date(dateStr + 'T00:00:00'); return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日'; }
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+        function recordDay(r) { return isValidDay(r.day) ? r.day : 'unknown'; }
+        function recordMonth(r) { const d = recordDay(r); return d === 'unknown' ? 'unknown' : d.slice(0, 7); }
+        function shortDay(day) { if (!isValidDay(day)) return '未记录'; const p = day.split('-'); return parseInt(p[1],10) + '月' + parseInt(p[2],10) + '日'; }
+        function monthLabel(key) { if (key === 'unknown') return '未记录日期'; const m = key.match(/^(\d{4})-(\d{2})$/); return m ? m[1] + '年' + parseInt(m[2],10) + '月' : key; }
 
-        /* ================= 标签切换 ================= */
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-            };
-        });
-
-        /* =====================================================
-           三账户系统（本地存储）
-           ===================================================== */
-        const ACCOUNTS_KEY = 'three_accounts_data';
+        /* ================= 常量 ================= */
         const RATIOS = { survival: 0.55, stable: 0.25, develop: 0.20 };
         const ACCOUNT_LABEL = { survival: '生存', stable: '稳定', develop: '发展' };
         const SUB_CATEGORIES = {
-            rigid:     { label: '刚性生存', icon: '🥣', cls: 'rigid' },
-            emotional: { label: '情绪消费', icon: '🎈', cls: 'emotional' },
-            once:      { label: '一次性支出', icon: '📦', cls: 'once' }
+            rigid: { label: '刚性生存', icon: '🥣' },
+            emotional: { label: '情绪消费', icon: '🎈' },
+            once: { label: '一次性支出', icon: '📦' }
         };
+        const POSTURE_ISSUES = [
+            { key: 'round_shoulder', label: '圆肩' }, { key: 'forward_head', label: '头前伸' },
+            { key: 'anterior_pelvic', label: '骨盆前倾' }, { key: 'hunchback', label: '驼背' },
+            { key: 'neck_forward', label: '颈前倾' }, { key: 'uneven_shoulder', label: '高低肩' },
+            { key: 'other', label: '其他' }
+        ];
+        const MICRO_HABITS = [
+            { key: 'wall_stand', label: '靠墙站' }, { key: 'chin_tuck', label: '收下巴' },
+            { key: 'neck_stretch', label: '肩颈拉伸' }, { key: 'shoulder_open', label: '开肩' },
+            { key: 'squat', label: '深蹲' }, { key: 'stand_reminder', label: '站姿提醒' },
+            { key: 'walk_break', label: '走动休息' }, { key: 'other', label: '其他' }
+        ];
+        const BODY_SIGNALS = [
+            { key: 'fatigue', label: '疲劳' }, { key: 'headache', label: '头痛' },
+            { key: 'stomach', label: '肠胃不适' }, { key: 'neck_pain', label: '肩颈酸' },
+            { key: 'back_pain', label: '腰酸' }, { key: 'eye_dry', label: '眼睛干涩' },
+            { key: 'mood_low', label: '情绪低落' }, { key: 'sleepy', label: '犯困' },
+            { key: 'other', label: '其他' }
+        ];
 
-        function getDefaultAccountsData() {
-            return { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
-        }
-        function loadAccountsData() {
-            try {
-                const raw = localStorage.getItem(ACCOUNTS_KEY);
-                if (raw) return JSON.parse(raw);
-            } catch (e) {}
-            return getDefaultAccountsData();
-        }
-        function saveAccountsData() { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accountsData)); }
-        let accountsData = loadAccountsData();
+        /* ================= 内存数据 ================= */
+        let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+        let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 
-        function recordDay(r) { return isValidDay(r.day) ? r.day : 'unknown'; }
-        function recordMonth(r) { const d = recordDay(r); return d === 'unknown' ? 'unknown' : d.slice(0, 7); }
-        function shortDay(day) {
-            if (!isValidDay(day)) return '未记录';
-            const p = day.split('-');
-            return parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
+        /* ================= UI ================= */
+        function showLoginUI() {
+            document.getElementById('auth-card').style.display = 'block';
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
         }
-        function monthLabel(key) {
-            if (key === 'unknown') return '未记录日期';
-            const m = key.match(/^(\d{4})-(\d{2})$/);
-            return m ? m[1] + '年' + parseInt(m[2], 10) + '月' : key;
+        function showLoadingUI() {
+            document.getElementById('auth-card').style.display = 'none';
+            document.getElementById('loading-overlay').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+        }
+        function showMainUI() {
+            document.getElementById('auth-card').style.display = 'none';
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
         }
 
-        function addIncome(amount, day) {
+        /* ================= 认证 ================= */
+        async function signIn(email, password) {
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) { alert('登录失败：' + error.message); return false; }
+            currentUser = data.user;
+            return true;
+        }
+        async function signUp(email, password) {
+            const { error } = await sb.auth.signUp({ email, password });
+            if (error) { alert('注册失败：' + error.message); return false; }
+            alert('注册成功！请到邮箱确认后登录。');
+            return true;
+        }
+        async function signOut() {
+            await sb.auth.signOut();
+            currentUser = null;
+            if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+            location.reload();
+        }
+
+        /* ================= 云同步 ================= */
+        async function loadAllFromCloud() {
+            showLoadingUI();
+            // 账户
+            const { data: records } = await sb.from('records').select('*').order('ts', { ascending: true });
+            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+            (records || []).forEach(r => {
+                if (r.type === 'income') {
+                    accountsData.income += r.amount;
+                    accountsData.incomeRecords.push({ id: r.id, amount: r.amount, day: r.day, month: r.month, ts: r.ts });
+                    accountsData.balances.survival += r.amount * RATIOS.survival;
+                    accountsData.balances.stable += r.amount * RATIOS.stable;
+                    accountsData.balances.develop += r.amount * RATIOS.develop;
+                } else {
+                    accountsData.balances[r.account] -= r.amount;
+                    accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
+                }
+            });
+
+            // 健康
+            const { data: hd } = await sb.from('health_data').select('*').order('ts', { ascending: true });
+            healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+            (hd || []).forEach(r => {
+                const d = r.data || {};
+                const item = { id: r.id, date: r.date, ts: r.ts, ...d };
+                switch (r.type) {
+                    case 'sleep': healthData.sleep.push(item); break;
+                    case 'energy': healthData.energy.push(item); break;
+                    case 'charge': healthData.charge.push(item); break;
+                    case 'exercise': healthData.exercise.push(item); break;
+                    case 'meal': healthData.meal.push(item); break;
+                    case 'innerPeace': healthData.innerPeace.push(item); break;
+                    case 'micro': healthData.microExercise.push(item); break;
+                    case 'body': healthData.bodySignals.push(item); break;
+                    case 'ai': healthData.aiAnalysis.push(item); break;
+                }
+            });
+
+            showMainUI();
+            renderAll();
+        }
+
+        async function pushAccountRecord(record) {
+            if (!currentUser) return null;
+            const { data, error } = await sb.from('records').insert({
+                user_id: currentUser.id,
+                type: record.type, amount: record.amount,
+                account: record.account || null,
+                sub_category: record.subCategory || null,
+                description: record.desc || null,
+                day: record.day || null,
+                month: record.month || null,
+                ts: record.ts
+            }).select().single();
+            if (error) { console.error('写入失败', error); return null; }
+            lastLocalChange = Date.now();
+            return data;
+        }
+        async function updateAccountRecord(id, updates) {
+            if (!currentUser) return;
+            await sb.from('records').update(updates).eq('id', id);
+            lastLocalChange = Date.now();
+        }
+        async function deleteAccountRecord(id) {
+            if (!currentUser) return;
+            await sb.from('records').delete().eq('id', id);
+            lastLocalChange = Date.now();
+        }
+
+        async function pushHealthRecord(type, date, dataObj) {
+            if (!currentUser) return null;
+            const ts = Date.now();
+            const { data, error } = await sb.from('health_data').insert({
+                user_id: currentUser.id,
+                type, date, data: dataObj, ts
+            }).select().single();
+            if (error) { console.error('写入健康失败', error); alert('保存失败：' + error.message); return null; }
+            lastLocalChange = Date.now();
+            return data;
+        }
+        async function updateHealthRecord(id, updates) {
+            if (!currentUser) return;
+            await sb.from('health_data').update(updates).eq('id', id);
+            lastLocalChange = Date.now();
+        }
+        async function deleteHealthRecord(id) {
+            if (!currentUser) return;
+            await sb.from('health_data').delete().eq('id', id);
+            lastLocalChange = Date.now();
+        }
+
+        /* ================= 实时监听 ================= */
+        function setupRealtime() {
+            if (realtimeChannel) sb.removeChannel(realtimeChannel);
+            realtimeChannel = sb.channel('db-realtime')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` }, () => {
+                    if (Date.now() - lastLocalChange < 2000) return;
+                    loadAllFromCloud();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'health_data', filter: `user_id=eq.${currentUser.id}` }, () => {
+                    if (Date.now() - lastLocalChange < 2000) return;
+                    loadAllFromCloud();
+                })
+                .subscribe();
+        }
+
+        /* ================= 三账户业务 ================= */
+        async function addIncome(amount, day) {
             if (isNaN(amount) || amount <= 0) return false;
-            const now = Date.now();
             const d = isValidDay(day) ? day : todayStr();
+            const ts = Date.now();
+            const record = { type: 'income', amount, day: d, month: d.slice(0,7), ts };
+            const inserted = await pushAccountRecord(record);
+            if (!inserted) return false;
+            record.id = inserted.id;
             accountsData.income += amount;
-            accountsData.incomeRecords.push({ id: now, amount, day: d, month: d.slice(0, 7), ts: now });
+            accountsData.incomeRecords.push(record);
             accountsData.balances.survival += amount * RATIOS.survival;
             accountsData.balances.stable += amount * RATIOS.stable;
             accountsData.balances.develop += amount * RATIOS.develop;
-            saveAccountsData(); renderAccounts(); return true;
+            renderAccounts();
+            return true;
         }
-
-        function addExpense(amount, account, desc, day, subCategory) {
+        async function addExpense(amount, account, desc, day, subCategory) {
             if (isNaN(amount) || amount <= 0) return false;
-            if (!accountsData.balances[account] || accountsData.balances[account] < amount) {
-                alert('⚠️ ' + ACCOUNT_LABEL[account] + '账户余额不足！'); return false;
-            }
-            if (account === 'survival' && (!subCategory || !SUB_CATEGORIES[subCategory])) {
-                alert('⚠️ 请选择生存账户的支出分类'); return false;
-            }
-            const now = Date.now();
+            if (accountsData.balances[account] < amount) { alert('⚠️ ' + ACCOUNT_LABEL[account] + '账户余额不足！'); return false; }
+            if (account === 'survival' && !subCategory) { alert('⚠️ 请选择生存账户分类'); return false; }
             const d = isValidDay(day) ? day : todayStr();
+            const ts = Date.now();
+            const record = { type: 'expense', amount, account, subCategory: account === 'survival' ? subCategory : null, desc: desc || '未注明', day: d, month: d.slice(0,7), ts };
+            const inserted = await pushAccountRecord(record);
+            if (!inserted) return false;
+            record.id = inserted.id;
             accountsData.balances[account] -= amount;
-            accountsData.expenses.push({
-                id: now, amount, account,
-                subCategory: account === 'survival' ? subCategory : null,
-                desc: desc || '未注明', day: d, month: d.slice(0, 7), ts: now
-            });
-            saveAccountsData(); renderAccounts(); return true;
+            accountsData.expenses.push(record);
+            renderAccounts();
+            return true;
         }
-
-        function deleteExpense(id) {
-            const index = accountsData.expenses.findIndex(e => String(e.id) === String(id));
-            if (index === -1) return;
-            const item = accountsData.expenses[index];
+        async function deleteExpense(id) {
+            const idx = accountsData.expenses.findIndex(e => String(e.id) === String(id));
+            if (idx === -1) return;
+            const item = accountsData.expenses[idx];
+            await deleteAccountRecord(id);
             accountsData.balances[item.account] += item.amount;
-            accountsData.expenses.splice(index, 1);
-            saveAccountsData(); renderAccounts();
+            accountsData.expenses.splice(idx, 1);
+            renderAccounts();
         }
-
-        function updateExpenseDate(id, newDate) {
+        async function updateExpenseDate(id, newDate) {
             const e = accountsData.expenses.find(x => String(x.id) === String(id));
             if (!e) return;
-            if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) { e.day = newDate; e.month = newDate.slice(0, 7); }
-            else { e.day = null; e.month = null; }
-            saveAccountsData(); renderAccounts();
+            let day = null, month = null;
+            if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
+            await updateAccountRecord(id, { day, month });
+            e.day = day; e.month = month;
+            renderAccounts();
         }
-
-        function updateExpenseSubcategory(id, sub) {
+        async function updateExpenseSubcategory(id, sub) {
             const e = accountsData.expenses.find(x => String(x.id) === String(id));
             if (!e || e.account !== 'survival') return;
-            e.subCategory = (sub && SUB_CATEGORIES[sub]) ? sub : null;
-            saveAccountsData(); renderAccounts();
+            const v = SUB_CATEGORIES[sub] ? sub : null;
+            await updateAccountRecord(id, { sub_category: v });
+            e.subCategory = v;
+            renderAccounts();
         }
-
-        function updateIncomeDate(id, newDate) {
+        async function updateIncomeDate(id, newDate) {
             const r = accountsData.incomeRecords.find(x => String(x.id) === String(id));
             if (!r) return;
-            if (newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) { r.day = newDate; r.month = newDate.slice(0, 7); }
-            else { r.day = null; r.month = null; }
-            saveAccountsData(); renderAccounts();
+            let day = null, month = null;
+            if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
+            await updateAccountRecord(id, { day, month });
+            r.day = day; r.month = month;
+            renderAccounts();
         }
 
         function renderAccounts() {
@@ -798,25 +730,24 @@
             document.getElementById('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
             document.getElementById('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
 
-            const expenseListEl = document.getElementById('expense-list');
+            const expEl = document.getElementById('expense-list');
             if (accountsData.expenses.length === 0) {
-                expenseListEl.innerHTML = '<div class="empty-hint">还没有支出记录，开始记一笔吧</div>';
+                expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>';
             } else {
                 const sorted = [...accountsData.expenses].sort((a, b) => {
                     const da = recordDay(a), db = recordDay(b);
                     if (da !== db) return db.localeCompare(da);
-                    return (b.ts || 0) - (a.ts || 0);
+                    return (b.ts||0) - (a.ts||0);
                 });
-                let html = `<table><thead><tr><th>日期</th><th>账户 / 分类</th><th>用途</th><th>金额</th><th></th></tr></thead><tbody>`;
+                let html = '<table><thead><tr><th>日期</th><th>账户/分类</th><th>用途</th><th>金额</th><th></th></tr></thead><tbody>';
                 sorted.forEach(e => {
-                    const accountLabel = ACCOUNT_LABEL[e.account] || e.account;
                     const dayVal = recordDay(e) === 'unknown' ? '' : recordDay(e);
-                    let accountCell = `<div class="account-cell-label">${esc(accountLabel)}</div>`;
+                    let accountCell = `<div class="account-cell-label">${esc(ACCOUNT_LABEL[e.account] || e.account)}</div>`;
                     if (e.account === 'survival') {
                         const cur = e.subCategory || '';
                         accountCell += `<select class="edit-subcategory" data-id="${e.id}">
-                            <option value="" ${cur === '' ? 'selected' : ''}>— 未分类 —</option>
-                            ${Object.keys(SUB_CATEGORIES).map(k => `<option value="${k}" ${cur === k ? 'selected' : ''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`).join('')}
+                            <option value="" ${cur===''?'selected':''}>— 未分类 —</option>
+                            ${Object.keys(SUB_CATEGORIES).map(k => `<option value="${k}" ${cur===k?'selected':''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`).join('')}
                         </select>`;
                     }
                     html += `<tr>
@@ -828,28 +759,22 @@
                     </tr>`;
                 });
                 html += '</tbody></table>';
-                expenseListEl.innerHTML = html;
-                expenseListEl.querySelectorAll('.edit-expense-date').forEach(input => {
-                    input.addEventListener('change', function () { updateExpenseDate(this.dataset.id, this.value); });
-                });
-                expenseListEl.querySelectorAll('.edit-subcategory').forEach(sel => {
-                    sel.addEventListener('change', function () { updateExpenseSubcategory(this.dataset.id, this.value); });
-                });
-                expenseListEl.querySelectorAll('[data-del-expense]').forEach(b => {
-                    b.onclick = () => deleteExpense(b.dataset.delExpense);
-                });
+                expEl.innerHTML = html;
+                expEl.querySelectorAll('.edit-expense-date').forEach(inp => inp.addEventListener('change', function() { updateExpenseDate(this.dataset.id, this.value); }));
+                expEl.querySelectorAll('.edit-subcategory').forEach(sel => sel.addEventListener('change', function() { updateExpenseSubcategory(this.dataset.id, this.value); }));
+                expEl.querySelectorAll('[data-del-expense]').forEach(b => b.onclick = () => deleteExpense(b.dataset.delExpense));
             }
 
-            const incomeListEl = document.getElementById('income-list');
+            const incEl = document.getElementById('income-list');
             if (accountsData.incomeRecords.length === 0) {
-                incomeListEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>';
+                incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>';
             } else {
                 const sorted = [...accountsData.incomeRecords].sort((a, b) => {
                     const da = recordDay(a), db = recordDay(b);
                     if (da !== db) return db.localeCompare(da);
-                    return (b.ts || 0) - (a.ts || 0);
+                    return (b.ts||0) - (a.ts||0);
                 });
-                let html = `<table><thead><tr><th>日期</th><th>金额</th><th>分配</th></tr></thead><tbody>`;
+                let html = '<table><thead><tr><th>日期</th><th>金额</th><th>分配</th></tr></thead><tbody>';
                 sorted.forEach(r => {
                     const dayVal = recordDay(r) === 'unknown' ? '' : recordDay(r);
                     html += `<tr>
@@ -859,13 +784,11 @@
                     </tr>`;
                 });
                 html += '</tbody></table>';
-                incomeListEl.innerHTML = html;
-                incomeListEl.querySelectorAll('.edit-income-date').forEach(input => {
-                    input.addEventListener('change', function () { updateIncomeDate(this.dataset.id, this.value); });
-                });
+                incEl.innerHTML = html;
+                incEl.querySelectorAll('.edit-income-date').forEach(inp => inp.addEventListener('change', function() { updateIncomeDate(this.dataset.id, this.value); }));
             }
 
-            const totalExpense = accountsData.expenses.reduce((sum, e) => sum + e.amount, 0);
+            const totalExpense = accountsData.expenses.reduce((s, e) => s + e.amount, 0);
             document.getElementById('accounts-summary').textContent =
                 `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${accountsData.income.toFixed(2)} · 剩余 ¥${(accountsData.income - totalExpense).toFixed(2)}`;
 
@@ -874,23 +797,17 @@
 
         function renderMonthly() {
             const map = {};
-            function ensure(key) {
-                if (!map[key]) map[key] = { month: key, income: 0, expense: 0, count: 0,
-                    byAccount: { survival: 0, stable: 0, develop: 0 },
-                    bySub: { rigid: 0, emotional: 0, once: 0 }, days: {} };
-                return map[key];
-            }
+            function ensure(key) { if (!map[key]) map[key] = { month: key, income: 0, expense: 0, count: 0, byAccount: { survival: 0, stable: 0, develop: 0 }, bySub: { rigid: 0, emotional: 0, once: 0 }, days: {} }; return map[key]; }
             accountsData.incomeRecords.forEach(r => { ensure(recordMonth(r)).income += r.amount; });
             accountsData.expenses.forEach(e => {
                 const item = ensure(recordMonth(e));
                 item.expense += e.amount; item.count += 1;
                 if (item.byAccount[e.account] !== undefined) item.byAccount[e.account] += e.amount;
-                if (e.account === 'survival' && e.subCategory && item.bySub[e.subCategory] !== undefined) item.bySub[e.subCategory] += e.amount;
+                if (e.account === 'survival' && e.subCategory) item.bySub[e.subCategory] += e.amount;
                 const d = recordDay(e);
                 if (!item.days[d]) item.days[d] = { expense: 0, count: 0 };
                 item.days[d].expense += e.amount; item.days[d].count += 1;
             });
-
             const listEl = document.getElementById('monthly-list');
             const list = Object.values(map).sort((a, b) => {
                 if (a.month === 'unknown') return 1;
@@ -898,457 +815,387 @@
                 return b.month.localeCompare(a.month);
             });
             if (list.length === 0) { listEl.innerHTML = '<div class="empty-hint">暂无月度记录</div>'; return; }
-            let totalIncome = 0, totalExpense = 0, html = '';
+            let tI = 0, tE = 0, html = '';
             list.forEach(m => {
-                totalIncome += m.income; totalExpense += m.expense;
-                const balance = m.income - m.expense;
-                const balCls = balance >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
-                const balSign = balance > 0 ? '+' : '';
+                tI += m.income; tE += m.expense;
+                const bal = m.income - m.expense;
+                const cls = bal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
                 const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
                 const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + dayKeys.map(k => {
                     const d = m.days[k];
                     const label = k === 'unknown' ? '未记录' : shortDay(k);
-                    return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;white-space:nowrap;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
+                    return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
                 }).join('') + '</div>' : '';
-                let survivalDetail = `生存 ${m.byAccount.survival.toFixed(2)}`;
-                if (m.byAccount.survival > 0) survivalDetail += ` <span style="color:#aaa;">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
+                let sd = `生存 ${m.byAccount.survival.toFixed(2)}`;
+                if (m.byAccount.survival > 0) sd += ` <span style="color:#aaa;">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
                 html += `<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">
-                        <span style="font-size:14px;font-weight:600;color:#333;">${monthLabel(m.month)}</span>
-                        <span style="font-size:15px;font-weight:600;${balCls}">${balSign}${balance.toFixed(2)}</span>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span style="font-size:14px;font-weight:600;">${monthLabel(m.month)}</span>
+                        <span style="font-size:15px;font-weight:600;${cls}">${bal>0?'+':''}${bal.toFixed(2)}</span>
                     </div>
                     <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:#777;">
                         <span>收入 <b style="color:#2d7d46;">${m.income.toFixed(2)}</b></span>
                         <span>支出 <b style="color:#c0392b;">${m.expense.toFixed(2)}</b></span>
                         <span style="color:#aaa;">${m.count} 笔</span>
                     </div>
-                    <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e5e5;font-size:12px;color:#999;">${survivalDetail} · 稳定 ${m.byAccount.stable.toFixed(2)} · 发展 ${m.byAccount.develop.toFixed(2)}</div>
+                    <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e5e5;font-size:12px;color:#999;">${sd} · 稳定 ${m.byAccount.stable.toFixed(2)} · 发展 ${m.byAccount.develop.toFixed(2)}</div>
                     ${dayHtml}
                 </div>`;
             });
-            const totalBal = totalIncome - totalExpense;
-            html += `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:6px;padding:10px 4px 0;border-top:2px solid #eee;font-size:13px;color:#555;">
-                <span>合计收入 <b style="color:#2d7d46;">${totalIncome.toFixed(2)}</b></span>
-                <span>合计支出 <b style="color:#c0392b;">${totalExpense.toFixed(2)}</b></span>
-                <span>总结余 <b style="${totalBal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;'}">${totalBal > 0 ? '+' : ''}${totalBal.toFixed(2)}</b></span>
+            const tb = tI - tE;
+            html += `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 4px 0;border-top:2px solid #eee;font-size:13px;">
+                <span>合计收入 <b style="color:#2d7d46;">${tI.toFixed(2)}</b></span>
+                <span>合计支出 <b style="color:#c0392b;">${tE.toFixed(2)}</b></span>
+                <span>总结余 <b style="${tb>=0?'color:#2d7d46;':'color:#c0392b;'}">${tb>0?'+':''}${tb.toFixed(2)}</b></span>
             </div>`;
             listEl.innerHTML = html;
         }
 
-        // 三账户事件
-        document.getElementById('add-btn').onclick = () => {
-            const amount = parseFloat(document.getElementById('expense-amount').value);
-            const account = document.getElementById('expense-account').value;
-            const desc = document.getElementById('expense-desc').value.trim() || undefined;
-            const day = document.getElementById('expense-date').value || todayStr();
-            const sub = (account === 'survival') ? document.getElementById('expense-subcategory').value : null;
-            if (addExpense(amount, account, desc, day, sub)) {
-                document.getElementById('expense-amount').value = '';
-                document.getElementById('expense-desc').value = '';
-                document.getElementById('expense-amount').focus();
-            }
-        };
-        document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
-        document.getElementById('expense-desc').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
-        document.getElementById('income-btn').onclick = () => {
-            const amount = parseFloat(document.getElementById('income-amount').value);
-            const day = document.getElementById('income-date').value || todayStr();
-            if (addIncome(amount, day)) document.getElementById('income-amount').value = '';
-            else alert('请输入有效的金额');
-        };
-        document.getElementById('reset-accounts-btn').onclick = () => {
-            if (!confirm('确定要清空三账户数据吗？此操作不可恢复。')) return;
-            accountsData = getDefaultAccountsData();
-            saveAccountsData(); renderAccounts();
-        };
-        (function () {
-            const accountSel = document.getElementById('expense-account');
-            const subSel = document.getElementById('expense-subcategory');
-            function updateSubVisibility() {
-                if (accountSel.value === 'survival') { subSel.style.display = ''; subSel.disabled = false; }
-                else { subSel.style.display = 'none'; subSel.disabled = true; }
-            }
-            accountSel.addEventListener('change', updateSubVisibility);
-            updateSubVisibility();
-        })();
-
-        /* =====================================================
-           健康系统（本地存储）
-           ===================================================== */
-        const HEALTH_KEY = 'health_system_data';
-        function getDefaultHealthData() {
-            return { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
-        }
-        function loadHealthData() {
-            try {
-                const raw = localStorage.getItem(HEALTH_KEY);
-                if (raw) { const d = JSON.parse(raw); return { ...getDefaultHealthData(), ...d }; }
-            } catch (e) {}
-            return getDefaultHealthData();
-        }
-        function saveHealthData() { localStorage.setItem(HEALTH_KEY, JSON.stringify(healthData)); }
-        let healthData = loadHealthData();
-
+        /* ================= 健康系统 ================= */
         let currentDay = todayStr();
-
-        function updateDayBar() {
-            const label = document.getElementById('day-label');
-            const sub = document.getElementById('day-sub');
-            label.textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-', '/');
-            sub.textContent = fullDayLabel(currentDay) + ' · ' + weekdayLabel(currentDay);
-            document.getElementById('day-picker').value = currentDay;
-        }
-        function setDay(newDay) {
-            currentDay = newDay;
-            updateDayBar();
-            resetIpSession();
-            renderHealthAll();
-        }
-        function filterByDay(list) { return list.filter(r => r.date === currentDay); }
-
-        /* ----- 常量：微运动 & 身体信号 ----- */
-        const POSTURE_ISSUES = [
-            { key: 'round_shoulder', label: '圆肩' },
-            { key: 'forward_head', label: '头前伸' },
-            { key: 'anterior_pelvic', label: '骨盆前倾' },
-            { key: 'hunchback', label: '驼背' },
-            { key: 'neck_forward', label: '颈前倾' },
-            { key: 'uneven_shoulder', label: '高低肩' },
-            { key: 'other', label: '其他' }
-        ];
-        const MICRO_HABITS = [
-            { key: 'wall_stand', label: '靠墙站' },
-            { key: 'chin_tuck', label: '收下巴' },
-            { key: 'neck_stretch', label: '肩颈拉伸' },
-            { key: 'shoulder_open', label: '开肩' },
-            { key: 'squat', label: '深蹲' },
-            { key: 'stand_reminder', label: '站姿提醒' },
-            { key: 'walk_break', label: '走动休息' },
-            { key: 'other', label: '其他' }
-        ];
-        const BODY_SIGNALS = [
-            { key: 'fatigue', label: '疲劳' },
-            { key: 'headache', label: '头痛' },
-            { key: 'stomach', label: '肠胃不适' },
-            { key: 'neck_pain', label: '肩颈酸' },
-            { key: 'back_pain', label: '腰酸' },
-            { key: 'eye_dry', label: '眼睛干涩' },
-            { key: 'mood_low', label: '情绪低落' },
-            { key: 'sleepy', label: '犯困' },
-            { key: 'other', label: '其他' }
-        ];
-
         let selectedPosture = new Set();
         let selectedHabit = new Set();
         let selectedSignals = new Set();
-        let otherPostureText = '';
-        let otherHabitText = '';
-        let otherSignalText = '';
+
+        function filterByDay(list) { return list.filter(r => r.date === currentDay); }
+        function updateDayBar() {
+            document.getElementById('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+            document.getElementById('day-sub').textContent = fullDayLabel(currentDay) + ' · ' + weekdayLabel(currentDay);
+            document.getElementById('day-picker').value = currentDay;
+        }
+        function setDay(d) { currentDay = d; updateDayBar(); resetIpSession(); renderHealthAll(); }
 
         function buildChipRow(containerId, items, selectedSet) {
             const el = document.getElementById(containerId);
             let html = '';
-            items.forEach(it => {
-                const active = selectedSet.has(it.key) ? 'active' : '';
-                html += `<span class="chip ${active}" data-key="${it.key}">${esc(it.label)}</span>`;
-            });
+            items.forEach(it => { html += `<span class="chip ${selectedSet.has(it.key)?'active':''}" data-key="${it.key}">${esc(it.label)}</span>`; });
             el.innerHTML = html;
-            el.querySelectorAll('.chip').forEach(chip => {
-                chip.onclick = () => {
-                    const k = chip.dataset.key;
-                    if (selectedSet.has(k)) { selectedSet.delete(k); chip.classList.remove('active'); }
-                    else { selectedSet.add(k); chip.classList.add('active'); }
+            el.querySelectorAll('.chip').forEach(c => {
+                c.onclick = () => {
+                    const k = c.dataset.key;
+                    if (selectedSet.has(k)) { selectedSet.delete(k); c.classList.remove('active'); }
+                    else { selectedSet.add(k); c.classList.add('active'); }
                     updateOtherInputs();
                 };
             });
             updateOtherInputs();
         }
-
         function updateOtherInputs() {
-            const postureOther = document.getElementById('posture-other');
-            if (selectedPosture.has('other')) postureOther.classList.remove('hidden');
-            else postureOther.classList.add('hidden');
-            const habitOther = document.getElementById('habit-other');
-            if (selectedHabit.has('other')) habitOther.classList.remove('hidden');
-            else habitOther.classList.add('hidden');
-            const signalOther = document.getElementById('signal-other');
-            if (selectedSignals.has('other')) signalOther.classList.remove('hidden');
-            else signalOther.classList.add('hidden');
+            document.getElementById('posture-other').classList.toggle('hidden', !selectedPosture.has('other'));
+            document.getElementById('habit-other').classList.toggle('hidden', !selectedHabit.has('other'));
+            document.getElementById('signal-other').classList.toggle('hidden', !selectedSignals.has('other'));
         }
 
-        /* ----- 睡眠 ----- */
+        async function addSleep() {
+            const start = document.getElementById('sleep-start').value;
+            const end = document.getElementById('sleep-end').value;
+            const feeling = document.getElementById('sleep-feeling').value;
+            const note = document.getElementById('sleep-note').value.trim();
+            if (!start || !end) return alert('请填写入睡和醒来时间');
+            const item = await pushHealthRecord('sleep', currentDay, { start_time: start, end_time: end, feeling, note });
+            if (item) { healthData.sleep.unshift({ id: item.id, date: currentDay, ts: item.ts, start_time: start, end_time: end, feeling, note }); renderSleep(); document.getElementById('sleep-start').value=''; document.getElementById('sleep-end').value=''; document.getElementById('sleep-note').value=''; }
+        }
+        async function addEnergy() {
+            let am = 5, pm = 5;
+            document.querySelectorAll('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); });
+            document.querySelectorAll('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
+            const note = document.getElementById('energy-note').value.trim();
+            const item = await pushHealthRecord('energy', currentDay, { am_score: am, pm_score: pm, note });
+            if (item) { healthData.energy.unshift({ id: item.id, date: currentDay, ts: item.ts, am_score: am, pm_score: pm, note }); renderEnergy(); document.getElementById('energy-note').value=''; }
+        }
+        async function addCharge() {
+            const type = document.getElementById('charge-type').value;
+            const delta = parseInt(document.getElementById('charge-delta').value, 10) || 0;
+            const note = document.getElementById('charge-note').value.trim();
+            const item = await pushHealthRecord('charge', currentDay, { type, delta, note });
+            if (item) { healthData.charge.unshift({ id: item.id, date: currentDay, ts: item.ts, type, delta, note }); renderCharge(); document.getElementById('charge-note').value=''; }
+        }
+        async function addExercise() {
+            const dur = parseInt(document.getElementById('exercise-duration').value, 10);
+            if (!dur || dur <= 0) return alert('请填写时长');
+            const type = document.getElementById('exercise-type').value;
+            const note = document.getElementById('exercise-note').value.trim();
+            const item = await pushHealthRecord('exercise', currentDay, { type, duration: dur, note });
+            if (item) { healthData.exercise.unshift({ id: item.id, date: currentDay, ts: item.ts, type, duration: dur, note }); renderExercise(); document.getElementById('exercise-duration').value=''; document.getElementById('exercise-note').value=''; }
+        }
+        async function addMicro() {
+            if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
+            const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('posture-other').value.trim() } : { key: k });
+            const habits = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('habit-other').value.trim() } : { key: k });
+            const note = document.getElementById('micro-note').value.trim();
+            const item = await pushHealthRecord('micro', currentDay, { posture, habits, note });
+            if (item) {
+                healthData.microExercise.unshift({ id: item.id, date: currentDay, ts: item.ts, posture, habits, note });
+                renderMicro();
+                selectedPosture.clear(); selectedHabit.clear();
+                buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+                buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+                document.getElementById('posture-other').value = '';
+                document.getElementById('habit-other').value = '';
+                document.getElementById('micro-note').value = '';
+            }
+        }
+        async function addBody() {
+            const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('signal-other').value.trim() } : { key: k });
+            const acneLocation = document.getElementById('acne-location').value;
+            const acne = {
+                location: acneLocation,
+                locationCustom: acneLocation === 'other' ? document.getElementById('acne-location-other').value.trim() : '',
+                type: document.getElementById('acne-type').value,
+                severity: parseInt(document.getElementById('acne-severity').value, 10) || null,
+                note: document.getElementById('acne-note').value.trim()
+            };
+            const hasAcne = acne.location || acne.type || acne.severity || acne.note;
+            if (signals.length === 0 && !hasAcne) return alert('请至少选择一项或填写痘痘记录');
+            const note = document.getElementById('signal-note').value.trim();
+            const item = await pushHealthRecord('body', currentDay, { signals, acne: hasAcne ? acne : null, note });
+            if (item) {
+                healthData.bodySignals.unshift({ id: item.id, date: currentDay, ts: item.ts, signals, acne: hasAcne ? acne : null, note });
+                renderBody();
+                selectedSignals.clear();
+                buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+                document.getElementById('signal-other').value = '';
+                document.getElementById('acne-location').value = '';
+                document.getElementById('acne-location-other').value = '';
+                document.getElementById('acne-location-other-field').style.display = 'none';
+                document.getElementById('acne-type').value = '';
+                document.getElementById('acne-severity').value = '';
+                document.getElementById('acne-note').value = '';
+                document.getElementById('signal-note').value = '';
+            }
+        }
+        async function addMeal() {
+            const meals = {
+                breakfast: document.getElementById('meal-breakfast').value.trim(),
+                lunch: document.getElementById('meal-lunch').value.trim(),
+                dinner: document.getElementById('meal-dinner').value.trim()
+            };
+            const water = parseInt(document.getElementById('water-cups').value, 10) || 0;
+            const snack = document.getElementById('snack').value.trim();
+            if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐');
+            const item = await pushHealthRecord('meal', currentDay, { ...meals, water, snack });
+            if (item) {
+                healthData.meal.unshift({ id: item.id, date: currentDay, ts: item.ts, ...meals, water, snack });
+                renderMeal();
+                showFoodAnalysis(meals, water, snack);
+                ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => document.getElementById(id).value = '');
+            }
+        }
+
         function renderSleep() {
             const el = document.getElementById('sleep-history');
             const list = filterByDay(healthData.sleep);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有睡眠记录</div>'; return; }
-            const feelingMap = {
-                refreshed: { text: '😊 神清气爽', cls: 'tag-good' },
-                ok: { text: '😐 还行', cls: 'tag-warn' },
-                tired: { text: '😫 疲惫', cls: 'tag-bad' },
-                groggy: { text: '😵 昏沉', cls: 'tag-bad' }
-            };
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有睡眠记录</div>'; return; }
+            const fm = { refreshed: { text: '😊 神清气爽', cls: 'tag-good' }, ok: { text: '😐 还行', cls: 'tag-warn' }, tired: { text: '😫 疲惫', cls: 'tag-bad' }, groggy: { text: '😵 昏沉', cls: 'tag-bad' } };
             let html = '';
             list.forEach(r => {
-                const f = feelingMap[r.feeling] || { text: r.feeling || '', cls: '' };
-                let duration = '';
+                const f = fm[r.feeling] || { text: r.feeling, cls: '' };
+                let dur = '';
                 if (r.start_time && r.end_time) {
-                    const [sh, sm] = r.start_time.split(':').map(Number);
-                    const [eh, em] = r.end_time.split(':').map(Number);
-                    let mins = (eh * 60 + em) - (sh * 60 + sm);
-                    if (mins < 0) mins += 24 * 60;
-                    duration = (mins / 60).toFixed(1) + 'h';
+                    const [sh,sm] = r.start_time.split(':').map(Number);
+                    const [eh,em] = r.end_time.split(':').map(Number);
+                    let mins = (eh*60+em) - (sh*60+sm);
+                    if (mins < 0) mins += 24*60;
+                    dur = (mins/60).toFixed(1) + 'h';
                 }
-                html += `<div class="list-item">
-                    <div class="main"><div>${esc(r.start_time)} → ${esc(r.end_time)} <span class="meta">(${duration})</span></div>
-                    ${r.note ? `<div class="meta">${esc(r.note)}</div>` : ''}</div>
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <span class="tag ${f.cls}">${f.text}</span>
-                        <button class="btn btn-danger btn-sm" data-del-sleep="${r.id}">✕</button>
-                    </div>
-                </div>`;
+                html += `<div class="list-item"><div class="main"><div>${esc(r.start_time)} → ${esc(r.end_time)} <span class="meta">(${dur})</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><div style="display:flex;align-items:center;gap:6px;"><span class="tag ${f.cls}">${f.text}</span><button class="btn btn-danger btn-sm" data-del-sleep="${r.id}">✕</button></div></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-sleep]').forEach(b => {
-                b.onclick = () => { healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(b.dataset.delSleep)); saveHealthData(); renderSleep(); };
-            });
+            el.querySelectorAll('[data-del-sleep]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(b.dataset.delSleep)); renderSleep(); });
         }
-
-        /* ----- 能量 ----- */
         function renderEnergy() {
             const el = document.getElementById('energy-history');
             const list = filterByDay(healthData.energy);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有能量记录</div>'; return; }
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有能量记录</div>'; return; }
             let html = '';
             list.forEach(r => {
-                const avg = ((r.am_score + r.pm_score) / 2).toFixed(1);
+                const avg = ((r.am_score + r.pm_score)/2).toFixed(1);
                 const cls = avg >= 7 ? 'tag-good' : (avg >= 4 ? 'tag-warn' : 'tag-bad');
-                html += `<div class="list-item">
-                    <div class="main"><div>上午 ${r.am_score} · 下午 ${r.pm_score} <span class="tag ${cls}">均 ${avg}</span></div>
-                    ${r.note ? `<div class="meta">${esc(r.note)}</div>` : ''}</div>
-                    <button class="btn btn-danger btn-sm" data-del-energy="${r.id}">✕</button>
-                </div>`;
+                html += `<div class="list-item"><div class="main"><div>上午 ${r.am_score} · 下午 ${r.pm_score} <span class="tag ${cls}">均 ${avg}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-energy="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-energy]').forEach(b => {
-                b.onclick = () => { healthData.energy = healthData.energy.filter(x => String(x.id) !== String(b.dataset.delEnergy)); saveHealthData(); renderEnergy(); };
-            });
+            el.querySelectorAll('[data-del-energy]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(b.dataset.delEnergy)); renderEnergy(); });
         }
-
-        /* ----- 充电 ----- */
         function renderCharge() {
             const el = document.getElementById('charge-history');
             const list = filterByDay(healthData.charge);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有充电记录</div>'; return; }
-            const typeMap = {
-                rest: '🛌 休息', nature: '🌿 自然', social: '👥 社交',
-                hobby: '🎨 爱好', exercise: '🏃 轻度运动', food: '🍵 好好吃饭', other: '✨ 其他'
-            };
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有充电记录</div>'; return; }
+            const tm = { rest:'🛌 休息', nature:'🌿 自然', social:'👥 社交', hobby:'🎨 爱好', exercise:'🏃 轻度运动', food:'🍵 好好吃饭', other:'✨ 其他' };
             let html = '';
             list.forEach(r => {
-                const delta = r.delta > 0 ? '+' + r.delta : r.delta;
+                const d = r.delta > 0 ? '+' + r.delta : r.delta;
                 const cls = r.delta > 0 ? 'tag-good' : (r.delta < 0 ? 'tag-bad' : 'tag-warn');
-                html += `<div class="list-item">
-                    <div class="main"><div>${typeMap[r.type] || r.type} <span class="tag ${cls}">能量 ${delta}</span></div>
-                    ${r.note ? `<div class="meta">${esc(r.note)}</div>` : ''}</div>
-                    <button class="btn btn-danger btn-sm" data-del-charge="${r.id}">✕</button>
-                </div>`;
+                html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} <span class="tag ${cls}">能量 ${d}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-charge="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-charge]').forEach(b => {
-                b.onclick = () => { healthData.charge = healthData.charge.filter(x => String(x.id) !== String(b.dataset.delCharge)); saveHealthData(); renderCharge(); };
+            el.querySelectorAll('[data-del-charge]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(b.dataset.delCharge)); renderCharge(); });
+        }
+        function renderExercise() {
+            renderExerciseWeek();
+            const el = document.getElementById('exercise-history');
+            const list = filterByDay(healthData.exercise);
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有运动记录</div>'; return; }
+            const tm = { walk:'🚶 散步', run:'🏃 跑步', cycling:'🚴 骑行', strength:'🏋️ 力量', yoga:'🧘 瑜伽', ball:'⚽ 球类', swim:'🏊 游泳', other:'✨ 其他' };
+            let html = '';
+            list.forEach(r => {
+                html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} · ${r.duration} 分钟</div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-exercise="${r.id}">✕</button></div>`;
             });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-exercise]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(b.dataset.delExercise)); renderExercise(); });
+        }
+        function renderMicro() {
+            const el = document.getElementById('micro-history');
+            const list = filterByDay(healthData.microExercise);
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有微运动记录</div>'; return; }
+            let html = '';
+            list.forEach(r => {
+                const pLabels = (r.posture||[]).map(p => { if (typeof p === 'string') { const it = POSTURE_ISSUES.find(x => x.key === p); return it ? it.label : p; } if (p.key === 'other') return p.custom ? '其他：'+p.custom : '其他'; const it = POSTURE_ISSUES.find(x => x.key === p.key); return it ? it.label : p.key; }).join(' · ') || '（无）';
+                const hLabels = (r.habits||[]).map(h => { if (typeof h === 'string') { const it = MICRO_HABITS.find(x => x.key === h); return it ? it.label : h; } if (h.key === 'other') return h.custom ? '其他：'+h.custom : '其他'; const it = MICRO_HABITS.find(x => x.key === h.key); return it ? it.label : h.key; }).join(' · ') || '（无）';
+                html += `<div class="list-item"><div class="main"><div><span class="tag tag-neutral">体态</span> ${esc(pLabels)}</div><div style="margin-top:4px;"><span class="tag tag-good">微运动</span> ${esc(hLabels)}</div>${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-micro="${r.id}">✕</button></div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-micro]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); renderMicro(); });
+        }
+        function renderBody() {
+            const el = document.getElementById('body-history');
+            const list = filterByDay(healthData.bodySignals);
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
+            let html = '';
+            list.forEach(r => {
+                const sigs = (r.signals||[]).map(s => { if (typeof s === 'string') { const it = BODY_SIGNALS.find(x => x.key === s); return it ? it.label : s; } if (s.key === 'other') return s.custom ? '其他：'+s.custom : '其他'; const it = BODY_SIGNALS.find(x => x.key === s.key); return it ? it.label : s.key; }).join(' · ') || '（无）';
+                const a = r.acne || {};
+                const locMap = { forehead:'额头', nose:'鼻子', cheek:'脸颊', chin:'下巴', back:'背部' };
+                const typeMap = { red:'红肿', whitehead:'白头', blackhead:'黑头', closed:'闭口' };
+                let aText = '';
+                if (a.location || a.type || a.severity || a.note) {
+                    const parts = [];
+                    if (a.location === 'other' && a.locationCustom) parts.push('位置：其他（'+a.locationCustom+'）');
+                    else if (a.location) parts.push('位置：'+(locMap[a.location]||a.location));
+                    if (a.type) parts.push('类型：'+(typeMap[a.type]||a.type));
+                    if (a.severity) parts.push('严重：'+a.severity+'/5');
+                    if (a.note) parts.push('备注：'+a.note);
+                    aText = parts.join(' · ');
+                }
+                html += `<div class="list-item"><div class="main"><div><span class="tag tag-warn">身体</span> ${esc(sigs)}</div>${aText?`<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(aText)}</div>`:''}${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-body="${r.id}">✕</button></div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-body]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); renderBody(); });
+        }
+        function renderMeal() {
+            const el = document.getElementById('meal-history');
+            const list = filterByDay(healthData.meal);
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有饮食记录</div>'; return; }
+            let html = '';
+            list.forEach(r => {
+                html += `<div class="list-item"><div class="main"><div>饮水 ${r.water||0} 杯</div><div class="meta">早：${esc(r.breakfast||'—')} · 午：${esc(r.lunch||'—')} · 晚：${esc(r.dinner||'—')} · 加餐：${esc(r.snack||'—')}</div></div><button class="btn btn-danger btn-sm" data-del-meal="${r.id}">✕</button></div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-meal]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(b.dataset.delMeal)); renderMeal(); document.getElementById('food-analysis').classList.add('hidden'); });
+        }
+        function showFoodAnalysis(meals, water, snack) {
+            const all = [meals.breakfast, meals.lunch, meals.dinner, snack].join(' ');
+            const carbs = ['饭','面','粥','面包','馒头','燕麦','米','红薯','土豆','玉米','粉','饼'];
+            const proteins = ['鸡蛋','蛋','鸡','牛','猪','鱼','虾','豆腐','豆','奶','酸奶','肉','贝','海鲜'];
+            const fats = ['油','坚果','花生','核桃','芝麻','牛油果','芝士','黄油','肥肉'];
+            const veggies = ['菜','青','蔬','叶','西兰花','番茄','黄瓜','萝卜','菇','木耳','海带'];
+            const fruits = ['苹果','香蕉','橙','葡萄','莓','梨','桃','瓜','水果'];
+            let cc=0, pc=0, fc=0, vc=0, frc=0;
+            carbs.forEach(k => { if (all.includes(k)) cc++; });
+            proteins.forEach(k => { if (all.includes(k)) pc++; });
+            fats.forEach(k => { if (all.includes(k)) fc++; });
+            veggies.forEach(k => { if (all.includes(k)) vc++; });
+            fruits.forEach(k => { if (all.includes(k)) frc++; });
+            const total = cc + pc + fc + vc + frc || 1;
+            const pC = Math.round(cc/total*100), pP = Math.round(pc/total*100), pF = Math.round(fc/total*100);
+            const issues = [], good = [];
+            if (pc === 0) issues.push('蛋白质偏少，可以加个鸡蛋/豆制品/奶。'); else good.push('蛋白质来源不错。');
+            if (vc + frc === 0) issues.push('几乎没有蔬菜水果，建议补充。'); else good.push('有蔬菜水果摄入。');
+            if (cc >= 3 && pc <= 1) issues.push('碳水偏多蛋白偏少，容易犯困。');
+            if (fc >= 2) issues.push('脂肪来源较多，注意量。');
+            if (water && water < 6) issues.push(`饮水 ${water} 杯偏少，建议 6-8 杯。`); else if (water >= 8) good.push('饮水充足。');
+            const summary = issues.length === 0 ? '今天饮食结构比较均衡，继续保持 🌿' : '注意：' + issues.join(' ');
+            const el = document.getElementById('food-analysis');
+            el.classList.remove('hidden');
+            el.innerHTML = `<div style="font-weight:600;color:#1a5c47;margin-bottom:6px;">📊 今日饮食分析</div>
+                <div class="macro-bar"><div class="carb" style="width:${pC}%"></div><div class="protein" style="width:${pP}%"></div><div class="fat" style="width:${pF}%"></div></div>
+                <div style="display:flex;gap:14px;font-size:12px;color:#6b8a7e;margin-bottom:8px;"><span>🍚 碳水 ${pC}%</span><span>🥩 蛋白 ${pP}%</span><span>🥑 脂肪 ${pF}%</span></div>
+                <div>${summary}</div>${good.length?`<div style="margin-top:6px;color:#2d7d5a;">✓ ${good.join(' ')}</div>`:''}`;
+        }
+        function getWeekDays() {
+            const base = new Date(currentDay + 'T00:00:00');
+            const day = base.getDay() || 7;
+            const mon = new Date(base); mon.setDate(base.getDate() - day + 1);
+            const days = [];
+            for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); days.push({ date: d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()), label: ['一','二','三','四','五','六','日'][i] }); }
+            return days;
+        }
+        function renderExerciseWeek() {
+            const el = document.getElementById('exercise-week');
+            const days = getWeekDays();
+            const today = todayStr();
+            let html = '';
+            days.forEach(d => {
+                const has = healthData.exercise.some(r => r.date === d.date);
+                const isToday = d.date === today;
+                const isSel = d.date === currentDay;
+                html += `<div class="exercise-day"><div class="dot ${has?'done':''} ${isToday?'today':''} ${isSel?'selected':''}" data-day="${d.date}">${has?'✓':d.label}</div><div>周${d.label}</div></div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('.dot').forEach(dot => dot.onclick = () => setDay(dot.dataset.day));
         }
 
-        /* ----- 反内耗 10 步引导 ----- */
+        /* ================= 反内耗 ================= */
         const ipFlow = {
-            step1: {
-                title: '第 1 步：暂停与着陆',
-                sys: '现在，停下。把脚踩在地上，感受地面的支撑。',
-                bullets: ['吸气 4 秒，呼气 6 秒，做 3 次。'],
-                note: '完成标志：呼吸稍微慢一点，身体松一点点。\n如果卡住：先喝一口水，或者站起来走两步。',
-                type: 'confirm', checkboxLabel: '我完成了第 1 步', next: 'step2'
-            },
-            step2: {
-                title: '第 2 步：身体调节',
-                sys: '先照顾身体，再处理念头。',
-                bullets: ['慢呼吸', '拉伸肩膀和脖子', '走动一下', '冷水洗脸', '把手放在胸口，感受温度'],
-                type: 'confirm', checkboxLabel: '我完成了第 2 步', next: 'step3'
-            },
-            step3: {
-                title: '第 3 步：外化命名',
-                sys: '把脑子里的东西写出来，它就不再那么混沌。',
-                type: 'form',
-                fields: [
-                    { key: 's3_1', label: '我在反复想什么？', type: 'textarea' },
-                    { key: 's3_2', label: '我担心会发生什么？', type: 'textarea' },
-                    { key: 's3_3', label: '别人的情绪有哪些？', type: 'textarea' },
-                    { key: 's3_4', label: '别人的选择有哪些？', type: 'textarea' },
-                    { key: 's3_5', label: '别人的课题有哪些？', type: 'textarea' }
-                ],
-                checkboxLabel: '我完成了第 3 步', next: 'step4'
-            },
-            step4: {
-                title: '第 4 步：分类判断',
-                sys: '这件事有客观答案吗？',
-                bullets: [
-                    '它是我单方面能确定的吗？',
-                    '继续想，会产生新信息，还是只是重复旧念头？'
-                ],
-                type: 'choice',
-                options: [
-                    { label: '是事实、可验证、可执行步骤 → 能想清楚', next: 'step5a' },
-                    { label: '依赖别人怎么想 / 未来 / 过去 → 不能想清楚', next: 'step5b' },
-                    { label: '连分类都卡住 → 回到第 1 步呼吸三次', next: 'step1' }
-                ]
-            },
-            step5a: {
-                title: '第 5 步 A：能想清楚 — 专属思考时间',
-                sys: '设一个 15 分钟闹钟，把下面的写下来。',
-                type: 'form',
-                fields: [
-                    { key: 's5a_1', label: '已知事实', type: 'textarea' },
-                    { key: 's5a_2', label: '我的假设', type: 'textarea' },
-                    { key: 's5a_3', label: '我能控制的部分', type: 'textarea' },
-                    { key: 's5a_4', label: '我不能控制的部分', type: 'textarea' },
-                    { key: 's5a_5', label: '下一步最小行动', type: 'textarea' }
-                ],
-                note: '闹钟响，合上纸，对自己说：\n"我已尽力分析。足够好即可，错了可以修正。"',
-                checkboxLabel: '我完成了第 5 步 A', next: 'step6'
-            },
-            step5b: {
-                title: '第 5 步 B：不能想清楚 — 标记待探索',
-                sys: '待探索事件：',
-                type: 'form',
-                fields: [
-                    { key: 's5b_1', label: '待探索事件', type: 'textarea', placeholder: '写下让你悬而未决的那件事……' },
-                    { key: 's5b_2', label: '问谁？', type: 'text' },
-                    { key: 's5b_3', label: '查什么？', type: 'text' },
-                    { key: 's5b_4', label: '观察多久？', type: 'text' },
-                    { key: 's5b_5', label: '什么时候再决定？', type: 'text' }
-                ],
-                note: '接下来，设一些未来探索动作。\n\n对自己说：\n"我现在不需要知道，答案可能会在行动中慢慢出现。"',
-                checkboxLabel: '我完成了第 5 步 B', next: 'step6'
-            },
-            step6: {
-                title: '第 6 步：转向当下',
-                sys: '列出此刻能让你稍微放松的事。如果没有"高兴的事"，就创造小愉悦。',
-                bullets: ['喝一杯温水', '晒 5 分钟太阳', '听一首喜欢的歌', '整理一个小角落', '给植物浇水', '写下三件"今天不算太糟"的事'],
-                type: 'form',
-                fields: [{ key: 's6_1', label: '我此刻可以做的小愉悦', type: 'textarea', placeholder: '写下一件或几件……' }],
-                note: '对自己说：\n"我不是必须想通，才能活在此刻。"',
-                checkboxLabel: '我完成了第 6 步', next: 'step7'
-            },
-            step7: {
-                title: '第 7 步：课题归还',
-                sys: '问自己："这是谁的课题？"',
-                bullets: ['如果是别人的情绪、选择、人生 —— 想象把它轻轻还回去。', '如果是自己的课题 —— 我为自己负责，但不苛责自己。'],
-                type: 'form',
-                fields: [{ key: 's7_1', label: '这是谁的课题？', type: 'textarea' }],
-                note: '对自己说：\n"我可以关心，但不替承担。我先留三分给自己。"\n"我为自己负责，但不苛责自己。"',
-                checkboxLabel: '我完成了第 7 步', next: 'step8'
-            },
-            step8: {
-                title: '第 8 步：呼吸锚定',
-                sys: '吸气 4 秒，呼气 6 秒，做 10 次。',
-                note: '走神了，就温柔拉回来，不用骂自己。\n\n对自己说：\n"此刻我是安全的。"',
-                type: 'confirm', checkboxLabel: '我完成了第 8 步', next: 'step9'
-            },
-            step9: {
-                title: '第 9 步：存档与担忧窗口',
-                sys: '把悬而未决的事写进一张清单，标题叫"待探索 / 未完成"。',
-                type: 'form',
-                fields: [
-                    { key: 's9_1', label: '待探索 / 未完成清单', type: 'textarea' },
-                    { key: 's9_2', label: '我的"担忧窗口"时间', type: 'text', placeholder: '如：晚上 7:00 - 7:15' }
-                ],
-                note: '其他时间如果念头冒出来，只记录，不处理。\n\n对自己说：\n"已经存好了，不需要一直开着。"',
-                checkboxLabel: '我完成了第 9 步', next: 'step10'
-            },
-            step10: {
-                title: '第 10 步：结束与回归（1 分钟）',
-                sys: '对自己说：',
-                bullets: ['我带着不确定，也能好好活着。', '卡住不自责，我在学习。', '关心别人，但不替别人活。', '现在，回到当下。'],
-                type: 'confirm', checkboxLabel: '我完成了第 10 步', next: 'feeling'
-            },
-            feeling: {
-                title: '记录此刻的感受',
-                sys: '走完了 10 步，最后记录一下此刻的感受吧。',
-                type: 'form',
-                fields: [{ key: 'feeling', label: '此刻的感受（身体 / 情绪 / 想对自己说的）', type: 'textarea', placeholder: '如：身体松了一些，没那么钻牛角尖了……' }],
-                checkboxLabel: '生成引导报告', next: '__end__'
-            }
+            step1: { title: '第 1 步：暂停与着陆', sys: '现在，停下。把脚踩在地上，感受地面的支撑。', bullets: ['吸气 4 秒，呼气 6 秒，做 3 次。'], note: '完成标志：呼吸稍微慢一点，身体松一点点。\n如果卡住：先喝一口水，或者站起来走两步。', type: 'confirm', checkboxLabel: '我完成了第 1 步', next: 'step2' },
+            step2: { title: '第 2 步：身体调节', sys: '先照顾身体，再处理念头。', bullets: ['慢呼吸','拉伸肩膀和脖子','走动一下','冷水洗脸','把手放在胸口，感受温度'], type: 'confirm', checkboxLabel: '我完成了第 2 步', next: 'step3' },
+            step3: { title: '第 3 步：外化命名', sys: '把脑子里的东西写出来，它就不再那么混沌。', type: 'form', fields: [{ key:'s3_1', label:'我在反复想什么？', type:'textarea' },{ key:'s3_2', label:'我担心会发生什么？', type:'textarea' },{ key:'s3_3', label:'别人的情绪有哪些？', type:'textarea' },{ key:'s3_4', label:'别人的选择有哪些？', type:'textarea' },{ key:'s3_5', label:'别人的课题有哪些？', type:'textarea' }], checkboxLabel: '我完成了第 3 步', next: 'step4' },
+            step4: { title: '第 4 步：分类判断', sys: '这件事有客观答案吗？', bullets: ['它是我单方面能确定的吗？','继续想，会产生新信息，还是只是重复旧念头？'], type: 'choice', options: [{ label:'是事实、可验证、可执行步骤 → 能想清楚', next:'step5a' },{ label:'依赖别人怎么想 / 未来 / 过去 → 不能想清楚', next:'step5b' },{ label:'连分类都卡住 → 回到第 1 步呼吸三次', next:'step1' }] },
+            step5a: { title: '第 5 步 A：能想清楚 — 专属思考时间', sys: '设一个 15 分钟闹钟，把下面的写下来。', type: 'form', fields: [{ key:'s5a_1', label:'已知事实', type:'textarea' },{ key:'s5a_2', label:'我的假设', type:'textarea' },{ key:'s5a_3', label:'我能控制的部分', type:'textarea' },{ key:'s5a_4', label:'我不能控制的部分', type:'textarea' },{ key:'s5a_5', label:'下一步最小行动', type:'textarea' }], note: '闹钟响，合上纸，对自己说：\n"我已尽力分析。足够好即可，错了可以修正。"', checkboxLabel: '我完成了第 5 步 A', next: 'step6' },
+            step5b: { title: '第 5 步 B：不能想清楚 — 标记待探索', sys: '待探索事件：', type: 'form', fields: [{ key:'s5b_1', label:'待探索事件', type:'textarea' },{ key:'s5b_2', label:'问谁？', type:'text' },{ key:'s5b_3', label:'查什么？', type:'text' },{ key:'s5b_4', label:'观察多久？', type:'text' },{ key:'s5b_5', label:'什么时候再决定？', type:'text' }], note: '接下来，设一些未来探索动作。\n\n对自己说：\n"我现在不需要知道，答案可能会在行动中慢慢出现。"', checkboxLabel: '我完成了第 5 步 B', next: 'step6' },
+            step6: { title: '第 6 步：转向当下', sys: '列出此刻能让你稍微放松的事。如果没有"高兴的事"，就创造小愉悦。', bullets: ['喝一杯温水','晒 5 分钟太阳','听一首喜欢的歌','整理一个小角落','给植物浇水','写下三件"今天不算太糟"的事'], type: 'form', fields: [{ key:'s6_1', label:'我此刻可以做的小愉悦', type:'textarea' }], note: '对自己说：\n"我不是必须想通，才能活在此刻。"', checkboxLabel: '我完成了第 6 步', next: 'step7' },
+            step7: { title: '第 7 步：课题归还', sys: '问自己："这是谁的课题？"', bullets: ['如果是别人的情绪、选择、人生 —— 想象把它轻轻还回去。','如果是自己的课题 —— 我为自己负责，但不苛责自己。'], type: 'form', fields: [{ key:'s7_1', label:'这是谁的课题？', type:'textarea' }], note: '对自己说：\n"我可以关心，但不替承担。我先留三分给自己。"\n"我为自己负责，但不苛责自己。"', checkboxLabel: '我完成了第 7 步', next: 'step8' },
+            step8: { title: '第 8 步：呼吸锚定', sys: '吸气 4 秒，呼气 6 秒，做 10 次。', note: '走神了，就温柔拉回来，不用骂自己。\n\n对自己说：\n"此刻我是安全的。"', type: 'confirm', checkboxLabel: '我完成了第 8 步', next: 'step9' },
+            step9: { title: '第 9 步：存档与担忧窗口', sys: '把悬而未决的事写进一张清单，标题叫"待探索 / 未完成"。', type: 'form', fields: [{ key:'s9_1', label:'待探索 / 未完成清单', type:'textarea' },{ key:'s9_2', label:'我的"担忧窗口"时间', type:'text' }], note: '其他时间如果念头冒出来，只记录，不处理。\n\n对自己说：\n"已经存好了，不需要一直开着。"', checkboxLabel: '我完成了第 9 步', next: 'step10' },
+            step10: { title: '第 10 步：结束与回归（1 分钟）', sys: '对自己说：', bullets: ['我带着不确定，也能好好活着。','卡住不自责，我在学习。','关心别人，但不替别人活。','现在，回到当下。'], type: 'confirm', checkboxLabel: '我完成了第 10 步', next: 'feeling' },
+            feeling: { title: '记录此刻的感受', sys: '走完了 10 步，最后记录一下此刻的感受吧。', type: 'form', fields: [{ key:'feeling', label:'此刻的感受（身体 / 情绪 / 想对自己说的）', type:'textarea' }], checkboxLabel: '生成引导报告', next: '__end__' }
         };
+        let ipConversation = [], ipCurrentKey = null, ipAnswers = {}, ipSelectedOption = null;
 
-        let ipConversation = [];
-        let ipCurrentKey = null;
-        let ipAnswers = {};
-        let ipSelectedOption = null;
-
-        function resetIpSession() {
-            ipConversation = []; ipCurrentKey = null; ipAnswers = {}; ipSelectedOption = null;
-            renderIpChat();
-        }
-        function startIpSession() {
-            ipConversation = []; ipAnswers = {}; ipSelectedOption = null;
-            ipCurrentKey = 'step1'; renderIpChat();
-        }
+        function resetIpSession() { ipConversation = []; ipCurrentKey = null; ipAnswers = {}; ipSelectedOption = null; renderIpChat(); }
+        function startIpSession() { ipConversation = []; ipAnswers = {}; ipSelectedOption = null; ipCurrentKey = 'step1'; renderIpChat(); }
 
         function renderIpChat() {
             const container = document.getElementById('ip-chat-container');
             if (ipCurrentKey === null) {
-                container.innerHTML = `
-                    <div class="ip-welcome">
-                        <div class="ip-welcome-text">
-                            跟随引导，一步一步来。<br>走完会生成一份引导报告。
-                        </div>
-                        <button class="btn btn-primary" id="ip-start-btn">开始练习</button>
-                    </div>
-                `;
+                container.innerHTML = `<div class="ip-welcome"><div class="ip-welcome-text">跟随引导，一步一步来。<br>走完会生成一份引导报告。</div><button class="btn btn-primary" id="ip-start-btn">开始练习</button></div>`;
                 document.getElementById('ip-start-btn').onclick = startIpSession;
                 return;
             }
             const step = ipFlow[ipCurrentKey];
             if (!step) return;
-
             let html = '';
-            ipConversation.forEach(msg => {
-                const role = msg.role === 'sys' ? 'sys' : 'user';
-                html += `<div class="ip-msg ${role}"><div class="ip-bubble">${esc(msg.text)}</div></div>`;
-            });
-            html += `<div class="ip-step-card">`;
-            html += `<div class="ip-step-title">${esc(step.title)}</div>`;
+            ipConversation.forEach(m => { html += `<div class="ip-msg ${m.role === 'sys' ? 'sys' : 'user'}"><div class="ip-bubble">${esc(m.text)}</div></div>`; });
+            html += `<div class="ip-step-card"><div class="ip-step-title">${esc(step.title)}</div>`;
             if (step.sys) html += `<div class="ip-step-sys">${esc(step.sys)}</div>`;
-            if (step.bullets) html += `<ul class="ip-step-bullets">` + step.bullets.map(b => `<li>${esc(b)}</li>`).join('') + `</ul>`;
+            if (step.bullets) html += `<ul class="ip-step-bullets">${step.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`;
             if (step.note) html += `<div class="ip-step-note">${esc(step.note).replace(/\n/g, '<br>')}</div>`;
-
             if (step.type === 'form') {
                 step.fields.forEach(f => {
                     html += `<div class="ip-field"><label>${esc(f.label)}</label>`;
-                    if (f.type === 'textarea') {
-                        html += `<textarea data-field-key="${f.key}" placeholder="${esc(f.placeholder || '')}">${esc(ipAnswers[f.key] || '')}</textarea>`;
-                    } else {
-                        html += `<input type="text" data-field-key="${f.key}" placeholder="${esc(f.placeholder || '')}" value="${esc(ipAnswers[f.key] || '')}">`;
-                    }
+                    if (f.type === 'textarea') html += `<textarea data-field-key="${f.key}">${esc(ipAnswers[f.key]||'')}</textarea>`;
+                    else html += `<input type="text" data-field-key="${f.key}" value="${esc(ipAnswers[f.key]||'')}">`;
                     html += `</div>`;
                 });
             }
             if (step.type === 'choice') {
                 html += `<div class="ip-step-options">`;
-                step.options.forEach((opt, i) => {
-                    const cls = ipSelectedOption === i ? 'selected' : '';
-                    html += `<button class="ip-opt-btn ${cls}" data-opt-idx="${i}">${esc(opt.label)}</button>`;
-                });
+                step.options.forEach((o,i) => { html += `<button class="ip-opt-btn ${ipSelectedOption===i?'selected':''}" data-opt-idx="${i}">${esc(o.label)}</button>`; });
                 html += `</div>`;
             }
             const nextLabel = step.next === '__end__' ? '生成报告' : '下一步 →';
-            html += `<div class="ip-confirm-row">
-                <label class="ip-confirm-label"><input type="checkbox" id="ip-confirm-cb"> ${esc(step.checkboxLabel || '我完成了这一步')}</label>
-                <button class="btn btn-primary" id="ip-confirm-next" disabled>${nextLabel}</button>
-            </div>`;
-            html += `</div>`;
+            html += `<div class="ip-confirm-row"><label class="ip-confirm-label"><input type="checkbox" id="ip-confirm-cb"> ${esc(step.checkboxLabel||'我完成了这一步')}</label><button class="btn btn-primary" id="ip-confirm-next" disabled>${nextLabel}</button></div></div>`;
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
-
             if (step.type === 'choice') {
                 container.querySelectorAll('[data-opt-idx]').forEach(btn => {
                     btn.onclick = () => {
@@ -1366,516 +1213,78 @@
                 nextBtn.disabled = !cb.checked;
             }
             cb.onchange = () => {
-                if (step.type === 'choice' && ipSelectedOption === null && cb.checked) {
-                    alert('请先选择一个选项'); cb.checked = false; return;
-                }
+                if (step.type === 'choice' && ipSelectedOption === null && cb.checked) { alert('请先选择'); cb.checked = false; return; }
                 syncConfirmState();
             };
-            nextBtn.onclick = () => {
-                if (step.type === 'form') {
-                    container.querySelectorAll('[data-field-key]').forEach(el => {
-                        ipAnswers[el.dataset.fieldKey] = el.value.trim();
-                    });
-                }
+            nextBtn.onclick = async () => {
+                if (step.type === 'form') container.querySelectorAll('[data-field-key]').forEach(el => { ipAnswers[el.dataset.fieldKey] = el.value.trim(); });
                 let userMsg = '';
-                if (step.type === 'form') {
-                    userMsg = step.fields.map(f => `${f.label}：${ipAnswers[f.key] || '（未填写）'}`).join('\n');
-                } else if (step.type === 'choice' && ipSelectedOption !== null) {
-                    userMsg = step.options[ipSelectedOption].label;
-                } else {
-                    userMsg = '✓ ' + (step.checkboxLabel || '完成');
-                }
+                if (step.type === 'form') userMsg = step.fields.map(f => `${f.label}：${ipAnswers[f.key]||'（未填写）'}`).join('\n');
+                else if (step.type === 'choice' && ipSelectedOption !== null) userMsg = step.options[ipSelectedOption].label;
+                else userMsg = '✓ ' + (step.checkboxLabel || '完成');
                 ipConversation.push({ role: 'user', text: userMsg });
-                if (ipCurrentKey === 'step4' && ipSelectedOption !== null) {
-                    ipAnswers['step4_choice'] = step.options[ipSelectedOption].label;
-                }
-                if (step.next === '__end__') { finishIpSession(); return; }
-                if (step.type === 'choice' && ipSelectedOption !== null) {
-                    ipCurrentKey = step.options[ipSelectedOption].next;
-                } else {
-                    ipCurrentKey = step.next;
-                }
+                if (ipCurrentKey === 'step4' && ipSelectedOption !== null) ipAnswers['step4_choice'] = step.options[ipSelectedOption].label;
+                if (step.next === '__end__') { await finishIpSession(); return; }
+                ipCurrentKey = (step.type === 'choice' && ipSelectedOption !== null) ? step.options[ipSelectedOption].next : step.next;
                 ipSelectedOption = null;
                 renderIpChat();
             };
         }
 
-        function finishIpSession() {
+        async function finishIpSession() {
             const now = new Date();
-            const record = {
-                id: Date.now(), date: currentDay,
-                feeling: ipAnswers.feeling || '（未记录）',
-                answers: { ...ipAnswers },
-                conversation: ipConversation.map(m => ({ role: m.role, text: m.text })),
-                createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-            };
-            healthData.innerPeace.unshift(record);
-            saveHealthData();
-            renderIpReport(record);
-            renderInnerPeaceHistory();
+            const dataObj = { feeling: ipAnswers.feeling || '（未记录）', answers: { ...ipAnswers }, conversation: ipConversation.map(m => ({ role: m.role, text: m.text })), createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) };
+            const item = await pushHealthRecord('innerPeace', currentDay, dataObj);
+            if (item) {
+                healthData.innerPeace.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+                renderIpReport(healthData.innerPeace[0]);
+                renderInnerPeaceHistory();
+            }
             ipCurrentKey = null; ipConversation = []; ipAnswers = {}; ipSelectedOption = null;
         }
 
         function renderIpReport(record) {
             const container = document.getElementById('ip-chat-container');
-            let html = '<div class="ip-report">';
-            html += `<div class="ip-report-title">📋 引导报告 · ${esc(record.date)} ${esc(record.createdAt)}</div>`;
-            if (record.answers.step4_choice) {
-                html += `<div class="ip-report-section"><b>分类判断</b><br>${esc(record.answers.step4_choice)}</div>`;
-            }
-            const s3fields = [
-                ['s3_1', '我在反复想什么'], ['s3_2', '我担心会发生什么'],
-                ['s3_3', '别人的情绪'], ['s3_4', '别人的选择'], ['s3_5', '别人的课题']
-            ];
-            if (s3fields.some(([k]) => record.answers[k])) {
-                html += `<div class="ip-report-section"><b>外化命名</b>`;
-                s3fields.forEach(([k, label]) => {
-                    if (record.answers[k]) html += `<div class="kv"><span class="k">${label}</span><span class="v">${esc(record.answers[k])}</span></div>`;
-                });
-                html += `</div>`;
-            }
-            const s5a = [
-                ['s5a_1', '已知事实'], ['s5a_2', '我的假设'],
-                ['s5a_3', '我能控制的部分'], ['s5a_4', '我不能控制的部分'], ['s5a_5', '下一步最小行动']
-            ];
-            if (s5a.some(([k]) => record.answers[k])) {
-                html += `<div class="ip-report-section"><b>专属思考时间</b>`;
-                s5a.forEach(([k, label]) => {
-                    if (record.answers[k]) html += `<div class="kv"><span class="k">${label}</span><span class="v">${esc(record.answers[k])}</span></div>`;
-                });
-                html += `</div>`;
-            }
-            const s5b = [
-                ['s5b_1', '待探索事件'], ['s5b_2', '问谁'],
-                ['s5b_3', '查什么'], ['s5b_4', '观察多久'], ['s5b_5', '什么时候再决定']
-            ];
-            if (s5b.some(([k]) => record.answers[k])) {
-                html += `<div class="ip-report-section"><b>标记待探索</b>`;
-                s5b.forEach(([k, label]) => {
-                    if (record.answers[k]) html += `<div class="kv"><span class="k">${label}</span><span class="v">${esc(record.answers[k])}</span></div>`;
-                });
-                html += `</div>`;
-            }
-            if (record.answers.s6_1) html += `<div class="ip-report-section"><b>转向当下</b><div class="kv"><span class="k">我此刻可以做的小愉悦</span><span class="v">${esc(record.answers.s6_1)}</span></div></div>`;
-            if (record.answers.s7_1) html += `<div class="ip-report-section"><b>课题归还</b><div class="kv"><span class="k">这是谁的课题</span><span class="v">${esc(record.answers.s7_1)}</span></div></div>`;
-            if (record.answers.s9_1 || record.answers.s9_2) {
-                html += `<div class="ip-report-section"><b>存档与担忧窗口</b>`;
-                if (record.answers.s9_1) html += `<div class="kv"><span class="k">待探索 / 未完成清单</span><span class="v">${esc(record.answers.s9_1)}</span></div>`;
-                if (record.answers.s9_2) html += `<div class="kv"><span class="k">担忧窗口时间</span><span class="v">${esc(record.answers.s9_2)}</span></div>`;
-                html += `</div>`;
-            }
+            let html = `<div class="ip-report"><div class="ip-report-title">📋 引导报告 · ${esc(record.date)} ${esc(record.createdAt||'')}</div>`;
+            if (record.answers?.step4_choice) html += `<div class="ip-report-section"><b>分类判断</b><br>${esc(record.answers.step4_choice)}</div>`;
+            const s3 = [['s3_1','我在反复想什么'],['s3_2','我担心会发生什么'],['s3_3','别人的情绪'],['s3_4','别人的选择'],['s3_5','别人的课题']];
+            if (s3.some(([k]) => record.answers?.[k])) { html += `<div class="ip-report-section"><b>外化命名</b>`; s3.forEach(([k,l]) => { if (record.answers[k]) html += `<div class="kv"><span class="k">${l}</span><span class="v">${esc(record.answers[k])}</span></div>`; }); html += `</div>`; }
+            const s5a = [['s5a_1','已知事实'],['s5a_2','我的假设'],['s5a_3','我能控制的部分'],['s5a_4','我不能控制的部分'],['s5a_5','下一步最小行动']];
+            if (s5a.some(([k]) => record.answers?.[k])) { html += `<div class="ip-report-section"><b>专属思考时间</b>`; s5a.forEach(([k,l]) => { if (record.answers[k]) html += `<div class="kv"><span class="k">${l}</span><span class="v">${esc(record.answers[k])}</span></div>`; }); html += `</div>`; }
+            const s5b = [['s5b_1','待探索事件'],['s5b_2','问谁'],['s5b_3','查什么'],['s5b_4','观察多久'],['s5b_5','什么时候再决定']];
+            if (s5b.some(([k]) => record.answers?.[k])) { html += `<div class="ip-report-section"><b>标记待探索</b>`; s5b.forEach(([k,l]) => { if (record.answers[k]) html += `<div class="kv"><span class="k">${l}</span><span class="v">${esc(record.answers[k])}</span></div>`; }); html += `</div>`; }
+            if (record.answers?.s6_1) html += `<div class="ip-report-section"><b>转向当下</b><div class="kv"><span class="k">我此刻可以做的小愉悦</span><span class="v">${esc(record.answers.s6_1)}</span></div></div>`;
+            if (record.answers?.s7_1) html += `<div class="ip-report-section"><b>课题归还</b><div class="kv"><span class="k">这是谁的课题</span><span class="v">${esc(record.answers.s7_1)}</span></div></div>`;
+            if (record.answers?.s9_1 || record.answers?.s9_2) { html += `<div class="ip-report-section"><b>存档与担忧窗口</b>`; if (record.answers.s9_1) html += `<div class="kv"><span class="k">待探索清单</span><span class="v">${esc(record.answers.s9_1)}</span></div>`; if (record.answers.s9_2) html += `<div class="kv"><span class="k">担忧窗口</span><span class="v">${esc(record.answers.s9_2)}</span></div>`; html += `</div>`; }
             html += `<div class="ip-report-section"><b>此刻感受</b><div style="margin-top:4px;">${esc(record.feeling)}</div></div>`;
-            html += `<details class="ip-report-detail ip-report-section">
-                <summary>查看完整对话（${record.conversation.length} 条）</summary>`;
-            record.conversation.forEach(msg => {
-                const roleText = msg.role === 'sys' ? '🧘 引导' : '👤 我';
-                html += `<div class="ip-conv-line"><span class="role">${roleText}</span>${esc(msg.text)}</div>`;
-            });
-            html += `</details>`;
-            html += `<div style="margin-top:12px;text-align:right;">
-                <button class="btn btn-ghost" id="ip-restart-btn">再做一次</button>
-            </div></div>`;
+            if (record.conversation?.length) {
+                html += `<details class="ip-report-detail ip-report-section"><summary>查看完整对话（${record.conversation.length} 条）</summary>`;
+                record.conversation.forEach(m => { html += `<div class="ip-conv-line"><span class="role">${m.role === 'sys' ? '🧘 引导' : '👤 我'}</span>${esc(m.text)}</div>`; });
+                html += `</details>`;
+            }
+            html += `<div style="margin-top:12px;text-align:right;"><button class="btn btn-ghost" id="ip-restart-btn">再做一次</button></div></div>`;
             container.innerHTML = html;
-            document.getElementById('ip-restart-btn').onclick = () => startIpSession();
+            document.getElementById('ip-restart-btn').onclick = startIpSession;
             container.scrollTop = 0;
         }
 
         function renderInnerPeaceHistory() {
             const el = document.getElementById('ip-history');
             const list = filterByDay(healthData.innerPeace);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有反内耗练习记录</div>'; return; }
+            if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有反内耗练习记录</div>'; return; }
             let html = '';
             list.forEach(r => {
-                html += `<div class="list-item">
-                    <div class="main">
-                        <div><b>${esc(r.createdAt || '')}</b></div>
-                        <div style="margin-top:4px;color:#3a5c50;">感受：${esc(r.feeling || '（未记录）')}</div>
-                    </div>
-                    <div style="display:flex;gap:4px;">
-                        <button class="btn btn-ghost btn-sm" data-view-ip="${r.id}">查看报告</button>
-                        <button class="btn btn-danger btn-sm" data-del-ip="${r.id}">✕</button>
-                    </div>
-                </div>`;
+                html += `<div class="list-item"><div class="main"><div><b>${esc(r.createdAt||'')}</b></div><div style="margin-top:4px;color:#3a5c50;">感受：${esc(r.feeling||'（未记录）')}</div></div><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm" data-view-ip="${r.id}">查看报告</button><button class="btn btn-danger btn-sm" data-del-ip="${r.id}">✕</button></div></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-ip]').forEach(b => {
-                b.onclick = () => {
-                    healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(b.dataset.delIp));
-                    saveHealthData(); renderInnerPeaceHistory();
-                };
-            });
-            el.querySelectorAll('[data-view-ip]').forEach(b => {
-                b.onclick = () => {
-                    const record = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp));
-                    if (record) renderIpReport(record);
-                };
-            });
+            el.querySelectorAll('[data-del-ip]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(b.dataset.delIp)); renderInnerPeaceHistory(); });
+            el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
         }
 
-        /* ----- 运动 ----- */
-        function getWeekDays() {
-            const base = new Date(currentDay + 'T00:00:00');
-            const day = base.getDay() || 7;
-            const monday = new Date(base);
-            monday.setDate(base.getDate() - day + 1);
-            const days = [];
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                days.push({
-                    date: d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()),
-                    label: ['一','二','三','四','五','六','日'][i]
-                });
-            }
-            return days;
-        }
-
-        function renderExerciseWeek() {
-            const el = document.getElementById('exercise-week');
-            const days = getWeekDays();
-            const today = todayStr();
-            let html = '';
-            days.forEach(d => {
-                const has = healthData.exercise.some(r => r.date === d.date);
-                const isToday = d.date === today;
-                const isSelected = d.date === currentDay;
-                html += `<div class="exercise-day">
-                    <div class="dot ${has ? 'done' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-day="${d.date}">${has ? '✓' : d.label}</div>
-                    <div>周${d.label}</div>
-                </div>`;
-            });
-            el.innerHTML = html;
-            el.querySelectorAll('.dot').forEach(dot => { dot.onclick = () => setDay(dot.dataset.day); });
-        }
-
-        function renderExercise() {
-            renderExerciseWeek();
-            const el = document.getElementById('exercise-history');
-            const list = filterByDay(healthData.exercise);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有运动记录</div>'; return; }
-            const typeMap = {
-                walk: '🚶 散步', run: '🏃 跑步', cycling: '🚴 骑行', strength: '🏋️ 力量',
-                yoga: '🧘 瑜伽', ball: '⚽ 球类', swim: '🏊 游泳', other: '✨ 其他'
-            };
-            let html = '';
-            list.forEach(r => {
-                html += `<div class="list-item">
-                    <div class="main"><div>${typeMap[r.type] || r.type} · ${r.duration} 分钟</div>
-                    ${r.note ? `<div class="meta">${esc(r.note)}</div>` : ''}</div>
-                    <button class="btn btn-danger btn-sm" data-del-exercise="${r.id}">✕</button>
-                </div>`;
-            });
-            el.innerHTML = html;
-            el.querySelectorAll('[data-del-exercise]').forEach(b => {
-                b.onclick = () => { healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(b.dataset.delExercise)); saveHealthData(); renderExercise(); };
-            });
-        }
-
-        /* ----- 微运动管理 ----- */
-        function renderMicro() {
-            const el = document.getElementById('micro-history');
-            const list = filterByDay(healthData.microExercise);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有微运动记录</div>'; return; }
-            let html = '';
-            list.forEach(r => {
-                const postureLabels = (r.posture || []).map(p => {
-                    if (typeof p === 'string') {
-                        const it = POSTURE_ISSUES.find(x => x.key === p); return it ? it.label : p;
-                    }
-                    if (p.key === 'other') return p.custom ? '其他：' + p.custom : '其他';
-                    const it = POSTURE_ISSUES.find(x => x.key === p.key); return it ? it.label : p.key;
-                }).join(' · ') || '（无体态问题记录）';
-                const habitLabels = (r.habits || []).map(h => {
-                    if (typeof h === 'string') {
-                        const it = MICRO_HABITS.find(x => x.key === h); return it ? it.label : h;
-                    }
-                    if (h.key === 'other') return h.custom ? '其他：' + h.custom : '其他';
-                    const it = MICRO_HABITS.find(x => x.key === h.key); return it ? it.label : h.key;
-                }).join(' · ') || '（无微运动记录）';
-                html += `<div class="list-item">
-                    <div class="main">
-                        <div><span class="tag tag-neutral">体态</span> ${esc(postureLabels)}</div>
-                        <div style="margin-top:4px;"><span class="tag tag-good">微运动</span> ${esc(habitLabels)}</div>
-                        ${r.note ? `<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>` : ''}
-                    </div>
-                    <button class="btn btn-danger btn-sm" data-del-micro="${r.id}">✕</button>
-                </div>`;
-            });
-            el.innerHTML = html;
-            el.querySelectorAll('[data-del-micro]').forEach(b => {
-                b.onclick = () => { healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); saveHealthData(); renderMicro(); };
-            });
-        }
-
-        /* ----- 身体管理 ----- */
-        function renderBody() {
-            const el = document.getElementById('body-history');
-            const list = filterByDay(healthData.bodySignals);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
-            let html = '';
-            list.forEach(r => {
-                const sigLabels = (r.signals || []).map(s => {
-                    if (typeof s === 'string') {
-                        const it = BODY_SIGNALS.find(x => x.key === s); return it ? it.label : s;
-                    }
-                    if (s.key === 'other') return s.custom ? '其他：' + s.custom : '其他';
-                    const it = BODY_SIGNALS.find(x => x.key === s.key); return it ? it.label : s.key;
-                }).join(' · ') || '（无身体信号）';
-                const acne = r.acne || {};
-                const acneLocationMap = { forehead: '额头', nose: '鼻子', cheek: '脸颊', chin: '下巴', back: '背部' };
-                const acneTypeMap = { red: '红肿', whitehead: '白头', blackhead: '黑头', closed: '闭口' };
-                let acneText = '';
-                if (acne.location || acne.type || acne.severity || acne.note) {
-                    const parts = [];
-                    if (acne.location === 'other' && acne.locationCustom) parts.push('位置：其他（' + acne.locationCustom + '）');
-                    else if (acne.location) parts.push('位置：' + (acneLocationMap[acne.location] || acne.location));
-                    if (acne.type) parts.push('类型：' + (acneTypeMap[acne.type] || acne.type));
-                    if (acne.severity) parts.push('严重：' + acne.severity + '/5');
-                    if (acne.note) parts.push('备注：' + acne.note);
-                    acneText = parts.join(' · ');
-                }
-                html += `<div class="list-item">
-                    <div class="main">
-                        <div><span class="tag tag-warn">身体</span> ${esc(sigLabels)}</div>
-                        ${acneText ? `<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(acneText)}</div>` : ''}
-                        ${r.note ? `<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>` : ''}
-                    </div>
-                    <button class="btn btn-danger btn-sm" data-del-body="${r.id}">✕</button>
-                </div>`;
-            });
-            el.innerHTML = html;
-            el.querySelectorAll('[data-del-body]').forEach(b => {
-                b.onclick = () => { healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); saveHealthData(); renderBody(); };
-            });
-        }
-
-        /* ----- 饮食 ----- */
-        function renderMeal() {
-            const el = document.getElementById('meal-history');
-            const list = filterByDay(healthData.meal);
-            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有饮食记录</div>'; return; }
-            let html = '';
-            list.forEach(r => {
-                html += `<div class="list-item">
-                    <div class="main"><div>饮水 ${r.water || 0} 杯</div>
-                    <div class="meta">早：${esc(r.breakfast || '—')} · 午：${esc(r.lunch || '—')} · 晚：${esc(r.dinner || '—')} · 加餐：${esc(r.snack || '—')}</div></div>
-                    <button class="btn btn-danger btn-sm" data-del-meal="${r.id}">✕</button>
-                </div>`;
-            });
-            el.innerHTML = html;
-            el.querySelectorAll('[data-del-meal]').forEach(b => {
-                b.onclick = () => {
-                    healthData.meal = healthData.meal.filter(x => String(x.id) !== String(b.dataset.delMeal));
-                    saveHealthData(); renderMeal();
-                    document.getElementById('food-analysis').classList.add('hidden');
-                };
-            });
-        }
-
-        function analyzeMeal(meals, water, snack) {
-            const allText = [meals.breakfast, meals.lunch, meals.dinner, snack].join(' ');
-            const carbs = ['饭','面','粥','面包','馒头','燕麦','米','红薯','土豆','玉米','粉','饼'];
-            const proteins = ['鸡蛋','蛋','鸡','牛','猪','鱼','虾','豆腐','豆','奶','酸奶','肉','贝','海鲜'];
-            const fats = ['油','坚果','花生','核桃','芝麻','牛油果','芝士','黄油','肥肉'];
-            const veggies = ['菜','青','蔬','叶','西兰花','番茄','黄瓜','萝卜','菇','木耳','海带'];
-            const fruits = ['苹果','香蕉','橙','葡萄','莓','梨','桃','瓜','水果'];
-            let carbCount = 0, proteinCount = 0, fatCount = 0, vegCount = 0, fruitCount = 0;
-            carbs.forEach(k => { if (allText.includes(k)) carbCount++; });
-            proteins.forEach(k => { if (allText.includes(k)) proteinCount++; });
-            fats.forEach(k => { if (allText.includes(k)) fatCount++; });
-            veggies.forEach(k => { if (allText.includes(k)) vegCount++; });
-            fruits.forEach(k => { if (allText.includes(k)) fruitCount++; });
-            const total = carbCount + proteinCount + fatCount + vegCount + fruitCount || 1;
-            const pctCarb = Math.round(carbCount / total * 100);
-            const pctProtein = Math.round(proteinCount / total * 100);
-            const pctFat = Math.round(fatCount / total * 100);
-            const issues = [], good = [];
-            if (proteinCount === 0) issues.push('今天蛋白质来源偏少，明天可以加一个鸡蛋、豆制品或奶类。');
-            else good.push('蛋白质来源不错。');
-            if (vegCount + fruitCount === 0) issues.push('几乎没有蔬菜水果，建议补充一份绿叶菜或水果。');
-            else good.push('有蔬菜水果摄入。');
-            if (carbCount >= 3 && proteinCount <= 1) issues.push('碳水偏多、蛋白偏少，容易饭后困倦。');
-            if (fatCount >= 2) issues.push('脂肪来源较多，注意坚果、油脂的量。');
-            if (water && water < 6) issues.push(`饮水 ${water} 杯偏少，建议 6-8 杯。`);
-            else if (water >= 8) good.push('饮水充足。');
-            return {
-                pctCarb, pctProtein, pctFat,
-                summary: issues.length === 0 ? '今天饮食结构比较均衡，继续保持 🌿' : '注意：' + issues.join(' '),
-                good
-            };
-        }
-
-        /* ----- 保存：睡眠/能量/充电/运动/饮食 ----- */
-        document.getElementById('sleep-save').onclick = () => {
-            const start = document.getElementById('sleep-start').value;
-            const end = document.getElementById('sleep-end').value;
-            const feeling = document.getElementById('sleep-feeling').value;
-            const note = document.getElementById('sleep-note').value.trim();
-            if (!start || !end) return alert('请填写入睡和醒来时间');
-            healthData.sleep.unshift({ id: Date.now(), date: currentDay, start_time: start, end_time: end, feeling, note });
-            saveHealthData(); renderSleep();
-            document.getElementById('sleep-start').value = '';
-            document.getElementById('sleep-end').value = '';
-            document.getElementById('sleep-note').value = '';
-        };
-
-        document.getElementById('energy-save').onclick = () => {
-            let am = 5, pm = 5;
-            document.querySelectorAll('#energy-am .score-btn').forEach(b => {
-                if (b.classList.contains('active')) am = parseInt(b.dataset.val, 10);
-            });
-            document.querySelectorAll('#energy-pm .score-btn').forEach(b => {
-                if (b.classList.contains('active')) pm = parseInt(b.dataset.val, 10);
-            });
-            healthData.energy.unshift({
-                id: Date.now(), date: currentDay,
-                am_score: am, pm_score: pm,
-                note: document.getElementById('energy-note').value.trim()
-            });
-            saveHealthData(); renderEnergy();
-            document.getElementById('energy-note').value = '';
-        };
-
-        document.getElementById('charge-save').onclick = () => {
-            healthData.charge.unshift({
-                id: Date.now(), date: currentDay,
-                type: document.getElementById('charge-type').value,
-                delta: parseInt(document.getElementById('charge-delta').value, 10) || 0,
-                note: document.getElementById('charge-note').value.trim()
-            });
-            saveHealthData(); renderCharge();
-            document.getElementById('charge-note').value = '';
-        };
-
-        document.getElementById('exercise-save').onclick = () => {
-            const duration = parseInt(document.getElementById('exercise-duration').value, 10);
-            if (!duration || duration <= 0) return alert('请填写运动时长');
-            healthData.exercise.unshift({
-                id: Date.now(), date: currentDay,
-                type: document.getElementById('exercise-type').value,
-                duration,
-                note: document.getElementById('exercise-note').value.trim()
-            });
-            saveHealthData(); renderExercise();
-            document.getElementById('exercise-duration').value = '';
-            document.getElementById('exercise-note').value = '';
-        };
-
-        document.getElementById('micro-save').onclick = () => {
-            if (selectedPosture.size === 0 && selectedHabit.size === 0) {
-                return alert('请至少选择一个体态问题或微运动习惯');
-            }
-            otherPostureText = document.getElementById('posture-other').value.trim();
-            otherHabitText = document.getElementById('habit-other').value.trim();
-            healthData.microExercise.unshift({
-                id: Date.now(), date: currentDay,
-                posture: Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: otherPostureText } : { key: k }),
-                habits: Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: otherHabitText } : { key: k }),
-                note: document.getElementById('micro-note').value.trim()
-            });
-            saveHealthData(); renderMicro();
-            selectedPosture.clear(); selectedHabit.clear();
-            otherPostureText = ''; otherHabitText = '';
-            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
-            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-            document.getElementById('posture-other').value = '';
-            document.getElementById('habit-other').value = '';
-            document.getElementById('micro-note').value = '';
-            updateOtherInputs();
-        };
-
-        document.getElementById('signal-save').onclick = () => {
-            otherSignalText = document.getElementById('signal-other').value.trim();
-            const acneLocation = document.getElementById('acne-location').value;
-            const acne = {
-                location: acneLocation,
-                locationCustom: acneLocation === 'other' ? document.getElementById('acne-location-other').value.trim() : '',
-                type: document.getElementById('acne-type').value,
-                severity: parseInt(document.getElementById('acne-severity').value, 10) || null,
-                note: document.getElementById('acne-note').value.trim()
-            };
-            const hasAcne = acne.location || acne.type || acne.severity || acne.note;
-            if (selectedSignals.size === 0 && !hasAcne) {
-                return alert('请至少选择一个身体信号，或填写痘痘记录');
-            }
-            healthData.bodySignals.unshift({
-                id: Date.now(), date: currentDay,
-                signals: Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: otherSignalText } : { key: k }),
-                acne: hasAcne ? acne : null,
-                note: document.getElementById('signal-note').value.trim()
-            });
-            saveHealthData(); renderBody();
-            selectedSignals.clear();
-            otherSignalText = '';
-            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-            document.getElementById('signal-other').value = '';
-            document.getElementById('acne-location').value = '';
-            document.getElementById('acne-location-other').value = '';
-            document.getElementById('acne-location-other-field').style.display = 'none';
-            document.getElementById('acne-type').value = '';
-            document.getElementById('acne-severity').value = '';
-            document.getElementById('acne-note').value = '';
-            document.getElementById('signal-note').value = '';
-            updateOtherInputs();
-        };
-
-        document.getElementById('meal-save').onclick = () => {
-            const meals = {
-                breakfast: document.getElementById('meal-breakfast').value.trim(),
-                lunch: document.getElementById('meal-lunch').value.trim(),
-                dinner: document.getElementById('meal-dinner').value.trim()
-            };
-            const water = parseInt(document.getElementById('water-cups').value, 10) || 0;
-            const snack = document.getElementById('snack').value.trim();
-            if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐吧');
-            healthData.meal.unshift({ id: Date.now(), date: currentDay, ...meals, water, snack });
-            saveHealthData(); renderMeal();
-
-            const analysis = analyzeMeal(meals, water, snack);
-            const anaEl = document.getElementById('food-analysis');
-            anaEl.classList.remove('hidden');
-            anaEl.innerHTML = `
-                <div style="font-weight:600;color:#1a5c47;margin-bottom:6px;">📊 今日饮食分析</div>
-                <div class="macro-bar">
-                    <div class="carb" style="width:${analysis.pctCarb}%"></div>
-                    <div class="protein" style="width:${analysis.pctProtein}%"></div>
-                    <div class="fat" style="width:${analysis.pctFat}%"></div>
-                </div>
-                <div style="display:flex;gap:14px;font-size:12px;color:#6b8a7e;margin-bottom:8px;">
-                    <span>🍚 碳水 ${analysis.pctCarb}%</span>
-                    <span>🥩 蛋白 ${analysis.pctProtein}%</span>
-                    <span>🥑 脂肪 ${analysis.pctFat}%</span>
-                </div>
-                <div>${analysis.summary}</div>
-                ${analysis.good.length ? `<div style="margin-top:6px;color:#2d7d5a;">✓ ${analysis.good.join(' ')}</div>` : ''}
-            `;
-            ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => {
-                document.getElementById(id).value = '';
-            });
-        };
-
-        /* ----- 痘痘位置「其他」显示/隐藏 ----- */
-        document.getElementById('acne-location').addEventListener('change', function () {
-            const field = document.getElementById('acne-location-other-field');
-            if (this.value === 'other') field.style.display = '';
-            else field.style.display = 'none';
-        });
-
-        /* =====================================================
-           AI 每日分析
-           ===================================================== */
-        const AI_KEY_STORAGE = 'ai_analyze_config';
-
-        function getAIConfig() {
-            try {
-                const raw = localStorage.getItem(AI_KEY_STORAGE);
-                if (raw) return JSON.parse(raw);
-            } catch (e) {}
-            return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
-        }
-        function saveAIConfig(cfg) {
-            localStorage.setItem(AI_KEY_STORAGE, JSON.stringify(cfg));
-        }
+        /* ================= AI 分析 ================= */
+        const AI_KEY = 'ai_analyze_config';
+        function getAIConfig() { try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {} return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }; }
+        function saveAIConfig(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 
         function collectDayData() {
             const day = currentDay;
@@ -1893,229 +1302,173 @@
         }
 
         function buildPrompt(d) {
-            const lines = [];
-            lines.push('请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。');
-            lines.push('');
-            lines.push(`【日期】${d.date}`);
-            lines.push('');
-
-            if (d.sleep.length) {
-                const s = d.sleep[0];
-                const feelingMap = { refreshed: '神清气爽', ok: '还行', tired: '疲惫', groggy: '昏沉' };
-                lines.push(`【睡眠】${s.start_time} → ${s.end_time}（${feelingMap[s.feeling] || s.feeling}）${s.note ? '，' + s.note : ''}`);
-            } else lines.push('【睡眠】未记录');
-
-            if (d.energy.length) {
-                const e = d.energy[0];
-                lines.push(`【能量】上午 ${e.am_score}/10 · 下午 ${e.pm_score}/10${e.note ? '，' + e.note : ''}`);
-            } else lines.push('【能量】未记录');
-
-            if (d.charge.length) {
-                const typeMap = { rest: '休息', nature: '接触自然', social: '社交', hobby: '爱好', exercise: '轻度运动', food: '好好吃饭', other: '其他' };
-                lines.push('【充电】' + d.charge.map(c => `${typeMap[c.type] || c.type}（能量${c.delta > 0 ? '+' : ''}${c.delta}）${c.note ? '：' + c.note : ''}`).join('；'));
-            }
-
-            if (d.exercise.length) {
-                const typeMap = { walk: '散步', run: '跑步', cycling: '骑行', strength: '力量', yoga: '瑜伽', ball: '球类', swim: '游泳', other: '其他' };
-                lines.push('【运动】' + d.exercise.map(x => `${typeMap[x.type] || x.type} ${x.duration}分钟${x.note ? '（' + x.note + '）' : ''}`).join('；'));
-            } else lines.push('【运动】未记录');
-
-            if (d.micro.length) {
-                const postureMap = { round_shoulder: '圆肩', forward_head: '头前伸', anterior_pelvic: '骨盆前倾', hunchback: '驼背', neck_forward: '颈前倾', uneven_shoulder: '高低肩' };
-                const habitMap = { wall_stand: '靠墙站', chin_tuck: '收下巴', neck_stretch: '肩颈拉伸', shoulder_open: '开肩', squat: '深蹲', stand_reminder: '站姿提醒', walk_break: '走动休息' };
-                const m = d.micro[0];
-                const posture = (m.posture || []).map(p => typeof p === 'string' ? (postureMap[p] || p) : (p.key === 'other' ? p.custom : (postureMap[p.key] || p.key))).join('、');
-                const habits = (m.habits || []).map(h => typeof h === 'string' ? (habitMap[h] || h) : (h.key === 'other' ? h.custom : (habitMap[h.key] || h.key))).join('、');
-                lines.push(`【微运动】体态：${posture || '无'}；习惯：${habits || '无'}${m.note ? '；' + m.note : ''}`);
-            }
-
-            if (d.body.length) {
-                const signalMap = { fatigue: '疲劳', headache: '头痛', stomach: '肠胃不适', neck_pain: '肩颈酸', back_pain: '腰酸', eye_dry: '眼睛干涩', mood_low: '情绪低落', sleepy: '犯困' };
-                const b = d.body[0];
-                const sigs = (b.signals || []).map(s => typeof s === 'string' ? (signalMap[s] || s) : (s.key === 'other' ? s.custom : (signalMap[s.key] || s.key))).join('、');
-                let acneText = '';
-                if (b.acne && (b.acne.location || b.acne.type || b.acne.note)) {
-                    const locMap = { forehead: '额头', nose: '鼻子', cheek: '脸颊', chin: '下巴', back: '背部', other: '其他' };
-                    const typeMap2 = { red: '红肿', whitehead: '白头', blackhead: '黑头', closed: '闭口' };
-                    const parts = [];
-                    if (b.acne.location) parts.push('位置' + (b.acne.location === 'other' ? (b.acne.locationCustom || '其他') : locMap[b.acne.location]));
-                    if (b.acne.type) parts.push(typeMap2[b.acne.type]);
-                    if (b.acne.severity) parts.push('严重度' + b.acne.severity);
-                    acneText = '；痘痘：' + parts.join('·');
-                }
-                lines.push(`【身体信号】${sigs || '无'}${acneText}${b.note ? '；' + b.note : ''}`);
-            }
-
-            if (d.meal.length) {
-                const m = d.meal[0];
-                lines.push(`【饮食】早：${m.breakfast || '—'}；午：${m.lunch || '—'}；晚：${m.dinner || '—'}；加餐：${m.snack || '—'}；饮水：${m.water || 0}杯`);
-            } else lines.push('【饮食】未记录');
-
-            if (d.innerPeace.length) {
-                lines.push(`【反内耗】今天做了 ${d.innerPeace.length} 次练习。感受：${d.innerPeace.map(x => x.feeling || '（无）').join('；')}`);
-            }
-
-            lines.push('');
-            lines.push('请从以下 4 个角度输出（用 Markdown 格式，简洁友好，不要评判说教）：');
-            lines.push('1. **今日状态小结**（2-3句）');
-            lines.push('2. **亮点**（1-3条，具体到记录里提到的事）');
-            lines.push('3. **需要温柔关注的地方**（1-3条，不要制造焦虑）');
-            lines.push('4. **明天的一个小建议**（1条，具体可执行，10-30分钟内能完成）');
+            const lines = ['请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。', '', `【日期】${d.date}`, ''];
+            if (d.sleep.length) { const s = d.sleep[0]; const fm = { refreshed:'神清气爽', ok:'还行', tired:'疲惫', groggy:'昏沉' }; lines.push(`【睡眠】${s.start_time} → ${s.end_time}（${fm[s.feeling]||s.feeling}）${s.note?'，'+s.note:''}`); } else lines.push('【睡眠】未记录');
+            if (d.energy.length) { const e = d.energy[0]; lines.push(`【能量】上午 ${e.am_score}/10 · 下午 ${e.pm_score}/10${e.note?'，'+e.note:''}`); } else lines.push('【能量】未记录');
+            if (d.charge.length) { const tm = { rest:'休息', nature:'接触自然', social:'社交', hobby:'爱好', exercise:'轻度运动', food:'好好吃饭', other:'其他' }; lines.push('【充电】'+d.charge.map(c => `${tm[c.type]||c.type}（能量${c.delta>0?'+':''}${c.delta}）${c.note?'：'+c.note:''}`).join('；')); }
+            if (d.exercise.length) { const tm = { walk:'散步', run:'跑步', cycling:'骑行', strength:'力量', yoga:'瑜伽', ball:'球类', swim:'游泳', other:'其他' }; lines.push('【运动】'+d.exercise.map(x => `${tm[x.type]||x.type} ${x.duration}分钟${x.note?'（'+x.note+'）':''}`).join('；')); } else lines.push('【运动】未记录');
+            if (d.micro.length) { const pm = { round_shoulder:'圆肩', forward_head:'头前伸', anterior_pelvic:'骨盆前倾', hunchback:'驼背', neck_forward:'颈前倾', uneven_shoulder:'高低肩' }; const hm = { wall_stand:'靠墙站', chin_tuck:'收下巴', neck_stretch:'肩颈拉伸', shoulder_open:'开肩', squat:'深蹲', stand_reminder:'站姿提醒', walk_break:'走动休息' }; const m = d.micro[0]; const posture = (m.posture||[]).map(p => typeof p === 'string' ? (pm[p]||p) : (p.key === 'other' ? p.custom : (pm[p.key]||p.key))).join('、'); const habits = (m.habits||[]).map(h => typeof h === 'string' ? (hm[h]||h) : (h.key === 'other' ? h.custom : (hm[h.key]||h.key))).join('、'); lines.push(`【微运动】体态：${posture||'无'}；习惯：${habits||'无'}${m.note?'；'+m.note:''}`); }
+            if (d.body.length) { const sm = { fatigue:'疲劳', headache:'头痛', stomach:'肠胃不适', neck_pain:'肩颈酸', back_pain:'腰酸', eye_dry:'眼睛干涩', mood_low:'情绪低落', sleepy:'犯困' }; const b = d.body[0]; const sigs = (b.signals||[]).map(s => typeof s === 'string' ? (sm[s]||s) : (s.key === 'other' ? s.custom : (sm[s.key]||s.key))).join('、'); let at = ''; if (b.acne && (b.acne.location || b.acne.type || b.acne.note)) { const lm = { forehead:'额头', nose:'鼻子', cheek:'脸颊', chin:'下巴', back:'背部', other:'其他' }; const tm = { red:'红肿', whitehead:'白头', blackhead:'黑头', closed:'闭口' }; const ps = []; if (b.acne.location) ps.push('位置'+(b.acne.location === 'other' ? (b.acne.locationCustom||'其他') : lm[b.acne.location])); if (b.acne.type) ps.push(tm[b.acne.type]); if (b.acne.severity) ps.push('严重度'+b.acne.severity); at = '；痘痘：'+ps.join('·'); } lines.push(`【身体信号】${sigs||'无'}${at}${b.note?'；'+b.note:''}`); }
+            if (d.meal.length) { const m = d.meal[0]; lines.push(`【饮食】早：${m.breakfast||'—'}；午：${m.lunch||'—'}；晚：${m.dinner||'—'}；加餐：${m.snack||'—'}；饮水：${m.water||0}杯`); } else lines.push('【饮食】未记录');
+            if (d.innerPeace.length) lines.push(`【反内耗】今天做了 ${d.innerPeace.length} 次练习。感受：${d.innerPeace.map(x => x.feeling||'（无）').join('；')}`);
+            lines.push('', '请从以下 4 个角度输出（用 Markdown，简洁友好，不说教）：', '1. **今日状态小结**（2-3句）', '2. **亮点**（1-3条，具体到记录里的事）', '3. **需要温柔关注的地方**（1-3条，不制造焦虑）', '4. **明天的一个小建议**（1条，10-30分钟内可完成）');
             return lines.join('\n');
         }
 
-        function md2html(content) {
-            return content
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>')
-                .replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
-                .replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
-                .replace(/^- (.+)$/gm, '• $1')
-                .replace(/\n/g, '<br>');
+        function md2html(c) {
+            return c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>').replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^- (.+)$/gm, '• $1').replace(/\n/g, '<br>');
         }
 
         async function runAIAnalysis() {
             const cfg = getAIConfig();
-            if (!cfg.apiKey) {
-                alert('请先在「⚙️ API 配置」中填写 API Key');
-                return;
-            }
+            if (!cfg.apiKey) { alert('请先在 API 配置中填写 Key'); return; }
             const resultEl = document.getElementById('ai-result');
             const btn = document.getElementById('ai-analyze-btn');
-            btn.disabled = true;
-            btn.textContent = '⏳ 分析中...';
-            resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI，请稍候…</div>';
-
+            btn.disabled = true; btn.textContent = '⏳ 分析中...';
+            resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI…</div>';
             const d = collectDayData();
             const prompt = buildPrompt(d);
-
             try {
-                const res = await fetch(cfg.apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + cfg.apiKey
-                    },
-                    body: JSON.stringify({
-                        model: cfg.model,
-                        messages: [
-                            { role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。善于从记录中观察细节，给出具体可执行的小建议。' },
-                            { role: 'user', content: prompt }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 800
-                    })
-                });
-
-                if (!res.ok) {
-                    const errText = await res.text();
-                    throw new Error(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
-                }
+                const res = await fetch(cfg.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey }, body: JSON.stringify({ model: cfg.model, messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 }) });
+                if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
                 const json = await res.json();
-                const content = json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
-                if (!content) throw new Error('返回内容为空');
-
+                const content = json.choices?.[0]?.message?.content;
+                if (!content) throw new Error('返回为空');
                 resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
-
-                const existing = healthData.aiAnalysis || [];
-                healthData.aiAnalysis = existing.filter(x => x.date !== currentDay);
-                healthData.aiAnalysis.push({ date: currentDay, content, ts: Date.now() });
-                saveHealthData();
+                // 保存到云端
+                const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
+                for (const e of existing) { await deleteHealthRecord(e.id); }
+                healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+                const item = await pushHealthRecord('ai', currentDay, { content });
+                if (item) healthData.aiAnalysis.push({ id: item.id, date: currentDay, ts: item.ts, content });
             } catch (err) {
                 console.error(err);
-                resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}<br><span style="font-size:12px;color:#888;">请检查 API Key、网络，或浏览器控制台。</span></div>`;
+                resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}</div>`;
             } finally {
-                btn.disabled = false;
-                btn.textContent = '✨ 生成今日分析';
+                btn.disabled = false; btn.textContent = '✨ 生成今日分析';
             }
         }
 
         function renderAIAnalysis() {
-            const list = (healthData.aiAnalysis || []).filter(x => x.date === currentDay);
+            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
             const resultEl = document.getElementById('ai-result');
-            if (list.length === 0) {
-                resultEl.innerHTML = '<div class="empty-hint">还没有今日分析，点上方按钮生成</div>';
-                return;
-            }
-            const content = list[0].content || '';
-            resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
+            if (!list.length) { resultEl.innerHTML = '<div class="empty-hint">还没有今日分析</div>'; return; }
+            resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(list[0].content||'')}</div>`;
         }
 
-        /* ----- 健康数据导入/导出/重置 ----- */
-        document.getElementById('export-btn').onclick = () => {
-            const blob = new Blob([JSON.stringify(healthData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'health-data-' + todayStr() + '.json';
-            a.click(); URL.revokeObjectURL(url);
-        };
-        document.getElementById('import-btn').onclick = () => document.getElementById('import-file').click();
-        document.getElementById('import-file').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                try {
-                    const imported = JSON.parse(reader.result);
-                    if (!confirm('导入将覆盖当前健康数据，确定继续？')) return;
-                    healthData = { ...getDefaultHealthData(), ...imported };
-                    saveHealthData(); renderHealthAll();
-                    alert('导入成功！');
-                } catch (err) { alert('导入失败：文件格式不正确'); }
-                e.target.value = '';
-            };
-            reader.readAsText(file);
-        };
-        document.getElementById('reset-health-btn').onclick = () => {
-            if (!confirm('确定要清空所有健康数据吗？此操作不可恢复。')) return;
-            healthData = getDefaultHealthData();
-            saveHealthData(); resetIpSession(); renderHealthAll();
-            document.getElementById('food-analysis').classList.add('hidden');
-            selectedPosture.clear(); selectedHabit.clear(); selectedSignals.clear();
-            otherPostureText = ''; otherHabitText = ''; otherSignalText = '';
-            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
-            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-            document.getElementById('posture-other').value = '';
-            document.getElementById('habit-other').value = '';
-            document.getElementById('signal-other').value = '';
-        };
+        /* ================= 渲染全部 ================= */
+        function renderHealthAll() {
+            renderSleep(); renderEnergy(); renderCharge();
+            renderExercise(); renderMicro(); renderBody(); renderMeal();
+            renderInnerPeaceHistory(); renderAIAnalysis();
+        }
+        function renderAll() { renderAccounts(); renderHealthAll(); }
 
-        /* ----- 日期栏事件 ----- */
-        document.getElementById('day-picker').addEventListener('change', function () {
-            if (this.value) setDay(this.value);
+        /* ================= 事件绑定 ================= */
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            };
         });
+
+        document.getElementById('login-btn').onclick = async () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const pwd = document.getElementById('auth-password').value;
+            if (!email || !pwd) return alert('请填写邮箱和密码');
+            if (await signIn(email, pwd)) {
+                await loadAllFromCloud();
+                setupRealtime();
+            }
+        };
+        document.getElementById('register-btn').onclick = async () => {
+            const email = document.getElementById('auth-email').value.trim();
+            const pwd = document.getElementById('auth-password').value;
+            if (!email || pwd.length < 6) return alert('密码至少6位');
+            await signUp(email, pwd);
+        };
+        document.getElementById('logout-btn').onclick = signOut;
+
+        document.getElementById('add-btn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const account = document.getElementById('expense-account').value;
+            const desc = document.getElementById('expense-desc').value.trim() || undefined;
+            const day = document.getElementById('expense-date').value || todayStr();
+            const sub = (account === 'survival') ? document.getElementById('expense-subcategory').value : null;
+            if (await addExpense(amount, account, desc, day, sub)) {
+                document.getElementById('expense-amount').value = '';
+                document.getElementById('expense-desc').value = '';
+            }
+        };
+        document.getElementById('income-btn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const day = document.getElementById('income-date').value || todayStr();
+            if (await addIncome(amount, day)) document.getElementById('income-amount').value = '';
+        };
+        document.getElementById('reset-accounts-btn').onclick = async () => {
+            if (!confirm('确定清空三账户数据？')) return;
+            await sb.from('records').delete().eq('user_id', currentUser.id);
+            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+            renderAccounts();
+        };
+        document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
+        (function () {
+            const a = document.getElementById('expense-account'), s = document.getElementById('expense-subcategory');
+            function u() { if (a.value === 'survival') { s.style.display = ''; s.disabled = false; } else { s.style.display = 'none'; s.disabled = true; } }
+            a.addEventListener('change', u); u();
+        })();
+
+        // 健康
+        document.getElementById('sleep-save').onclick = addSleep;
+        document.getElementById('energy-save').onclick = addEnergy;
+        document.getElementById('charge-save').onclick = addCharge;
+        document.getElementById('exercise-save').onclick = addExercise;
+        document.getElementById('micro-save').onclick = addMicro;
+        document.getElementById('signal-save').onclick = addBody;
+        document.getElementById('meal-save').onclick = addMeal;
+
+        document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
         document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
         document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
         document.getElementById('day-today').onclick = () => setDay(todayStr());
 
-        /* ----- 渲染健康系统全部 ----- */
-        function renderHealthAll() {
-            renderSleep(); renderEnergy(); renderCharge();
-            renderExercise(); renderMicro(); renderBody(); renderMeal();
-            renderInnerPeaceHistory();
-            renderAIAnalysis();
-        }
+        document.getElementById('acne-location').addEventListener('change', function () {
+            document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
+        });
 
-        /* ================= 初始化 ================= */
-        document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('ai-save-config').onclick = () => {
+            saveAIConfig({
+                apiKey: document.getElementById('ai-api-key').value.trim(),
+                apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
+                model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
+            });
+            alert('已保存 ✓');
+        };
+        document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
+        document.getElementById('ai-clear-btn').onclick = async () => {
+            if (!confirm('清除今天的 AI 分析？')) return;
+            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+            for (const e of list) { await deleteHealthRecord(e.id); }
+            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+            renderAIAnalysis();
+        };
+
+        /* ================= 启动 ================= */
+        document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('expense-date').value = todayStr();
             document.getElementById('income-date').value = todayStr();
-            renderAccounts();
-
             document.getElementById('sleep-start').value = '23:00';
             document.getElementById('sleep-end').value = '07:00';
 
+            // 能量打分
             function buildScoreRow(el) {
                 let html = '';
                 for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
                 el.innerHTML = html;
                 el.querySelectorAll('.score-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                    };
+                    btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
                 });
             }
             buildScoreRow(document.getElementById('energy-am'));
@@ -2123,40 +1476,29 @@
             document.querySelectorAll('#energy-am .score-btn')[4].click();
             document.querySelectorAll('#energy-pm .score-btn')[4].click();
 
-            // 生成微运动 chip
+            // chip
             buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
             buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
             buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
 
-            // ===== AI 分析初始化 =====
-            (function initAI() {
-                const cfg = getAIConfig();
-                document.getElementById('ai-api-key').value = cfg.apiKey || '';
-                document.getElementById('ai-api-url').value = cfg.apiUrl;
-                document.getElementById('ai-model').value = cfg.model;
-
-                document.getElementById('ai-save-config').onclick = () => {
-                    const newCfg = {
-                        apiKey: document.getElementById('ai-api-key').value.trim(),
-                        apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
-                        model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
-                    };
-                    saveAIConfig(newCfg);
-                    alert('已保存 ✓');
-                };
-
-                document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
-                document.getElementById('ai-clear-btn').onclick = () => {
-                    if (!confirm('清除今天的 AI 分析？')) return;
-                    healthData.aiAnalysis = (healthData.aiAnalysis || []).filter(x => x.date !== currentDay);
-                    saveHealthData();
-                    renderAIAnalysis();
-                };
-            })();
+            // AI 配置回填
+            const cfg = getAIConfig();
+            document.getElementById('ai-api-key').value = cfg.apiKey || '';
+            document.getElementById('ai-api-url').value = cfg.apiUrl;
+            document.getElementById('ai-model').value = cfg.model;
 
             updateDayBar();
             resetIpSession();
-            renderHealthAll();
+
+            // 检查登录
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                await loadAllFromCloud();
+                setupRealtime();
+            } else {
+                showLoginUI();
+            }
         });
     </script>
 </body>
