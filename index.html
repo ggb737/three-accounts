@@ -75,10 +75,34 @@
         .score-btn.active { background: #2d7d5a; color: #fff; border-color: #2d7d5a; }
         .score-btn:hover:not(.active) { background: #e8f2ee; }
 
+        .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip {
+            padding: 6px 12px; border-radius: 999px; font-size: 12px;
+            background: #fafcfb; border: 1px solid #d4e3dd; color: #6b8a7e;
+            cursor: pointer; user-select: none; transition: all 0.15s;
+            font-family: inherit;
+        }
+        .chip.active { background: #2d7d5a; color: #fff; border-color: #2d7d5a; font-weight: 600; }
+        .chip:hover:not(.active) { background: #e8f2ee; }
+
+        .other-input {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border: 1px solid #d4e3dd;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff;
+            color: #1a2e2a;
+            font-family: inherit;
+            width: 100%;
+        }
+        .other-input:focus { outline: none; border-color: #3a8f6e; }
+
         .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
         .tag-good { background: #e0f2e8; color: #1a7a4a; }
         .tag-warn { background: #fef3e0; color: #b87000; }
         .tag-bad { background: #fdeaea; color: #c0392b; }
+        .tag-neutral { background: #eaeef6; color: #4a5c8a; }
 
         .list-item {
             display: flex; justify-content: space-between; align-items: flex-start;
@@ -113,7 +137,14 @@
         .macro-bar .protein { background: #3a8f6e; }
         .macro-bar .fat { background: #c4715c; }
 
-        /* 反内耗对话界面 */
+        .acne-card {
+            background: #fdf6f6; border-radius: 10px; padding: 12px;
+            margin-top: 10px; border-left: 3px solid #e8a8a8;
+        }
+        .acne-card .title {
+            font-size: 13px; font-weight: 600; color: #a14a4a; margin-bottom: 8px;
+        }
+
         .ip-chat-container {
             background: #f7fbf9; border-radius: 12px; padding: 16px;
             max-height: 640px; overflow-y: auto;
@@ -260,7 +291,6 @@
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
         .toolbar-actions { display: flex; gap: 8px; }
 
-        /* 顶部标签导航 */
         .app-nav {
             display: flex; gap: 8px; margin-bottom: 16px;
         }
@@ -319,7 +349,6 @@
     <!-- ================= TAB 1: 三账户 ================= -->
     <div id="tab-accounts" class="tab-content active">
 
-        <!-- 三账户余额 -->
         <div class="card">
             <h2>📊 三账户余额</h2>
             <div class="grid-3">
@@ -341,7 +370,6 @@
             </div>
         </div>
 
-        <!-- 记一笔支出 -->
         <div class="card">
             <h2>✏️ 记一笔支出</h2>
             <div class="form-row">
@@ -365,7 +393,6 @@
             </div>
         </div>
 
-        <!-- 添加收入 -->
         <div class="card">
             <div class="form-row">
                 <input type="number" id="income-amount" placeholder="收入金额" step="0.01">
@@ -378,20 +405,17 @@
             </div>
         </div>
 
-        <!-- 支出明细 -->
         <div class="card">
             <h2>📋 支出明细</h2>
             <div id="expense-list"><div class="empty-hint">还没有支出记录，开始记一笔吧</div></div>
             <div style="margin-top:12px;font-size:13px;color:#888;" id="accounts-summary"></div>
         </div>
 
-        <!-- 收入明细 -->
         <div class="card">
             <h2>💰 收入明细</h2>
             <div id="income-list"><div class="empty-hint">还没有收入记录</div></div>
         </div>
 
-        <!-- 每月合计 -->
         <div class="card">
             <h2>📅 每月合计</h2>
             <div id="monthly-list"><div class="empty-hint">暂无月度记录</div></div>
@@ -401,7 +425,6 @@
     <!-- ================= TAB 2: 健康系统 ================= -->
     <div id="tab-health" class="tab-content">
 
-        <!-- 顶部统一日期栏 -->
         <div class="day-bar">
             <div class="day-info">
                 <div>
@@ -486,7 +509,7 @@
             </div>
         </div>
 
-        <!-- 运动 -->
+        <!-- 运动 + 微运动 + 身体管理 -->
         <div class="card">
             <h2>🏃 运动</h2>
             <div class="exercise-week" id="exercise-week"></div>
@@ -508,6 +531,72 @@
             <div class="field"><label>感受 / 备注</label><input type="text" id="exercise-note" placeholder="如：跑完很轻松，膝盖无不适"></div>
             <button class="btn btn-primary" id="exercise-save">记录运动</button>
             <div id="exercise-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有运动记录</div></div>
+
+            <!-- ============ 微运动管理 ============ -->
+            <h3 style="margin-top:24px;">🧘 微运动管理</h3>
+            <div class="field">
+                <label>体态问题（可多选）</label>
+                <div class="chip-row" id="posture-chips"></div>
+                <input type="text" id="posture-other" class="other-input hidden" placeholder="请说明其他体态问题…">
+            </div>
+            <div class="field">
+                <label>微运动习惯（可多选）</label>
+                <div class="chip-row" id="habit-chips"></div>
+                <input type="text" id="habit-other" class="other-input hidden" placeholder="请说明其他微运动习惯…">
+            </div>
+            <div class="field"><label>备注</label><input type="text" id="micro-note" placeholder="如：今天靠墙站了3次，每次2分钟"></div>
+            <button class="btn btn-primary" id="micro-save">记录微运动</button>
+            <div id="micro-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有微运动记录</div></div>
+
+            <!-- ============ 身体管理 ============ -->
+            <h3 style="margin-top:24px;">💗 身体管理</h3>
+            <div class="field">
+                <label>身体信号（可多选）</label>
+                <div class="chip-row" id="signal-chips"></div>
+                <input type="text" id="signal-other" class="other-input hidden" placeholder="请说明其他身体信号…">
+            </div>
+
+            <div class="acne-card">
+                <div class="title">🫥 痘痘记录（选填）</div>
+                <div class="grid-3">
+                    <div class="field"><label>位置</label>
+                        <select id="acne-location">
+                            <option value="">无</option>
+                            <option value="forehead">额头</option>
+                            <option value="nose">鼻子</option>
+                            <option value="cheek">脸颊</option>
+                            <option value="chin">下巴</option>
+                            <option value="back">背部</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>类型</label>
+                        <select id="acne-type">
+                            <option value="">无</option>
+                            <option value="red">红肿</option>
+                            <option value="whitehead">白头</option>
+                            <option value="blackhead">黑头</option>
+                            <option value="closed">闭口</option>
+                        </select>
+                    </div>
+                    <div class="field"><label>严重程度（1-5）</label>
+                        <input type="number" id="acne-severity" min="1" max="5" placeholder="3">
+                    </div>
+                </div>
+                <div class="field" id="acne-location-other-field" style="display:none;">
+                    <label>痘痘位置（其他）</label>
+                    <input type="text" id="acne-location-other" placeholder="请说明具体位置…">
+                </div>
+                <div class="field" style="margin-bottom:0;"><label>痘痘备注</label>
+                    <input type="text" id="acne-note" placeholder="如：下巴附近，有点疼">
+                </div>
+            </div>
+
+            <div class="field" style="margin-top:10px;"><label>身体信号备注</label>
+                <input type="text" id="signal-note" placeholder="如：今天肩颈特别酸，可能坐太久了">
+            </div>
+            <button class="btn btn-primary" id="signal-save">记录身体信号</button>
+            <div id="body-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有身体信号记录</div></div>
         </div>
 
         <!-- 饮食与营养 -->
@@ -525,6 +614,43 @@
             <button class="btn btn-primary" id="meal-save">记录饮食并分析</button>
             <div class="food-analysis hidden" id="food-analysis"></div>
             <div id="meal-history" style="margin-top:12px;"><div class="empty-hint">这一天还没有饮食记录</div></div>
+        </div>
+
+        <!-- ============ AI 每日分析 ============ -->
+        <div class="card">
+            <h2>🤖 AI 每日分析</h2>
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:10px;">
+                配置一次 API Key，之后每天点「生成分析」即可
+            </div>
+
+            <details style="margin-bottom:10px;">
+                <summary style="cursor:pointer;color:#2d7d5a;font-weight:600;font-size:13px;">⚙️ API 配置（点击展开）</summary>
+                <div style="margin-top:10px;">
+                    <div class="field">
+                        <label>API Key</label>
+                        <input type="password" id="ai-api-key" placeholder="sk-...">
+                    </div>
+                    <div class="field">
+                        <label>API 地址</label>
+                        <input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions">
+                    </div>
+                    <div class="field">
+                        <label>模型</label>
+                        <input type="text" id="ai-model" value="deepseek-chat">
+                    </div>
+                    <button class="btn btn-ghost btn-sm" id="ai-save-config">保存配置</button>
+                    <span style="font-size:12px;color:#a0bdb0;margin-left:8px;">仅保存在本机浏览器</span>
+                </div>
+            </details>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="btn btn-primary" id="ai-analyze-btn">✨ 生成今日分析</button>
+                <button class="btn btn-ghost btn-sm" id="ai-clear-btn">清除今日分析</button>
+            </div>
+
+            <div id="ai-result">
+                <div class="empty-hint">还没有今日分析，点上方按钮生成</div>
+            </div>
         </div>
     </div>
 
@@ -672,7 +798,6 @@
             document.getElementById('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
             document.getElementById('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
 
-            // 支出明细
             const expenseListEl = document.getElementById('expense-list');
             if (accountsData.expenses.length === 0) {
                 expenseListEl.innerHTML = '<div class="empty-hint">还没有支出记录，开始记一笔吧</div>';
@@ -715,7 +840,6 @@
                 });
             }
 
-            // 收入明细
             const incomeListEl = document.getElementById('income-list');
             if (accountsData.incomeRecords.length === 0) {
                 incomeListEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>';
@@ -837,7 +961,6 @@
             accountsData = getDefaultAccountsData();
             saveAccountsData(); renderAccounts();
         };
-        // 账户切换显示/隐藏子分类
         (function () {
             const accountSel = document.getElementById('expense-account');
             const subSel = document.getElementById('expense-subcategory');
@@ -854,7 +977,7 @@
            ===================================================== */
         const HEALTH_KEY = 'health_system_data';
         function getDefaultHealthData() {
-            return { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [] };
+            return { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
         }
         function loadHealthData() {
             try {
@@ -882,6 +1005,76 @@
             renderHealthAll();
         }
         function filterByDay(list) { return list.filter(r => r.date === currentDay); }
+
+        /* ----- 常量：微运动 & 身体信号 ----- */
+        const POSTURE_ISSUES = [
+            { key: 'round_shoulder', label: '圆肩' },
+            { key: 'forward_head', label: '头前伸' },
+            { key: 'anterior_pelvic', label: '骨盆前倾' },
+            { key: 'hunchback', label: '驼背' },
+            { key: 'neck_forward', label: '颈前倾' },
+            { key: 'uneven_shoulder', label: '高低肩' },
+            { key: 'other', label: '其他' }
+        ];
+        const MICRO_HABITS = [
+            { key: 'wall_stand', label: '靠墙站' },
+            { key: 'chin_tuck', label: '收下巴' },
+            { key: 'neck_stretch', label: '肩颈拉伸' },
+            { key: 'shoulder_open', label: '开肩' },
+            { key: 'squat', label: '深蹲' },
+            { key: 'stand_reminder', label: '站姿提醒' },
+            { key: 'walk_break', label: '走动休息' },
+            { key: 'other', label: '其他' }
+        ];
+        const BODY_SIGNALS = [
+            { key: 'fatigue', label: '疲劳' },
+            { key: 'headache', label: '头痛' },
+            { key: 'stomach', label: '肠胃不适' },
+            { key: 'neck_pain', label: '肩颈酸' },
+            { key: 'back_pain', label: '腰酸' },
+            { key: 'eye_dry', label: '眼睛干涩' },
+            { key: 'mood_low', label: '情绪低落' },
+            { key: 'sleepy', label: '犯困' },
+            { key: 'other', label: '其他' }
+        ];
+
+        let selectedPosture = new Set();
+        let selectedHabit = new Set();
+        let selectedSignals = new Set();
+        let otherPostureText = '';
+        let otherHabitText = '';
+        let otherSignalText = '';
+
+        function buildChipRow(containerId, items, selectedSet) {
+            const el = document.getElementById(containerId);
+            let html = '';
+            items.forEach(it => {
+                const active = selectedSet.has(it.key) ? 'active' : '';
+                html += `<span class="chip ${active}" data-key="${it.key}">${esc(it.label)}</span>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('.chip').forEach(chip => {
+                chip.onclick = () => {
+                    const k = chip.dataset.key;
+                    if (selectedSet.has(k)) { selectedSet.delete(k); chip.classList.remove('active'); }
+                    else { selectedSet.add(k); chip.classList.add('active'); }
+                    updateOtherInputs();
+                };
+            });
+            updateOtherInputs();
+        }
+
+        function updateOtherInputs() {
+            const postureOther = document.getElementById('posture-other');
+            if (selectedPosture.has('other')) postureOther.classList.remove('hidden');
+            else postureOther.classList.add('hidden');
+            const habitOther = document.getElementById('habit-other');
+            if (selectedHabit.has('other')) habitOther.classList.remove('hidden');
+            else habitOther.classList.add('hidden');
+            const signalOther = document.getElementById('signal-other');
+            if (selectedSignals.has('other')) signalOther.classList.remove('hidden');
+            else signalOther.classList.add('hidden');
+        }
 
         /* ----- 睡眠 ----- */
         function renderSleep() {
@@ -1378,6 +1571,84 @@
             });
         }
 
+        /* ----- 微运动管理 ----- */
+        function renderMicro() {
+            const el = document.getElementById('micro-history');
+            const list = filterByDay(healthData.microExercise);
+            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有微运动记录</div>'; return; }
+            let html = '';
+            list.forEach(r => {
+                const postureLabels = (r.posture || []).map(p => {
+                    if (typeof p === 'string') {
+                        const it = POSTURE_ISSUES.find(x => x.key === p); return it ? it.label : p;
+                    }
+                    if (p.key === 'other') return p.custom ? '其他：' + p.custom : '其他';
+                    const it = POSTURE_ISSUES.find(x => x.key === p.key); return it ? it.label : p.key;
+                }).join(' · ') || '（无体态问题记录）';
+                const habitLabels = (r.habits || []).map(h => {
+                    if (typeof h === 'string') {
+                        const it = MICRO_HABITS.find(x => x.key === h); return it ? it.label : h;
+                    }
+                    if (h.key === 'other') return h.custom ? '其他：' + h.custom : '其他';
+                    const it = MICRO_HABITS.find(x => x.key === h.key); return it ? it.label : h.key;
+                }).join(' · ') || '（无微运动记录）';
+                html += `<div class="list-item">
+                    <div class="main">
+                        <div><span class="tag tag-neutral">体态</span> ${esc(postureLabels)}</div>
+                        <div style="margin-top:4px;"><span class="tag tag-good">微运动</span> ${esc(habitLabels)}</div>
+                        ${r.note ? `<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>` : ''}
+                    </div>
+                    <button class="btn btn-danger btn-sm" data-del-micro="${r.id}">✕</button>
+                </div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-micro]').forEach(b => {
+                b.onclick = () => { healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); saveHealthData(); renderMicro(); };
+            });
+        }
+
+        /* ----- 身体管理 ----- */
+        function renderBody() {
+            const el = document.getElementById('body-history');
+            const list = filterByDay(healthData.bodySignals);
+            if (list.length === 0) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
+            let html = '';
+            list.forEach(r => {
+                const sigLabels = (r.signals || []).map(s => {
+                    if (typeof s === 'string') {
+                        const it = BODY_SIGNALS.find(x => x.key === s); return it ? it.label : s;
+                    }
+                    if (s.key === 'other') return s.custom ? '其他：' + s.custom : '其他';
+                    const it = BODY_SIGNALS.find(x => x.key === s.key); return it ? it.label : s.key;
+                }).join(' · ') || '（无身体信号）';
+                const acne = r.acne || {};
+                const acneLocationMap = { forehead: '额头', nose: '鼻子', cheek: '脸颊', chin: '下巴', back: '背部' };
+                const acneTypeMap = { red: '红肿', whitehead: '白头', blackhead: '黑头', closed: '闭口' };
+                let acneText = '';
+                if (acne.location || acne.type || acne.severity || acne.note) {
+                    const parts = [];
+                    if (acne.location === 'other' && acne.locationCustom) parts.push('位置：其他（' + acne.locationCustom + '）');
+                    else if (acne.location) parts.push('位置：' + (acneLocationMap[acne.location] || acne.location));
+                    if (acne.type) parts.push('类型：' + (acneTypeMap[acne.type] || acne.type));
+                    if (acne.severity) parts.push('严重：' + acne.severity + '/5');
+                    if (acne.note) parts.push('备注：' + acne.note);
+                    acneText = parts.join(' · ');
+                }
+                html += `<div class="list-item">
+                    <div class="main">
+                        <div><span class="tag tag-warn">身体</span> ${esc(sigLabels)}</div>
+                        ${acneText ? `<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(acneText)}</div>` : ''}
+                        ${r.note ? `<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>` : ''}
+                    </div>
+                    <button class="btn btn-danger btn-sm" data-del-body="${r.id}">✕</button>
+                </div>`;
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-del-body]').forEach(b => {
+                b.onclick = () => { healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); saveHealthData(); renderBody(); };
+            });
+        }
+
         /* ----- 饮食 ----- */
         function renderMeal() {
             const el = document.getElementById('meal-history');
@@ -1434,7 +1705,7 @@
             };
         }
 
-        /* ----- 健康系统保存操作 ----- */
+        /* ----- 保存：睡眠/能量/充电/运动/饮食 ----- */
         document.getElementById('sleep-save').onclick = () => {
             const start = document.getElementById('sleep-start').value;
             const end = document.getElementById('sleep-end').value;
@@ -1490,6 +1761,64 @@
             document.getElementById('exercise-note').value = '';
         };
 
+        document.getElementById('micro-save').onclick = () => {
+            if (selectedPosture.size === 0 && selectedHabit.size === 0) {
+                return alert('请至少选择一个体态问题或微运动习惯');
+            }
+            otherPostureText = document.getElementById('posture-other').value.trim();
+            otherHabitText = document.getElementById('habit-other').value.trim();
+            healthData.microExercise.unshift({
+                id: Date.now(), date: currentDay,
+                posture: Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: otherPostureText } : { key: k }),
+                habits: Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: otherHabitText } : { key: k }),
+                note: document.getElementById('micro-note').value.trim()
+            });
+            saveHealthData(); renderMicro();
+            selectedPosture.clear(); selectedHabit.clear();
+            otherPostureText = ''; otherHabitText = '';
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            document.getElementById('posture-other').value = '';
+            document.getElementById('habit-other').value = '';
+            document.getElementById('micro-note').value = '';
+            updateOtherInputs();
+        };
+
+        document.getElementById('signal-save').onclick = () => {
+            otherSignalText = document.getElementById('signal-other').value.trim();
+            const acneLocation = document.getElementById('acne-location').value;
+            const acne = {
+                location: acneLocation,
+                locationCustom: acneLocation === 'other' ? document.getElementById('acne-location-other').value.trim() : '',
+                type: document.getElementById('acne-type').value,
+                severity: parseInt(document.getElementById('acne-severity').value, 10) || null,
+                note: document.getElementById('acne-note').value.trim()
+            };
+            const hasAcne = acne.location || acne.type || acne.severity || acne.note;
+            if (selectedSignals.size === 0 && !hasAcne) {
+                return alert('请至少选择一个身体信号，或填写痘痘记录');
+            }
+            healthData.bodySignals.unshift({
+                id: Date.now(), date: currentDay,
+                signals: Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: otherSignalText } : { key: k }),
+                acne: hasAcne ? acne : null,
+                note: document.getElementById('signal-note').value.trim()
+            });
+            saveHealthData(); renderBody();
+            selectedSignals.clear();
+            otherSignalText = '';
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+            document.getElementById('signal-other').value = '';
+            document.getElementById('acne-location').value = '';
+            document.getElementById('acne-location-other').value = '';
+            document.getElementById('acne-location-other-field').style.display = 'none';
+            document.getElementById('acne-type').value = '';
+            document.getElementById('acne-severity').value = '';
+            document.getElementById('acne-note').value = '';
+            document.getElementById('signal-note').value = '';
+            updateOtherInputs();
+        };
+
         document.getElementById('meal-save').onclick = () => {
             const meals = {
                 breakfast: document.getElementById('meal-breakfast').value.trim(),
@@ -1525,6 +1854,194 @@
             });
         };
 
+        /* ----- 痘痘位置「其他」显示/隐藏 ----- */
+        document.getElementById('acne-location').addEventListener('change', function () {
+            const field = document.getElementById('acne-location-other-field');
+            if (this.value === 'other') field.style.display = '';
+            else field.style.display = 'none';
+        });
+
+        /* =====================================================
+           AI 每日分析
+           ===================================================== */
+        const AI_KEY_STORAGE = 'ai_analyze_config';
+
+        function getAIConfig() {
+            try {
+                const raw = localStorage.getItem(AI_KEY_STORAGE);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
+        }
+        function saveAIConfig(cfg) {
+            localStorage.setItem(AI_KEY_STORAGE, JSON.stringify(cfg));
+        }
+
+        function collectDayData() {
+            const day = currentDay;
+            return {
+                date: day,
+                sleep: healthData.sleep.filter(r => r.date === day),
+                energy: healthData.energy.filter(r => r.date === day),
+                charge: healthData.charge.filter(r => r.date === day),
+                exercise: healthData.exercise.filter(r => r.date === day),
+                micro: healthData.microExercise.filter(r => r.date === day),
+                body: healthData.bodySignals.filter(r => r.date === day),
+                meal: healthData.meal.filter(r => r.date === day),
+                innerPeace: healthData.innerPeace.filter(r => r.date === day)
+            };
+        }
+
+        function buildPrompt(d) {
+            const lines = [];
+            lines.push('请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。');
+            lines.push('');
+            lines.push(`【日期】${d.date}`);
+            lines.push('');
+
+            if (d.sleep.length) {
+                const s = d.sleep[0];
+                const feelingMap = { refreshed: '神清气爽', ok: '还行', tired: '疲惫', groggy: '昏沉' };
+                lines.push(`【睡眠】${s.start_time} → ${s.end_time}（${feelingMap[s.feeling] || s.feeling}）${s.note ? '，' + s.note : ''}`);
+            } else lines.push('【睡眠】未记录');
+
+            if (d.energy.length) {
+                const e = d.energy[0];
+                lines.push(`【能量】上午 ${e.am_score}/10 · 下午 ${e.pm_score}/10${e.note ? '，' + e.note : ''}`);
+            } else lines.push('【能量】未记录');
+
+            if (d.charge.length) {
+                const typeMap = { rest: '休息', nature: '接触自然', social: '社交', hobby: '爱好', exercise: '轻度运动', food: '好好吃饭', other: '其他' };
+                lines.push('【充电】' + d.charge.map(c => `${typeMap[c.type] || c.type}（能量${c.delta > 0 ? '+' : ''}${c.delta}）${c.note ? '：' + c.note : ''}`).join('；'));
+            }
+
+            if (d.exercise.length) {
+                const typeMap = { walk: '散步', run: '跑步', cycling: '骑行', strength: '力量', yoga: '瑜伽', ball: '球类', swim: '游泳', other: '其他' };
+                lines.push('【运动】' + d.exercise.map(x => `${typeMap[x.type] || x.type} ${x.duration}分钟${x.note ? '（' + x.note + '）' : ''}`).join('；'));
+            } else lines.push('【运动】未记录');
+
+            if (d.micro.length) {
+                const postureMap = { round_shoulder: '圆肩', forward_head: '头前伸', anterior_pelvic: '骨盆前倾', hunchback: '驼背', neck_forward: '颈前倾', uneven_shoulder: '高低肩' };
+                const habitMap = { wall_stand: '靠墙站', chin_tuck: '收下巴', neck_stretch: '肩颈拉伸', shoulder_open: '开肩', squat: '深蹲', stand_reminder: '站姿提醒', walk_break: '走动休息' };
+                const m = d.micro[0];
+                const posture = (m.posture || []).map(p => typeof p === 'string' ? (postureMap[p] || p) : (p.key === 'other' ? p.custom : (postureMap[p.key] || p.key))).join('、');
+                const habits = (m.habits || []).map(h => typeof h === 'string' ? (habitMap[h] || h) : (h.key === 'other' ? h.custom : (habitMap[h.key] || h.key))).join('、');
+                lines.push(`【微运动】体态：${posture || '无'}；习惯：${habits || '无'}${m.note ? '；' + m.note : ''}`);
+            }
+
+            if (d.body.length) {
+                const signalMap = { fatigue: '疲劳', headache: '头痛', stomach: '肠胃不适', neck_pain: '肩颈酸', back_pain: '腰酸', eye_dry: '眼睛干涩', mood_low: '情绪低落', sleepy: '犯困' };
+                const b = d.body[0];
+                const sigs = (b.signals || []).map(s => typeof s === 'string' ? (signalMap[s] || s) : (s.key === 'other' ? s.custom : (signalMap[s.key] || s.key))).join('、');
+                let acneText = '';
+                if (b.acne && (b.acne.location || b.acne.type || b.acne.note)) {
+                    const locMap = { forehead: '额头', nose: '鼻子', cheek: '脸颊', chin: '下巴', back: '背部', other: '其他' };
+                    const typeMap2 = { red: '红肿', whitehead: '白头', blackhead: '黑头', closed: '闭口' };
+                    const parts = [];
+                    if (b.acne.location) parts.push('位置' + (b.acne.location === 'other' ? (b.acne.locationCustom || '其他') : locMap[b.acne.location]));
+                    if (b.acne.type) parts.push(typeMap2[b.acne.type]);
+                    if (b.acne.severity) parts.push('严重度' + b.acne.severity);
+                    acneText = '；痘痘：' + parts.join('·');
+                }
+                lines.push(`【身体信号】${sigs || '无'}${acneText}${b.note ? '；' + b.note : ''}`);
+            }
+
+            if (d.meal.length) {
+                const m = d.meal[0];
+                lines.push(`【饮食】早：${m.breakfast || '—'}；午：${m.lunch || '—'}；晚：${m.dinner || '—'}；加餐：${m.snack || '—'}；饮水：${m.water || 0}杯`);
+            } else lines.push('【饮食】未记录');
+
+            if (d.innerPeace.length) {
+                lines.push(`【反内耗】今天做了 ${d.innerPeace.length} 次练习。感受：${d.innerPeace.map(x => x.feeling || '（无）').join('；')}`);
+            }
+
+            lines.push('');
+            lines.push('请从以下 4 个角度输出（用 Markdown 格式，简洁友好，不要评判说教）：');
+            lines.push('1. **今日状态小结**（2-3句）');
+            lines.push('2. **亮点**（1-3条，具体到记录里提到的事）');
+            lines.push('3. **需要温柔关注的地方**（1-3条，不要制造焦虑）');
+            lines.push('4. **明天的一个小建议**（1条，具体可执行，10-30分钟内能完成）');
+            return lines.join('\n');
+        }
+
+        function md2html(content) {
+            return content
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
+                .replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
+                .replace(/^- (.+)$/gm, '• $1')
+                .replace(/\n/g, '<br>');
+        }
+
+        async function runAIAnalysis() {
+            const cfg = getAIConfig();
+            if (!cfg.apiKey) {
+                alert('请先在「⚙️ API 配置」中填写 API Key');
+                return;
+            }
+            const resultEl = document.getElementById('ai-result');
+            const btn = document.getElementById('ai-analyze-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中...';
+            resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI，请稍候…</div>';
+
+            const d = collectDayData();
+            const prompt = buildPrompt(d);
+
+            try {
+                const res = await fetch(cfg.apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + cfg.apiKey
+                    },
+                    body: JSON.stringify({
+                        model: cfg.model,
+                        messages: [
+                            { role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。善于从记录中观察细节，给出具体可执行的小建议。' },
+                            { role: 'user', content: prompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 800
+                    })
+                });
+
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
+                }
+                const json = await res.json();
+                const content = json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+                if (!content) throw new Error('返回内容为空');
+
+                resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
+
+                const existing = healthData.aiAnalysis || [];
+                healthData.aiAnalysis = existing.filter(x => x.date !== currentDay);
+                healthData.aiAnalysis.push({ date: currentDay, content, ts: Date.now() });
+                saveHealthData();
+            } catch (err) {
+                console.error(err);
+                resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}<br><span style="font-size:12px;color:#888;">请检查 API Key、网络，或浏览器控制台。</span></div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ 生成今日分析';
+            }
+        }
+
+        function renderAIAnalysis() {
+            const list = (healthData.aiAnalysis || []).filter(x => x.date === currentDay);
+            const resultEl = document.getElementById('ai-result');
+            if (list.length === 0) {
+                resultEl.innerHTML = '<div class="empty-hint">还没有今日分析，点上方按钮生成</div>';
+                return;
+            }
+            const content = list[0].content || '';
+            resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
+        }
+
         /* ----- 健康数据导入/导出/重置 ----- */
         document.getElementById('export-btn').onclick = () => {
             const blob = new Blob([JSON.stringify(healthData, null, 2)], { type: 'application/json' });
@@ -1555,6 +2072,14 @@
             healthData = getDefaultHealthData();
             saveHealthData(); resetIpSession(); renderHealthAll();
             document.getElementById('food-analysis').classList.add('hidden');
+            selectedPosture.clear(); selectedHabit.clear(); selectedSignals.clear();
+            otherPostureText = ''; otherHabitText = ''; otherSignalText = '';
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+            document.getElementById('posture-other').value = '';
+            document.getElementById('habit-other').value = '';
+            document.getElementById('signal-other').value = '';
         };
 
         /* ----- 日期栏事件 ----- */
@@ -1568,18 +2093,17 @@
         /* ----- 渲染健康系统全部 ----- */
         function renderHealthAll() {
             renderSleep(); renderEnergy(); renderCharge();
-            renderExercise(); renderMeal();
+            renderExercise(); renderMicro(); renderBody(); renderMeal();
             renderInnerPeaceHistory();
+            renderAIAnalysis();
         }
 
         /* ================= 初始化 ================= */
         document.addEventListener('DOMContentLoaded', function () {
-            // 三账户默认值
             document.getElementById('expense-date').value = todayStr();
             document.getElementById('income-date').value = todayStr();
             renderAccounts();
 
-            // 健康系统默认值
             document.getElementById('sleep-start').value = '23:00';
             document.getElementById('sleep-end').value = '07:00';
 
@@ -1598,6 +2122,37 @@
             buildScoreRow(document.getElementById('energy-pm'));
             document.querySelectorAll('#energy-am .score-btn')[4].click();
             document.querySelectorAll('#energy-pm .score-btn')[4].click();
+
+            // 生成微运动 chip
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+
+            // ===== AI 分析初始化 =====
+            (function initAI() {
+                const cfg = getAIConfig();
+                document.getElementById('ai-api-key').value = cfg.apiKey || '';
+                document.getElementById('ai-api-url').value = cfg.apiUrl;
+                document.getElementById('ai-model').value = cfg.model;
+
+                document.getElementById('ai-save-config').onclick = () => {
+                    const newCfg = {
+                        apiKey: document.getElementById('ai-api-key').value.trim(),
+                        apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
+                        model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
+                    };
+                    saveAIConfig(newCfg);
+                    alert('已保存 ✓');
+                };
+
+                document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
+                document.getElementById('ai-clear-btn').onclick = () => {
+                    if (!confirm('清除今天的 AI 分析？')) return;
+                    healthData.aiAnalysis = (healthData.aiAnalysis || []).filter(x => x.date !== currentDay);
+                    saveHealthData();
+                    renderAIAnalysis();
+                };
+            })();
 
             updateDayBar();
             resetIpSession();
