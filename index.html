@@ -162,6 +162,16 @@
         .auth-row { display: flex; gap: 10px; margin-top: 10px; }
         .auth-row button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; font-size: 14px; }
         .loading-overlay { text-align: center; padding: 60px 20px; color: #6b8a7e; }
+        
+        /* 高亮闪烁动画 */
+        .highlight-row {
+            animation: flash 1.5s ease-out;
+        }
+        @keyframes flash {
+            0% { background-color: #fff3e0; }
+            100% { background-color: transparent; }
+        }
+
         @media (max-width: 500px) {
             .grid-3 { grid-template-columns: 1fr 1fr; }
             body { padding: 10px; }
@@ -268,7 +278,7 @@
             </div>
 
             <!-- 按月折叠的支出明细 -->
-            <div class="card">
+            <div class="card" id="expense-card">
                 <h2>📋 支出明细</h2>
                 <div id="expense-list"><div class="empty-hint">还没有支出记录</div></div>
                 <div style="margin-top:12px;font-size:13px;color:#888;" id="accounts-summary"></div>
@@ -874,7 +884,7 @@
                     const isOpen = idx === 0 ? 'open' : '';
 
                     html += `
-                    <details style="margin-bottom: 12px; background: #fafcfb; border-radius: 8px; border: 1px solid #eef4f1; overflow: hidden;" ${isOpen}>
+                    <details style="margin-bottom: 12px; background: #fafcfb; border-radius: 8px; border: 1px solid #eef4f1; overflow: hidden;" data-month="${m}" ${isOpen}>
                         <summary style="padding: 12px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #1a5c47; background: #fff; outline: none;">
                             <span style="font-size: 14px;">${mLabel}</span>
                             <span style="font-size: 13px; color: #c0392b;">¥${monthTotal.toFixed(2)} <span style="color:#888;font-weight:normal;font-size:12px;margin-left:8px;">(${list.length} 笔)</span></span>
@@ -902,7 +912,7 @@
                                 ${Object.keys(SUB_CATEGORIES).map(k => `<option value="${k}" ${cur===k?'selected':''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`).join('')}
                             </select>`;
                         }
-                        html += `<tr>
+                        html += `<tr data-day="${dayVal}">
                             <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;"><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
                             <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;">${accountCell}</td>
                             <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;">${esc(e.desc)}</td>
@@ -1000,40 +1010,86 @@
                 return b.month.localeCompare(a.month);
             });
             if (list.length === 0) { listEl.innerHTML = '<div class="empty-hint">暂无月度记录</div>'; return; }
+            
             let tI = 0, tE = 0, html = '';
-            list.forEach(m => {
+            list.forEach((m, idx) => {
                 tI += m.income; tE += m.expense;
                 const bal = m.income - m.expense;
                 const cls = bal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
                 const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
-                const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + dayKeys.map(k => {
+                
+                // 生成可点击的每日标签
+                const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;border-top:1px dashed #eee;padding-top:10px;">' + dayKeys.map(k => {
                     const d = m.days[k];
                     const label = k === 'unknown' ? '未记录' : shortDay(k);
-                    return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
+                    // 增加 data-day 和可点击样式
+                    const isClickable = k !== 'unknown' ? `class="clickable-chip" data-day="${k}" style="cursor:pointer; font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px; transition:all 0.2s;" onmouseover="this.style.borderColor='#2d7d5a'; this.style.color='#2d7d5a'" onmouseout="this.style.borderColor='#e8e8e8'; this.style.color='#666'" title="点击查看该日明细"` 
+                                    : `style="font-size:11px;color:#999;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;"`;
+                    return `<span ${isClickable}>${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
                 }).join('') + '</div>' : '';
+
                 let sd = `生存 ${m.byAccount.survival.toFixed(2)}`;
                 if (m.byAccount.survival > 0) sd += ` <span style="color:#aaa;">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
-                html += `<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                        <span style="font-size:14px;font-weight:600;">${monthLabel(m.month)}</span>
-                        <span style="font-size:15px;font-weight:600;${cls}">${bal>0?'+':''}${bal.toFixed(2)}</span>
+
+                const isOpen = idx === 0 ? 'open' : '';
+
+                // 将每个月的块改为 details 折叠
+                html += `
+                <details style="background:#f8f9fa;border-radius:8px;margin-bottom:8px; overflow:hidden;" ${isOpen}>
+                    <summary style="padding:10px 12px; cursor:pointer; outline:none; user-select:none;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="font-size:14px;font-weight:600;">${monthLabel(m.month)}</span>
+                            <span style="font-size:15px;font-weight:600;${cls}">${bal>0?'+':''}${bal.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:#777;">
+                            <span>收入 <b style="color:#2d7d46;">${m.income.toFixed(2)}</b></span>
+                            <span>支出 <b style="color:#c0392b;">${m.expense.toFixed(2)}</b></span>
+                            <span style="color:#aaa;">${m.count} 笔</span>
+                        </div>
+                        <div style="margin-top:6px;font-size:12px;color:#999;">${sd} · 稳定 ${m.byAccount.stable.toFixed(2)} · 发展 ${m.byAccount.develop.toFixed(2)}</div>
+                    </summary>
+                    <div style="padding: 0 12px 12px;">
+                        ${dayHtml}
                     </div>
-                    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:#777;">
-                        <span>收入 <b style="color:#2d7d46;">${m.income.toFixed(2)}</b></span>
-                        <span>支出 <b style="color:#c0392b;">${m.expense.toFixed(2)}</b></span>
-                        <span style="color:#aaa;">${m.count} 笔</span>
-                    </div>
-                    <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e5e5;font-size:12px;color:#999;">${sd} · 稳定 ${m.byAccount.stable.toFixed(2)} · 发展 ${m.byAccount.develop.toFixed(2)}</div>
-                    ${dayHtml}
-                </div>`;
+                </details>`;
             });
             const tb = tI - tE;
-            html += `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 4px 0;border-top:2px solid #eee;font-size:13px;">
+            html += `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 4px 0;border-top:2px solid #eee;font-size:13px;margin-top:12px;">
                 <span>合计收入 <b style="color:#2d7d46;">${tI.toFixed(2)}</b></span>
                 <span>合计支出 <b style="color:#c0392b;">${tE.toFixed(2)}</b></span>
                 <span>总结余 <b style="${tb>=0?'color:#2d7d46;':'color:#c0392b;'}">${tb>0?'+':''}${tb.toFixed(2)}</b></span>
             </div>`;
             listEl.innerHTML = html;
+
+            // 绑定点击事件，点击当日标签跳转并高亮
+            listEl.querySelectorAll('.clickable-chip').forEach(chip => {
+                chip.onclick = (e) => {
+                    const day = e.target.dataset.day;
+                    if (!day) return;
+                    const month = day.slice(0, 7);
+                    
+                    // 1. 自动展开“支出明细”里对应的月份
+                    const monthDetail = document.querySelector(`#expense-list details[data-month="${month}"]`);
+                    if (monthDetail) {
+                        monthDetail.open = true;
+                    }
+                    
+                    // 2. 滚动到“支出明细”卡片
+                    document.getElementById('expense-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // 3. 高亮该日期的记录行
+                    setTimeout(() => {
+                        const rows = document.querySelectorAll(`#expense-list tr[data-day="${day}"]`);
+                        if (rows.length > 0) {
+                            rows.forEach(r => r.classList.add('highlight-row'));
+                            // 动画结束后移除类名
+                            setTimeout(() => {
+                                rows.forEach(r => r.classList.remove('highlight-row'));
+                            }, 2000);
+                        }
+                    }, 300); // 稍微延迟一下，等滚动和展开动画完成
+                };
+            });
         }
 
         /* ================= 健康系统 ================= */
