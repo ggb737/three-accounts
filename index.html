@@ -221,6 +221,28 @@
                 </div>
             </div>
 
+            <!-- 账户间转换 -->
+            <div class="card">
+                <h2>🔄 账户间转换</h2>
+                <div class="form-row" style="align-items:center;">
+                    <select id="transfer-from">
+                        <option value="survival">生存账户</option>
+                        <option value="stable">稳定账户</option>
+                        <option value="develop">发展账户</option>
+                    </select>
+                    <span style="font-weight:bold;color:#2d7d5a;">→</span>
+                    <select id="transfer-to">
+                        <option value="survival">生存账户</option>
+                        <option value="stable" selected>稳定账户</option>
+                        <option value="develop">发展账户</option>
+                    </select>
+                    <input type="number" id="transfer-amount" placeholder="金额" step="0.01">
+                    <input type="date" id="transfer-date">
+                    <input type="text" id="transfer-desc" placeholder="备注（可选）">
+                    <button id="transfer-btn" style="background:#2d7d5a;">确认转换</button>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>✏️ 记一笔支出</h2>
                 <div class="form-row">
@@ -254,6 +276,11 @@
                 <h2>📋 支出明细</h2>
                 <div id="expense-list"><div class="empty-hint">还没有支出记录</div></div>
                 <div style="margin-top:12px;font-size:13px;color:#888;" id="accounts-summary"></div>
+            </div>
+
+            <div class="card">
+                <h2>🔁 转换明细</h2>
+                <div id="transfer-list"><div class="empty-hint">还没有转换记录</div></div>
             </div>
 
             <div class="card">
@@ -511,7 +538,7 @@
         ];
 
         /* ================= 内存数据 ================= */
-        let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+        let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
         let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 
         /* ================= UI ================= */
@@ -556,7 +583,7 @@
             showLoadingUI();
             // 账户
             const { data: records } = await sb.from('records').select('*').order('ts', { ascending: true });
-            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
             (records || []).forEach(r => {
                 if (r.type === 'income') {
                     accountsData.income += r.amount;
@@ -564,6 +591,15 @@
                     accountsData.balances.survival += r.amount * RATIOS.survival;
                     accountsData.balances.stable += r.amount * RATIOS.stable;
                     accountsData.balances.develop += r.amount * RATIOS.develop;
+                } else if (r.type === 'transfer') {
+                    accountsData.balances[r.account] -= r.amount;
+                    if (accountsData.balances[r.sub_category] !== undefined) {
+                        accountsData.balances[r.sub_category] += r.amount;
+                    }
+                    accountsData.transfers.push({ 
+                        id: r.id, amount: r.amount, from: r.account, to: r.sub_category, 
+                        desc: r.description, day: r.day, month: r.month, ts: r.ts 
+                    });
                 } else {
                     accountsData.balances[r.account] -= r.amount;
                     accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
@@ -689,6 +725,22 @@
             renderAccounts();
             return true;
         }
+        async function addTransfer(amount, from, to, desc, day) {
+            if (from === to) { alert('转出和转入账户不能相同'); return false; }
+            if (isNaN(amount) || amount <= 0) { alert('请输入有效金额'); return false; }
+            if (accountsData.balances[from] < amount) { alert('⚠️ 转出账户余额不足！'); return false; }
+            const d = isValidDay(day) ? day : todayStr();
+            const ts = Date.now();
+            const record = { type: 'transfer', amount, account: from, subCategory: to, desc: desc || '账户转换', day: d, month: d.slice(0,7), ts };
+            const inserted = await pushAccountRecord(record);
+            if (!inserted) return false;
+            record.id = inserted.id;
+            accountsData.balances[from] -= amount;
+            accountsData.balances[to] += amount;
+            accountsData.transfers.push({ id: inserted.id, amount, from, to, desc: record.desc, day: d, month: record.month, ts });
+            renderAccounts();
+            return true;
+        }
         async function deleteExpense(id) {
             const idx = accountsData.expenses.findIndex(e => String(e.id) === String(id));
             if (idx === -1) return;
@@ -696,6 +748,16 @@
             await deleteAccountRecord(id);
             accountsData.balances[item.account] += item.amount;
             accountsData.expenses.splice(idx, 1);
+            renderAccounts();
+        }
+        async function deleteTransfer(id) {
+            const idx = accountsData.transfers.findIndex(e => String(e.id) === String(id));
+            if (idx === -1) return;
+            const item = accountsData.transfers[idx];
+            await deleteAccountRecord(id);
+            accountsData.balances[item.from] += item.amount;
+            accountsData.balances[item.to] -= item.amount;
+            accountsData.transfers.splice(idx, 1);
             renderAccounts();
         }
         async function updateExpenseDate(id, newDate) {
@@ -763,6 +825,32 @@
                 expEl.querySelectorAll('.edit-expense-date').forEach(inp => inp.addEventListener('change', function() { updateExpenseDate(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('.edit-subcategory').forEach(sel => sel.addEventListener('change', function() { updateExpenseSubcategory(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('[data-del-expense]').forEach(b => b.onclick = () => deleteExpense(b.dataset.delExpense));
+            }
+
+            const transEl = document.getElementById('transfer-list');
+            if (accountsData.transfers.length === 0) {
+                transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>';
+            } else {
+                const sorted = [...accountsData.transfers].sort((a, b) => {
+                    const da = recordDay(a), db = recordDay(b);
+                    if (da !== db) return db.localeCompare(da);
+                    return (b.ts||0) - (a.ts||0);
+                });
+                let html = '<table><thead><tr><th>日期</th><th>转换路径</th><th>备注</th><th>金额</th><th></th></tr></thead><tbody>';
+                sorted.forEach(e => {
+                    html += `<tr>
+                        <td>${shortDay(e.day)}</td>
+                        <td style="font-size:12px;">
+                            <span class="tag tag-warn">${ACCOUNT_LABEL[e.from]}</span> → <span class="tag tag-good">${ACCOUNT_LABEL[e.to]}</span>
+                        </td>
+                        <td>${esc(e.desc)}</td>
+                        <td>${e.amount.toFixed(2)}</td>
+                        <td><button class="btn btn-danger btn-sm" data-del-transfer="${e.id}">✕</button></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                transEl.innerHTML = html;
+                transEl.querySelectorAll('[data-del-transfer]').forEach(b => b.onclick = () => deleteTransfer(b.dataset.delTransfer));
             }
 
             const incEl = document.getElementById('income-list');
@@ -1407,13 +1495,25 @@
             const day = document.getElementById('income-date').value || todayStr();
             if (await addIncome(amount, day)) document.getElementById('income-amount').value = '';
         };
+        document.getElementById('transfer-btn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('transfer-amount').value);
+            const from = document.getElementById('transfer-from').value;
+            const to = document.getElementById('transfer-to').value;
+            const desc = document.getElementById('transfer-desc').value.trim();
+            const day = document.getElementById('transfer-date').value || todayStr();
+            if (await addTransfer(amount, from, to, desc, day)) {
+                document.getElementById('transfer-amount').value = '';
+                document.getElementById('transfer-desc').value = '';
+            }
+        };
         document.getElementById('reset-accounts-btn').onclick = async () => {
             if (!confirm('确定清空三账户数据？')) return;
             await sb.from('records').delete().eq('user_id', currentUser.id);
-            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [] };
+            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
             renderAccounts();
         };
         document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
+        document.getElementById('transfer-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('transfer-btn').click(); });
         (function () {
             const a = document.getElementById('expense-account'), s = document.getElementById('expense-subcategory');
             function u() { if (a.value === 'survival') { s.style.display = ''; s.disabled = false; } else { s.style.display = 'none'; s.disabled = true; } }
@@ -1450,56 +1550,4 @@
         document.getElementById('ai-clear-btn').onclick = async () => {
             if (!confirm('清除今天的 AI 分析？')) return;
             const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
-            for (const e of list) { await deleteHealthRecord(e.id); }
-            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-            renderAIAnalysis();
-        };
-
-        /* ================= 启动 ================= */
-        document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('expense-date').value = todayStr();
-            document.getElementById('income-date').value = todayStr();
-            document.getElementById('sleep-start').value = '23:00';
-            document.getElementById('sleep-end').value = '07:00';
-
-            // 能量打分
-            function buildScoreRow(el) {
-                let html = '';
-                for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
-                el.innerHTML = html;
-                el.querySelectorAll('.score-btn').forEach(btn => {
-                    btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
-                });
-            }
-            buildScoreRow(document.getElementById('energy-am'));
-            buildScoreRow(document.getElementById('energy-pm'));
-            document.querySelectorAll('#energy-am .score-btn')[4].click();
-            document.querySelectorAll('#energy-pm .score-btn')[4].click();
-
-            // chip
-            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
-            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-
-            // AI 配置回填
-            const cfg = getAIConfig();
-            document.getElementById('ai-api-key').value = cfg.apiKey || '';
-            document.getElementById('ai-api-url').value = cfg.apiUrl;
-            document.getElementById('ai-model').value = cfg.model;
-
-            updateDayBar();
-            resetIpSession();
-
-            // 检查登录
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                await loadAllFromCloud();
-                setupRealtime();
-            } else {
-                showLoginUI();
-            }
-        });
-    </script>
-</body>
-</html>
+            for (const e of list) { await deleteHealthRecord
