@@ -267,6 +267,7 @@
                 </div>
             </div>
 
+            <!-- 按月折叠的支出明细 -->
             <div class="card">
                 <h2>📋 支出明细</h2>
                 <div id="expense-list"><div class="empty-hint">还没有支出记录</div></div>
@@ -813,41 +814,88 @@
             document.getElementById('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
             document.getElementById('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
 
+            // ===== 支出明细按月折叠 =====
             const expEl = document.getElementById('expense-list');
             if (accountsData.expenses.length === 0) {
                 expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>';
             } else {
-                const sorted = [...accountsData.expenses].sort((a, b) => {
-                    const da = recordDay(a), db = recordDay(b);
-                    if (da !== db) return db.localeCompare(da);
-                    return (b.ts||0) - (a.ts||0);
+                // 按月分组
+                const grouped = {};
+                accountsData.expenses.forEach(e => {
+                    const m = recordMonth(e);
+                    if (!grouped[m]) grouped[m] = [];
+                    grouped[m].push(e);
                 });
-                let html = '<table><thead><tr><th>日期</th><th>账户/分类</th><th>用途</th><th>金额</th><th></th></tr></thead><tbody>';
-                sorted.forEach(e => {
-                    const dayVal = recordDay(e) === 'unknown' ? '' : recordDay(e);
-                    let accountCell = `<div class="account-cell-label">${esc(ACCOUNT_LABEL[e.account] || e.account)}</div>`;
-                    if (e.account === 'survival') {
-                        const cur = e.subCategory || '';
-                        accountCell += `<select class="edit-subcategory" data-id="${e.id}">
-                            <option value="" ${cur===''?'selected':''}>— 未分类 —</option>
-                            ${Object.keys(SUB_CATEGORIES).map(k => `<option value="${k}" ${cur===k?'selected':''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`).join('')}
-                        </select>`;
-                    }
-                    html += `<tr>
-                        <td><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
-                        <td>${accountCell}</td>
-                        <td>${esc(e.desc)}</td>
-                        <td>${e.amount.toFixed(2)}</td>
-                        <td><button class="btn btn-danger btn-sm" data-del-expense="${e.id}">✕</button></td>
-                    </tr>`;
+
+                // 月份倒序
+                const months = Object.keys(grouped).sort((a, b) => {
+                    if (a === 'unknown') return 1;
+                    if (b === 'unknown') return -1;
+                    return b.localeCompare(a);
                 });
-                html += '</tbody></table>';
+
+                let html = '';
+                months.forEach((m, idx) => {
+                    const list = grouped[m].sort((a, b) => {
+                        const da = recordDay(a), db = recordDay(b);
+                        if (da !== db) return db.localeCompare(da);
+                        return (b.ts || 0) - (a.ts || 0);
+                    });
+                    const monthTotal = list.reduce((sum, e) => sum + e.amount, 0);
+                    const mLabel = monthLabel(m);
+
+                    // 默认展开最新一个月
+                    const isOpen = idx === 0 ? 'open' : '';
+
+                    html += `<details style="margin-bottom: 12px; background: #fafcfb; border-radius: 8px; border: 1px solid #eef4f1; overflow: hidden;" ${isOpen}>
+                        <summary style="padding: 12px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #1a5c47; background: #fff;">
+                            <span>${mLabel}</span>
+                            <span style="font-size: 13px; color: #c0392b;">¥${monthTotal.toFixed(2)} <span style="color:#888;font-weight:normal;font-size:12px;margin-left:8px;">(${list.length} 笔)</span></span>
+                        </summary>
+                        <div style="padding: 0 12px 12px; border-top: 1px solid #eef4f1;">
+                            <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #eee;color:#888;font-weight:500;font-size:12px;">日期</th>
+                                        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #eee;color:#888;font-weight:500;font-size:12px;">账户/分类</th>
+                                        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #eee;color:#888;font-weight:500;font-size:12px;">用途</th>
+                                        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #eee;color:#888;font-weight:500;font-size:12px;">金额</th>
+                                        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #eee;color:#888;font-weight:500;font-size:12px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                    list.forEach(e => {
+                        const dayVal = recordDay(e) === 'unknown' ? '' : recordDay(e);
+                        let accountCell = `<div class="account-cell-label">${esc(ACCOUNT_LABEL[e.account] || e.account)}</div>`;
+                        if (e.account === 'survival') {
+                            const cur = e.subCategory || '';
+                            accountCell += `<select class="edit-subcategory" data-id="${e.id}">
+                                <option value="" ${cur===''?'selected':''}>— 未分类 —</option>
+                                ${Object.keys(SUB_CATEGORIES).map(k => `<option value="${k}" ${cur===k?'selected':''}>${SUB_CATEGORIES[k].icon} ${SUB_CATEGORIES[k].label}</option>`).join('')}
+                            </select>`;
+                        }
+                        html += `<tr>
+                            <td><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
+                            <td>${accountCell}</td>
+                            <td>${esc(e.desc)}</td>
+                            <td>${e.amount.toFixed(2)}</td>
+                            <td><button class="btn btn-danger btn-sm" data-del-expense="${e.id}">✕</button></td>
+                        </tr>`;
+                    });
+
+                    html += `</tbody></table></div></details>`;
+                });
+
                 expEl.innerHTML = html;
+                // 重新绑定事件
                 expEl.querySelectorAll('.edit-expense-date').forEach(inp => inp.addEventListener('change', function() { updateExpenseDate(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('.edit-subcategory').forEach(sel => sel.addEventListener('change', function() { updateExpenseSubcategory(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('[data-del-expense]').forEach(b => b.onclick = () => deleteExpense(b.dataset.delExpense));
             }
+            // =======================
 
+            // 转换明细
             const transEl = document.getElementById('transfer-list');
             if (accountsData.transfers.length === 0) {
                 transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>';
@@ -874,6 +922,7 @@
                 transEl.querySelectorAll('[data-del-transfer]').forEach(b => b.onclick = () => deleteTransfer(b.dataset.delTransfer));
             }
 
+            // 收入明细
             const incEl = document.getElementById('income-list');
             if (accountsData.incomeRecords.length === 0) {
                 incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>';
@@ -930,27 +979,13 @@
                 const bal = m.income - m.expense;
                 const cls = bal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
                 const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
-                
-                // 将每日明细改造成 <details> 折叠形式
-                let dayHtml = '';
-                if (dayKeys.length) {
-                    const dayList = dayKeys.map(k => {
-                        const d = m.days[k];
-                        const label = k === 'unknown' ? '未记录' : shortDay(k);
-                        return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;white-space:nowrap;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
-                    }).join('');
-                    
-                    dayHtml = `
-                        <details style="margin-top: 8px; border-top: 1px dashed #e5e5e5; padding-top: 8px;">
-                            <summary style="cursor: pointer; font-size: 12px; color: #2d7d5a; font-weight: 500; user-select: none; outline: none;">查看每日明细 (${dayKeys.length}天)</summary>
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${dayList}</div>
-                        </details>
-                    `;
-                }
-
+                const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + dayKeys.map(k => {
+                    const d = m.days[k];
+                    const label = k === 'unknown' ? '未记录' : shortDay(k);
+                    return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
+                }).join('') + '</div>' : '';
                 let sd = `生存 ${m.byAccount.survival.toFixed(2)}`;
                 if (m.byAccount.survival > 0) sd += ` <span style="color:#aaa;">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
-                
                 html += `<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                         <span style="font-size:14px;font-weight:600;">${monthLabel(m.month)}</span>
@@ -1567,84 +1602,4 @@
         document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
         document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
         document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
-        document.getElementById('day-today').onclick = () => setDay(todayStr());
-
-        document.getElementById('acne-location').addEventListener('change', function () {
-            document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
-        });
-
-        document.getElementById('ai-save-config').onclick = () => {
-            saveAIConfig({
-                apiKey: document.getElementById('ai-api-key').value.trim(),
-                apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
-                model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
-            });
-            alert('已保存 ✓');
-        };
-        document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
-        document.getElementById('ai-clear-btn').onclick = async () => {
-            if (!confirm('清除今天的 AI 分析？')) return;
-            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
-            for (const e of list) { await deleteHealthRecord(e.id); }
-            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-            renderAIAnalysis();
-        };
-
-        /* ================= 启动 ================= */
-        document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('expense-date').value = todayStr();
-            document.getElementById('income-date').value = todayStr();
-            document.getElementById('transfer-date').value = todayStr();
-            document.getElementById('sleep-start').value = '23:00';
-            document.getElementById('sleep-end').value = '07:00';
-
-            // 能量打分
-            function buildScoreRow(el) {
-                let html = '';
-                for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
-                el.innerHTML = html;
-                el.querySelectorAll('.score-btn').forEach(btn => {
-                    btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
-                });
-            }
-            buildScoreRow(document.getElementById('energy-am'));
-            buildScoreRow(document.getElementById('energy-pm'));
-            document.querySelectorAll('#energy-am .score-btn')[4].click();
-            document.querySelectorAll('#energy-pm .score-btn')[4].click();
-
-            // chip
-            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
-            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-
-            // AI 配置回填
-            const cfg = getAIConfig();
-            document.getElementById('ai-api-key').value = cfg.apiKey || '';
-            document.getElementById('ai-api-url').value = cfg.apiUrl;
-            document.getElementById('ai-model').value = cfg.model;
-
-            updateDayBar();
-            resetIpSession();
-
-            // 检查登录
-            try {
-                console.log('⏳ 正在检查登录状态...');
-                const res = await withTimeout(sb.auth.getSession(), 8000, '获取登录状态');
-                if (res.error) throw res.error;
-                console.log('✅ 登录状态检查完毕');
-                if (res.data.session) {
-                    currentUser = res.data.session.user;
-                    await loadAllFromCloud();
-                    setupRealtime();
-                } else {
-                    showLoginUI();
-                }
-            } catch (err) {
-                console.error('❌ 检查登录状态失败:', err);
-                alert('获取登录状态失败：' + err.message + '\n请检查网络或尝试刷新页面。');
-                showLoginUI();
-            }
-        });
-    </script>
-</body>
-</html>
+        document.getElementById('day-today').onclick
