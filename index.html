@@ -516,6 +516,32 @@
             ]);
         }
 
+        /* ================= 本地缓存策略 ================= */
+        const CACHE_KEY = 'sys_data_cache';
+        function saveCache() {
+            if (currentUser) {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    uid: currentUser.id,
+                    accounts: accountsData,
+                    health: healthData
+                }));
+            }
+        }
+        function loadCache() {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (raw) {
+                    const d = JSON.parse(raw);
+                    if (d.uid && currentUser && d.uid === currentUser.id) {
+                        accountsData = d.accounts;
+                        healthData = d.health;
+                        return true;
+                    }
+                }
+            } catch(e) {}
+            return false;
+        }
+
         /* ================= 常量 ================= */
         const RATIOS = { survival: 0.55, stable: 0.25, develop: 0.20 };
         const ACCOUNT_LABEL = { survival: '生存', stable: '稳定', develop: '发展' };
@@ -580,6 +606,7 @@
         }
         async function signOut() {
             await sb.auth.signOut();
+            localStorage.removeItem(CACHE_KEY);
             currentUser = null;
             if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
             location.reload();
@@ -645,14 +672,14 @@
                     }
                 });
 
+                saveCache(); // 拉取成功后缓存到本地
                 console.log('✅ 数据全部分类完毕，开始渲染 UI...');
                 showMainUI();
                 renderAll();
                 console.log('🎉 渲染完成！');
             } catch (err) {
                 console.error('❌ 加载数据异常:', err);
-                alert('加载失败：' + err.message + '\n请检查 Supabase 的 SQL 表是否建好，或者尝试关闭网络代理。');
-                showLoginUI();
+                if (!silent) alert('加载云端失败，已展示本地缓存数据。\n错误信息：' + err.message);
             }
         }
 
@@ -706,11 +733,11 @@
             realtimeChannel = sb.channel('db-realtime')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true);
+                    loadAllFromCloud(true); // 静默拉取，不转圈
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'health_data', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true);
+                    loadAllFromCloud(true); // 静默拉取，不转圈
                 })
                 .subscribe();
         }
@@ -729,7 +756,7 @@
             accountsData.balances.survival += amount * RATIOS.survival;
             accountsData.balances.stable += amount * RATIOS.stable;
             accountsData.balances.develop += amount * RATIOS.develop;
-            renderAccounts();
+            saveCache(); renderAccounts();
             return true;
         }
         async function addExpense(amount, account, desc, day, subCategory) {
@@ -744,7 +771,7 @@
             record.id = inserted.id;
             accountsData.balances[account] -= amount;
             accountsData.expenses.push(record);
-            renderAccounts();
+            saveCache(); renderAccounts();
             return true;
         }
         async function addTransfer(amount, from, to, desc, day) {
@@ -760,7 +787,7 @@
             accountsData.balances[from] -= amount;
             accountsData.balances[to] += amount;
             accountsData.transfers.push({ id: inserted.id, amount, from, to, desc: record.desc, day: d, month: record.month, ts });
-            renderAccounts();
+            saveCache(); renderAccounts();
             return true;
         }
         async function deleteExpense(id) {
@@ -770,7 +797,7 @@
             await deleteAccountRecord(id);
             accountsData.balances[item.account] += item.amount;
             accountsData.expenses.splice(idx, 1);
-            renderAccounts();
+            saveCache(); renderAccounts();
         }
         async function deleteTransfer(id) {
             const idx = accountsData.transfers.findIndex(e => String(e.id) === String(id));
@@ -780,7 +807,7 @@
             accountsData.balances[item.from] += item.amount;
             accountsData.balances[item.to] -= item.amount;
             accountsData.transfers.splice(idx, 1);
-            renderAccounts();
+            saveCache(); renderAccounts();
         }
         async function updateExpenseDate(id, newDate) {
             const e = accountsData.expenses.find(x => String(x.id) === String(id));
@@ -789,7 +816,7 @@
             if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
             await updateAccountRecord(id, { day, month });
             e.day = day; e.month = month;
-            renderAccounts();
+            saveCache(); renderAccounts();
         }
         async function updateExpenseSubcategory(id, sub) {
             const e = accountsData.expenses.find(x => String(x.id) === String(id));
@@ -797,7 +824,7 @@
             const v = SUB_CATEGORIES[sub] ? sub : null;
             await updateAccountRecord(id, { sub_category: v });
             e.subCategory = v;
-            renderAccounts();
+            saveCache(); renderAccounts();
         }
         async function updateIncomeDate(id, newDate) {
             const r = accountsData.incomeRecords.find(x => String(x.id) === String(id));
@@ -806,7 +833,7 @@
             if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
             await updateAccountRecord(id, { day, month });
             r.day = day; r.month = month;
-            renderAccounts();
+            saveCache(); renderAccounts();
         }
 
         function renderAccounts() {
@@ -1051,7 +1078,7 @@
             const note = document.getElementById('sleep-note').value.trim();
             if (!start || !end) return alert('请填写入睡和醒来时间');
             const item = await pushHealthRecord('sleep', currentDay, { start_time: start, end_time: end, feeling, note });
-            if (item) { healthData.sleep.unshift({ id: item.id, date: currentDay, ts: item.ts, start_time: start, end_time: end, feeling, note }); renderSleep(); document.getElementById('sleep-start').value=''; document.getElementById('sleep-end').value=''; document.getElementById('sleep-note').value=''; }
+            if (item) { healthData.sleep.unshift({ id: item.id, date: currentDay, ts: item.ts, start_time: start, end_time: end, feeling, note }); saveCache(); renderSleep(); document.getElementById('sleep-start').value=''; document.getElementById('sleep-end').value=''; document.getElementById('sleep-note').value=''; }
         }
         async function addEnergy() {
             let am = 5, pm = 5;
@@ -1059,14 +1086,14 @@
             document.querySelectorAll('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
             const note = document.getElementById('energy-note').value.trim();
             const item = await pushHealthRecord('energy', currentDay, { am_score: am, pm_score: pm, note });
-            if (item) { healthData.energy.unshift({ id: item.id, date: currentDay, ts: item.ts, am_score: am, pm_score: pm, note }); renderEnergy(); document.getElementById('energy-note').value=''; }
+            if (item) { healthData.energy.unshift({ id: item.id, date: currentDay, ts: item.ts, am_score: am, pm_score: pm, note }); saveCache(); renderEnergy(); document.getElementById('energy-note').value=''; }
         }
         async function addCharge() {
             const type = document.getElementById('charge-type').value;
             const delta = parseInt(document.getElementById('charge-delta').value, 10) || 0;
             const note = document.getElementById('charge-note').value.trim();
             const item = await pushHealthRecord('charge', currentDay, { type, delta, note });
-            if (item) { healthData.charge.unshift({ id: item.id, date: currentDay, ts: item.ts, type, delta, note }); renderCharge(); document.getElementById('charge-note').value=''; }
+            if (item) { healthData.charge.unshift({ id: item.id, date: currentDay, ts: item.ts, type, delta, note }); saveCache(); renderCharge(); document.getElementById('charge-note').value=''; }
         }
         async function addExercise() {
             const dur = parseInt(document.getElementById('exercise-duration').value, 10);
@@ -1074,7 +1101,7 @@
             const type = document.getElementById('exercise-type').value;
             const note = document.getElementById('exercise-note').value.trim();
             const item = await pushHealthRecord('exercise', currentDay, { type, duration: dur, note });
-            if (item) { healthData.exercise.unshift({ id: item.id, date: currentDay, ts: item.ts, type, duration: dur, note }); renderExercise(); document.getElementById('exercise-duration').value=''; document.getElementById('exercise-note').value=''; }
+            if (item) { healthData.exercise.unshift({ id: item.id, date: currentDay, ts: item.ts, type, duration: dur, note }); saveCache(); renderExercise(); document.getElementById('exercise-duration').value=''; document.getElementById('exercise-note').value=''; }
         }
         async function addMicro() {
             if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
@@ -1084,7 +1111,7 @@
             const item = await pushHealthRecord('micro', currentDay, { posture, habits, note });
             if (item) {
                 healthData.microExercise.unshift({ id: item.id, date: currentDay, ts: item.ts, posture, habits, note });
-                renderMicro();
+                saveCache(); renderMicro();
                 selectedPosture.clear(); selectedHabit.clear();
                 buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
                 buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
@@ -1109,7 +1136,7 @@
             const item = await pushHealthRecord('body', currentDay, { signals, acne: hasAcne ? acne : null, note });
             if (item) {
                 healthData.bodySignals.unshift({ id: item.id, date: currentDay, ts: item.ts, signals, acne: hasAcne ? acne : null, note });
-                renderBody();
+                saveCache(); renderBody();
                 selectedSignals.clear();
                 buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
                 document.getElementById('signal-other').value = '';
@@ -1134,7 +1161,7 @@
             const item = await pushHealthRecord('meal', currentDay, { ...meals, water, snack });
             if (item) {
                 healthData.meal.unshift({ id: item.id, date: currentDay, ts: item.ts, ...meals, water, snack });
-                renderMeal();
+                saveCache(); renderMeal();
                 showFoodAnalysis(meals, water, snack);
                 ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => document.getElementById(id).value = '');
             }
@@ -1159,7 +1186,7 @@
                 html += `<div class="list-item"><div class="main"><div>${esc(r.start_time)} → ${esc(r.end_time)} <span class="meta">(${dur})</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><div style="display:flex;align-items:center;gap:6px;"><span class="tag ${f.cls}">${f.text}</span><button class="btn btn-danger btn-sm" data-del-sleep="${r.id}">✕</button></div></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-sleep]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(b.dataset.delSleep)); renderSleep(); });
+            el.querySelectorAll('[data-del-sleep]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(b.dataset.delSleep)); saveCache(); renderSleep(); });
         }
         function renderEnergy() {
             const el = document.getElementById('energy-history');
@@ -1172,7 +1199,7 @@
                 html += `<div class="list-item"><div class="main"><div>上午 ${r.am_score} · 下午 ${r.pm_score} <span class="tag ${cls}">均 ${avg}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-energy="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-energy]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(b.dataset.delEnergy)); renderEnergy(); });
+            el.querySelectorAll('[data-del-energy]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(b.dataset.delEnergy)); saveCache(); renderEnergy(); });
         }
         function renderCharge() {
             const el = document.getElementById('charge-history');
@@ -1186,7 +1213,7 @@
                 html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} <span class="tag ${cls}">能量 ${d}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-charge="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-charge]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(b.dataset.delCharge)); renderCharge(); });
+            el.querySelectorAll('[data-del-charge]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(b.dataset.delCharge)); saveCache(); renderCharge(); });
         }
         function renderExercise() {
             renderExerciseWeek();
@@ -1199,7 +1226,7 @@
                 html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} · ${r.duration} 分钟</div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-exercise="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-exercise]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(b.dataset.delExercise)); renderExercise(); });
+            el.querySelectorAll('[data-del-exercise]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(b.dataset.delExercise)); saveCache(); renderExercise(); });
         }
         function renderMicro() {
             const el = document.getElementById('micro-history');
@@ -1212,7 +1239,7 @@
                 html += `<div class="list-item"><div class="main"><div><span class="tag tag-neutral">体态</span> ${esc(pLabels)}</div><div style="margin-top:4px;"><span class="tag tag-good">微运动</span> ${esc(hLabels)}</div>${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-micro="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-micro]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); renderMicro(); });
+            el.querySelectorAll('[data-del-micro]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); saveCache(); renderMicro(); });
         }
         function renderBody() {
             const el = document.getElementById('body-history');
@@ -1237,7 +1264,7 @@
                 html += `<div class="list-item"><div class="main"><div><span class="tag tag-warn">身体</span> ${esc(sigs)}</div>${aText?`<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(aText)}</div>`:''}${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-body="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-body]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); renderBody(); });
+            el.querySelectorAll('[data-del-body]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); saveCache(); renderBody(); });
         }
         function renderMeal() {
             const el = document.getElementById('meal-history');
@@ -1248,7 +1275,7 @@
                 html += `<div class="list-item"><div class="main"><div>饮水 ${r.water||0} 杯</div><div class="meta">早：${esc(r.breakfast||'—')} · 午：${esc(r.lunch||'—')} · 晚：${esc(r.dinner||'—')} · 加餐：${esc(r.snack||'—')}</div></div><button class="btn btn-danger btn-sm" data-del-meal="${r.id}">✕</button></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-meal]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(b.dataset.delMeal)); renderMeal(); document.getElementById('food-analysis').classList.add('hidden'); });
+            el.querySelectorAll('[data-del-meal]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(b.dataset.delMeal)); saveCache(); renderMeal(); document.getElementById('food-analysis').classList.add('hidden'); });
         }
         function showFoodAnalysis(meals, water, snack) {
             const all = [meals.breakfast, meals.lunch, meals.dinner, snack].join(' ');
@@ -1395,6 +1422,7 @@
             const item = await pushHealthRecord('innerPeace', currentDay, dataObj);
             if (item) {
                 healthData.innerPeace.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+                saveCache();
                 renderIpReport(healthData.innerPeace[0]);
                 renderInnerPeaceHistory();
             }
@@ -1435,7 +1463,7 @@
                 html += `<div class="list-item"><div class="main"><div><b>${esc(r.createdAt||'')}</b></div><div style="margin-top:4px;color:#3a5c50;">感受：${esc(r.feeling||'（未记录）')}</div></div><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm" data-view-ip="${r.id}">查看报告</button><button class="btn btn-danger btn-sm" data-del-ip="${r.id}">✕</button></div></div>`;
             });
             el.innerHTML = html;
-            el.querySelectorAll('[data-del-ip]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(b.dataset.delIp)); renderInnerPeaceHistory(); });
+            el.querySelectorAll('[data-del-ip]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(b.dataset.delIp)); saveCache(); renderInnerPeaceHistory(); });
             el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
         }
 
@@ -1499,6 +1527,7 @@
                 healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
                 const item = await pushHealthRecord('ai', currentDay, { content });
                 if (item) healthData.aiAnalysis.push({ id: item.id, date: currentDay, ts: item.ts, content });
+                saveCache();
             } catch (err) {
                 console.error(err);
                 resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}</div>`;
@@ -1580,7 +1609,7 @@
             if (!confirm('确定清空三账户数据？')) return;
             await sb.from('records').delete().eq('user_id', currentUser.id);
             accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
-            renderAccounts();
+            saveCache(); renderAccounts();
         };
         document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
         document.getElementById('transfer-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('transfer-btn').click(); });
@@ -1622,7 +1651,7 @@
             const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
             for (const e of list) { await deleteHealthRecord(e.id); }
             healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-            renderAIAnalysis();
+            saveCache(); renderAIAnalysis();
         };
 
         /* ================= 启动 ================= */
@@ -1661,7 +1690,7 @@
             updateDayBar();
             resetIpSession();
 
-            // 检查登录
+            // 检查登录并优先加载本地缓存
             try {
                 console.log('⏳ 正在检查登录状态...');
                 const res = await withTimeout(sb.auth.getSession(), 8000, '获取登录状态');
@@ -1669,7 +1698,18 @@
                 console.log('✅ 登录状态检查完毕');
                 if (res.data.session) {
                     currentUser = res.data.session.user;
-                    await loadAllFromCloud();
+                    
+                    // 尝试从缓存秒开
+                    if (loadCache()) {
+                        console.log('🚀 使用本地缓存渲染');
+                        showMainUI();
+                        renderAll();
+                    } else {
+                        showLoadingUI();
+                    }
+                    
+                    // 后台静默去云端拉取最新数据
+                    await loadAllFromCloud(true); 
                     setupRealtime();
                 } else {
                     showLoginUI();
