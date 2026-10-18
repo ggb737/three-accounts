@@ -164,13 +164,15 @@
         .loading-overlay { text-align: center; padding: 60px 20px; color: #6b8a7e; }
         
         /* 高亮闪烁动画 */
-        .highlight-row {
-            animation: flash 1.5s ease-out;
+        .highlight-row td {
+            animation: flash 2s ease-out;
         }
         @keyframes flash {
-            0% { background-color: #fff3e0; }
+            0% { background-color: #ffe0b2; }
             100% { background-color: transparent; }
         }
+        /* 滚动定位时留出顶部空间 */
+        tr { scroll-margin-top: 20px; }
 
         @media (max-width: 500px) {
             .grid-3 { grid-template-columns: 1fr 1fr; }
@@ -1061,7 +1063,7 @@
             </div>`;
             listEl.innerHTML = html;
 
-            // 绑定点击事件，点击当日标签跳转并高亮
+            // 绑定点击事件，点击当日标签跳转并居中高亮
             listEl.querySelectorAll('.clickable-chip').forEach(chip => {
                 chip.onclick = (e) => {
                     const day = e.target.dataset.day;
@@ -1071,23 +1073,28 @@
                     // 1. 自动展开“支出明细”里对应的月份
                     const monthDetail = document.querySelector(`#expense-list details[data-month="${month}"]`);
                     if (monthDetail) {
-                        monthDetail.open = true;
+                        monthDetail.open = true; // 确保对应月份是展开的
                     }
                     
-                    // 2. 滚动到“支出明细”卡片
-                    document.getElementById('expense-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    
-                    // 3. 高亮该日期的记录行
+                    // 2. 延迟一下等展开动画完成，再去滚动和加高亮
                     setTimeout(() => {
+                        // 找到该天对应的所有行
                         const rows = document.querySelectorAll(`#expense-list tr[data-day="${day}"]`);
                         if (rows.length > 0) {
-                            rows.forEach(r => r.classList.add('highlight-row'));
-                            // 动画结束后移除类名
-                            setTimeout(() => {
-                                rows.forEach(r => r.classList.remove('highlight-row'));
-                            }, 2000);
+                            // 滚动到第一行，并让它在屏幕中居中
+                            rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            
+                            // 增加高亮闪烁，让用户一眼看到
+                            rows.forEach(r => {
+                                r.classList.remove('highlight-row'); // 重置旧动画
+                                void r.offsetWidth; // 触发重绘
+                                r.classList.add('highlight-row');
+                                
+                                // 2秒后移除高亮
+                                setTimeout(() => r.classList.remove('highlight-row'), 2000);
+                            });
                         }
-                    }, 300); // 稍微延迟一下，等滚动和展开动画完成
+                    }, 200); 
                 };
             });
         }
