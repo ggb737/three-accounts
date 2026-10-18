@@ -174,7 +174,6 @@
 </head>
 <body>
 
-    <!-- ========== 登录卡片 ========== -->
     <div class="card" id="auth-card" style="display:none;">
         <h2 style="text-align:center;justify-content:center;">🔐 个人管理系统</h2>
         <div style="display:flex;flex-direction:column;gap:12px;">
@@ -188,17 +187,14 @@
         </div>
     </div>
 
-    <!-- ========== Loading ========== -->
-    <div class="loading-overlay" id="loading-overlay">正在加载数据…</div>
+    <div class="loading-overlay" id="loading-overlay">正在加载数据…<br><span style="font-size:12px;color:#999;">(如果长时间停在这里，请按 F12 查看控制台)</span></div>
 
-    <!-- ========== 主内容 ========== -->
     <div id="main-content" style="display:none;">
         <div class="app-nav">
             <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
             <button class="nav-btn" data-tab="health">🌿 健康系统</button>
         </div>
 
-        <!-- ===== 三账户 ===== -->
         <div id="tab-accounts" class="tab-content active">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -221,7 +217,6 @@
                 </div>
             </div>
 
-            <!-- 账户间转换 -->
             <div class="card">
                 <h2>🔄 账户间转换</h2>
                 <div class="form-row" style="align-items:center;">
@@ -294,7 +289,6 @@
             </div>
         </div>
 
-        <!-- ===== 健康系统 ===== -->
         <div id="tab-health" class="tab-content">
             <div class="day-bar">
                 <div>
@@ -488,12 +482,16 @@
         /* ================= Supabase 配置 ================= */
         const SUPABASE_URL = 'https://mtfqvszsqdijyzpwwhlg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
+        
+        if (!window.supabase) {
+            document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#c0392b;">Supabase 库加载失败！<br>请检查网络、关闭梯子或广告拦截插件后刷新页面。</div>';
+            throw new Error('Supabase 未加载');
+        }
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let realtimeChannel = null;
         let lastLocalChange = 0;
-        let loading = false;
 
         /* ================= 工具函数 ================= */
         function pad2(n) { return String(n).padStart(2, '0'); }
@@ -508,6 +506,14 @@
         function recordMonth(r) { const d = recordDay(r); return d === 'unknown' ? 'unknown' : d.slice(0, 7); }
         function shortDay(day) { if (!isValidDay(day)) return '未记录'; const p = day.split('-'); return parseInt(p[1],10) + '月' + parseInt(p[2],10) + '日'; }
         function monthLabel(key) { if (key === 'unknown') return '未记录日期'; const m = key.match(/^(\d{4})-(\d{2})$/); return m ? m[1] + '年' + parseInt(m[2],10) + '月' : key; }
+
+        /* ================= 超时与日志包装器 ================= */
+        function withTimeout(promise, ms = 8000, stepName = '操作') {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(`${stepName}超时 (${ms}ms)。请检查网络是否能连通 Supabase。`)), ms))
+            ]);
+        }
 
         /* ================= 常量 ================= */
         const RATIOS = { survival: 0.55, stable: 0.25, develop: 0.20 };
@@ -578,55 +584,75 @@
             location.reload();
         }
 
-        /* ================= 云同步 ================= */
-        async function loadAllFromCloud() {
-            showLoadingUI();
-            // 账户
-            const { data: records } = await sb.from('records').select('*').order('ts', { ascending: true });
-            accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
-            (records || []).forEach(r => {
-                if (r.type === 'income') {
-                    accountsData.income += r.amount;
-                    accountsData.incomeRecords.push({ id: r.id, amount: r.amount, day: r.day, month: r.month, ts: r.ts });
-                    accountsData.balances.survival += r.amount * RATIOS.survival;
-                    accountsData.balances.stable += r.amount * RATIOS.stable;
-                    accountsData.balances.develop += r.amount * RATIOS.develop;
-                } else if (r.type === 'transfer') {
-                    accountsData.balances[r.account] -= r.amount;
-                    if (accountsData.balances[r.sub_category] !== undefined) {
-                        accountsData.balances[r.sub_category] += r.amount;
+        /* ================= 云同步（带超时和步骤日志） ================= */
+        async function loadAllFromCloud(silent = false) {
+            if (!silent) showLoadingUI();
+            try {
+                console.log('⏳ 开始拉取账户数据...');
+                const { data: records, error: err1 } = await withTimeout(
+                    sb.from('records').select('*').order('ts', { ascending: true }),
+                    10000, '拉取账户数据'
+                );
+                if (err1) throw err1;
+                console.log('✅ 账户数据拉取成功，条数:', (records || []).length);
+
+                accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
+                (records || []).forEach(r => {
+                    if (r.type === 'income') {
+                        accountsData.income += r.amount;
+                        accountsData.incomeRecords.push({ id: r.id, amount: r.amount, day: r.day, month: r.month, ts: r.ts });
+                        accountsData.balances.survival += r.amount * RATIOS.survival;
+                        accountsData.balances.stable += r.amount * RATIOS.stable;
+                        accountsData.balances.develop += r.amount * RATIOS.develop;
+                    } else if (r.type === 'transfer') {
+                        accountsData.balances[r.account] -= r.amount;
+                        if (accountsData.balances[r.sub_category] !== undefined) {
+                            accountsData.balances[r.sub_category] += r.amount;
+                        }
+                        accountsData.transfers.push({ 
+                            id: r.id, amount: r.amount, from: r.account, to: r.sub_category, 
+                            desc: r.description, day: r.day, month: r.month, ts: r.ts 
+                        });
+                    } else {
+                        accountsData.balances[r.account] -= r.amount;
+                        accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
                     }
-                    accountsData.transfers.push({ 
-                        id: r.id, amount: r.amount, from: r.account, to: r.sub_category, 
-                        desc: r.description, day: r.day, month: r.month, ts: r.ts 
-                    });
-                } else {
-                    accountsData.balances[r.account] -= r.amount;
-                    accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
-                }
-            });
+                });
 
-            // 健康
-            const { data: hd } = await sb.from('health_data').select('*').order('ts', { ascending: true });
-            healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
-            (hd || []).forEach(r => {
-                const d = r.data || {};
-                const item = { id: r.id, date: r.date, ts: r.ts, ...d };
-                switch (r.type) {
-                    case 'sleep': healthData.sleep.push(item); break;
-                    case 'energy': healthData.energy.push(item); break;
-                    case 'charge': healthData.charge.push(item); break;
-                    case 'exercise': healthData.exercise.push(item); break;
-                    case 'meal': healthData.meal.push(item); break;
-                    case 'innerPeace': healthData.innerPeace.push(item); break;
-                    case 'micro': healthData.microExercise.push(item); break;
-                    case 'body': healthData.bodySignals.push(item); break;
-                    case 'ai': healthData.aiAnalysis.push(item); break;
-                }
-            });
+                console.log('⏳ 开始拉取健康数据...');
+                const { data: hd, error: err2 } = await withTimeout(
+                    sb.from('health_data').select('*').order('ts', { ascending: true }),
+                    10000, '拉取健康数据'
+                );
+                if (err2) throw err2;
+                console.log('✅ 健康数据拉取成功，条数:', (hd || []).length);
 
-            showMainUI();
-            renderAll();
+                healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+                (hd || []).forEach(r => {
+                    const d = r.data || {};
+                    const item = { id: r.id, date: r.date, ts: r.ts, ...d };
+                    switch (r.type) {
+                        case 'sleep': healthData.sleep.push(item); break;
+                        case 'energy': healthData.energy.push(item); break;
+                        case 'charge': healthData.charge.push(item); break;
+                        case 'exercise': healthData.exercise.push(item); break;
+                        case 'meal': healthData.meal.push(item); break;
+                        case 'innerPeace': healthData.innerPeace.push(item); break;
+                        case 'micro': healthData.microExercise.push(item); break;
+                        case 'body': healthData.bodySignals.push(item); break;
+                        case 'ai': healthData.aiAnalysis.push(item); break;
+                    }
+                });
+
+                console.log('✅ 数据全部分类完毕，开始渲染 UI...');
+                showMainUI();
+                renderAll();
+                console.log('🎉 渲染完成！');
+            } catch (err) {
+                console.error('❌ 加载数据异常:', err);
+                alert('加载失败：' + err.message + '\n请检查 Supabase 的 SQL 表是否建好，或者尝试关闭网络代理。');
+                showLoginUI(); // 失败退回登录界面，避免一直转圈
+            }
         }
 
         async function pushAccountRecord(record) {
@@ -641,7 +667,7 @@
                 month: record.month || null,
                 ts: record.ts
             }).select().single();
-            if (error) { console.error('写入失败', error); return null; }
+            if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
             lastLocalChange = Date.now();
             return data;
         }
@@ -667,11 +693,6 @@
             lastLocalChange = Date.now();
             return data;
         }
-        async function updateHealthRecord(id, updates) {
-            if (!currentUser) return;
-            await sb.from('health_data').update(updates).eq('id', id);
-            lastLocalChange = Date.now();
-        }
         async function deleteHealthRecord(id) {
             if (!currentUser) return;
             await sb.from('health_data').delete().eq('id', id);
@@ -684,11 +705,11 @@
             realtimeChannel = sb.channel('db-realtime')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud();
+                    loadAllFromCloud(true); // 静默刷新
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'health_data', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud();
+                    loadAllFromCloud(true); // 静默刷新
                 })
                 .subscribe();
         }
@@ -1550,4 +1571,66 @@
         document.getElementById('ai-clear-btn').onclick = async () => {
             if (!confirm('清除今天的 AI 分析？')) return;
             const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
-            for (const e of list) { await deleteHealthRecord
+            for (const e of list) { await deleteHealthRecord(e.id); }
+            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+            renderAIAnalysis();
+        };
+
+        /* ================= 启动 ================= */
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('expense-date').value = todayStr();
+            document.getElementById('income-date').value = todayStr();
+            document.getElementById('transfer-date').value = todayStr();
+            document.getElementById('sleep-start').value = '23:00';
+            document.getElementById('sleep-end').value = '07:00';
+
+            // 能量打分
+            function buildScoreRow(el) {
+                let html = '';
+                for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
+                el.innerHTML = html;
+                el.querySelectorAll('.score-btn').forEach(btn => {
+                    btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
+                });
+            }
+            buildScoreRow(document.getElementById('energy-am'));
+            buildScoreRow(document.getElementById('energy-pm'));
+            document.querySelectorAll('#energy-am .score-btn')[4].click();
+            document.querySelectorAll('#energy-pm .score-btn')[4].click();
+
+            // chip
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+
+            // AI 配置回填
+            const cfg = getAIConfig();
+            document.getElementById('ai-api-key').value = cfg.apiKey || '';
+            document.getElementById('ai-api-url').value = cfg.apiUrl;
+            document.getElementById('ai-model').value = cfg.model;
+
+            updateDayBar();
+            resetIpSession();
+
+            // 检查登录
+            try {
+                console.log('⏳ 正在检查登录状态...');
+                const res = await withTimeout(sb.auth.getSession(), 8000, '获取登录状态');
+                if (res.error) throw res.error;
+                console.log('✅ 登录状态检查完毕');
+                if (res.data.session) {
+                    currentUser = res.data.session.user;
+                    await loadAllFromCloud();
+                    setupRealtime();
+                } else {
+                    showLoginUI();
+                }
+            } catch (err) {
+                console.error('❌ 检查登录状态失败:', err);
+                alert('获取登录状态失败：' + err.message + '\n请检查网络或尝试刷新页面。');
+                showLoginUI();
+            }
+        });
+    </script>
+</body>
+</html>
