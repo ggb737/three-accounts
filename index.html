@@ -819,7 +819,7 @@
             if (accountsData.expenses.length === 0) {
                 expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>';
             } else {
-                // 按月分组
+                // 1. 按月分组
                 const grouped = {};
                 accountsData.expenses.forEach(e => {
                     const m = recordMonth(e);
@@ -827,7 +827,7 @@
                     grouped[m].push(e);
                 });
 
-                // 月份倒序
+                // 2. 月份排序（倒序，最新的在前）
                 const months = Object.keys(grouped).sort((a, b) => {
                     if (a === 'unknown') return 1;
                     if (b === 'unknown') return -1;
@@ -843,16 +843,16 @@
                     });
                     const monthTotal = list.reduce((sum, e) => sum + e.amount, 0);
                     const mLabel = monthLabel(m);
-
-                    // 默认展开最新一个月
+                    // 默认展开最新的一个月
                     const isOpen = idx === 0 ? 'open' : '';
 
-                    html += `<details style="margin-bottom: 12px; background: #fafcfb; border-radius: 8px; border: 1px solid #eef4f1; overflow: hidden;" ${isOpen}>
-                        <summary style="padding: 12px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #1a5c47; background: #fff;">
-                            <span>${mLabel}</span>
+                    html += `
+                    <details style="margin-bottom: 12px; background: #fafcfb; border-radius: 8px; border: 1px solid #eef4f1; overflow: hidden;" ${isOpen}>
+                        <summary style="padding: 12px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #1a5c47; background: #fff; outline: none;">
+                            <span style="font-size: 14px;">${mLabel}</span>
                             <span style="font-size: 13px; color: #c0392b;">¥${monthTotal.toFixed(2)} <span style="color:#888;font-weight:normal;font-size:12px;margin-left:8px;">(${list.length} 笔)</span></span>
                         </summary>
-                        <div style="padding: 0 12px 12px; border-top: 1px solid #eef4f1;">
+                        <div style="padding: 0 12px 12px; overflow-x: auto;">
                             <table style="width:100%; border-collapse: collapse; font-size: 14px;">
                                 <thead>
                                     <tr>
@@ -876,11 +876,11 @@
                             </select>`;
                         }
                         html += `<tr>
-                            <td><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
-                            <td>${accountCell}</td>
-                            <td>${esc(e.desc)}</td>
-                            <td>${e.amount.toFixed(2)}</td>
-                            <td><button class="btn btn-danger btn-sm" data-del-expense="${e.id}">✕</button></td>
+                            <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;"><input type="date" class="edit-date-input edit-expense-date" data-id="${e.id}" value="${dayVal}"></td>
+                            <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;">${accountCell}</td>
+                            <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;">${esc(e.desc)}</td>
+                            <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;">${e.amount.toFixed(2)}</td>
+                            <td style="padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;"><button class="btn btn-danger btn-sm" data-del-expense="${e.id}">✕</button></td>
                         </tr>`;
                     });
 
@@ -1602,4 +1602,84 @@
         document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
         document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
         document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
-        document.getElementById('day-today').onclick
+        document.getElementById('day-today').onclick = () => setDay(todayStr());
+
+        document.getElementById('acne-location').addEventListener('change', function () {
+            document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
+        });
+
+        document.getElementById('ai-save-config').onclick = () => {
+            saveAIConfig({
+                apiKey: document.getElementById('ai-api-key').value.trim(),
+                apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
+                model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
+            });
+            alert('已保存 ✓');
+        };
+        document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
+        document.getElementById('ai-clear-btn').onclick = async () => {
+            if (!confirm('清除今天的 AI 分析？')) return;
+            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+            for (const e of list) { await deleteHealthRecord(e.id); }
+            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+            renderAIAnalysis();
+        };
+
+        /* ================= 启动 ================= */
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('expense-date').value = todayStr();
+            document.getElementById('income-date').value = todayStr();
+            document.getElementById('transfer-date').value = todayStr();
+            document.getElementById('sleep-start').value = '23:00';
+            document.getElementById('sleep-end').value = '07:00';
+
+            // 能量打分
+            function buildScoreRow(el) {
+                let html = '';
+                for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
+                el.innerHTML = html;
+                el.querySelectorAll('.score-btn').forEach(btn => {
+                    btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
+                });
+            }
+            buildScoreRow(document.getElementById('energy-am'));
+            buildScoreRow(document.getElementById('energy-pm'));
+            document.querySelectorAll('#energy-am .score-btn')[4].click();
+            document.querySelectorAll('#energy-pm .score-btn')[4].click();
+
+            // chip
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+
+            // AI 配置回填
+            const cfg = getAIConfig();
+            document.getElementById('ai-api-key').value = cfg.apiKey || '';
+            document.getElementById('ai-api-url').value = cfg.apiUrl;
+            document.getElementById('ai-model').value = cfg.model;
+
+            updateDayBar();
+            resetIpSession();
+
+            // 检查登录
+            try {
+                console.log('⏳ 正在检查登录状态...');
+                const res = await withTimeout(sb.auth.getSession(), 8000, '获取登录状态');
+                if (res.error) throw res.error;
+                console.log('✅ 登录状态检查完毕');
+                if (res.data.session) {
+                    currentUser = res.data.session.user;
+                    await loadAllFromCloud();
+                    setupRealtime();
+                } else {
+                    showLoginUI();
+                }
+            } catch (err) {
+                console.error('❌ 检查登录状态失败:', err);
+                alert('获取登录状态失败：' + err.message + '\n请检查网络或尝试刷新页面。');
+                showLoginUI();
+            }
+        });
+    </script>
+</body>
+</html>
