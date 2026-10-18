@@ -584,7 +584,7 @@
             location.reload();
         }
 
-        /* ================= 云同步（带超时和步骤日志） ================= */
+        /* ================= 云同步 ================= */
         async function loadAllFromCloud(silent = false) {
             if (!silent) showLoadingUI();
             try {
@@ -651,7 +651,7 @@
             } catch (err) {
                 console.error('❌ 加载数据异常:', err);
                 alert('加载失败：' + err.message + '\n请检查 Supabase 的 SQL 表是否建好，或者尝试关闭网络代理。');
-                showLoginUI(); // 失败退回登录界面，避免一直转圈
+                showLoginUI();
             }
         }
 
@@ -705,11 +705,11 @@
             realtimeChannel = sb.channel('db-realtime')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true); // 静默刷新
+                    loadAllFromCloud(true);
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'health_data', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true); // 静默刷新
+                    loadAllFromCloud(true);
                 })
                 .subscribe();
         }
@@ -930,13 +930,27 @@
                 const bal = m.income - m.expense;
                 const cls = bal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
                 const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
-                const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + dayKeys.map(k => {
-                    const d = m.days[k];
-                    const label = k === 'unknown' ? '未记录' : shortDay(k);
-                    return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
-                }).join('') + '</div>' : '';
+                
+                // 将每日明细改造成 <details> 折叠形式
+                let dayHtml = '';
+                if (dayKeys.length) {
+                    const dayList = dayKeys.map(k => {
+                        const d = m.days[k];
+                        const label = k === 'unknown' ? '未记录' : shortDay(k);
+                        return `<span style="font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;white-space:nowrap;">${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
+                    }).join('');
+                    
+                    dayHtml = `
+                        <details style="margin-top: 8px; border-top: 1px dashed #e5e5e5; padding-top: 8px;">
+                            <summary style="cursor: pointer; font-size: 12px; color: #2d7d5a; font-weight: 500; user-select: none; outline: none;">查看每日明细 (${dayKeys.length}天)</summary>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${dayList}</div>
+                        </details>
+                    `;
+                }
+
                 let sd = `生存 ${m.byAccount.survival.toFixed(2)}`;
                 if (m.byAccount.survival > 0) sd += ` <span style="color:#aaa;">（刚性 ${m.bySub.rigid.toFixed(2)} · 情绪 ${m.bySub.emotional.toFixed(2)} · 一次性 ${m.bySub.once.toFixed(2)}）</span>`;
+                
                 html += `<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                         <span style="font-size:14px;font-weight:600;">${monthLabel(m.month)}</span>
