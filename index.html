@@ -1794,6 +1794,82 @@
             }
         }
 
+        /* ================= AI 分析 ================= */
+        const AI_KEY = 'ai_analyze_config';
+        function getAIConfig() { try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {} return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }; }
+        function saveAIConfig(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
+
+        function collectDayData() {
+            const day = currentDay;
+            return {
+                date: day,
+                sleep: healthData.sleep.filter(r => r.date === day),
+                energy: healthData.energy.filter(r => r.date === day),
+                charge: healthData.charge.filter(r => r.date === day),
+                exercise: healthData.exercise.filter(r => r.date === day),
+                micro: healthData.microExercise.filter(r => r.date === day),
+                body: healthData.bodySignals.filter(r => r.date === day),
+                meal: healthData.meal.filter(r => r.date === day),
+                innerPeace: healthData.innerPeace.filter(r => r.date === day)
+            };
+        }
+
+        function buildPrompt(d) {
+            const lines = ['请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。', '', `【日期】${d.date}`, ''];
+            if (d.sleep.length) { const s = d.sleep[0]; const fm = { refreshed:'神清气爽', ok:'还行', tired:'疲惫', groggy:'昏沉' }; lines.push(`【睡眠】${s.start_time} → ${s.end_time}（${fm[s.feeling]||s.feeling}）${s.note?'，'+s.note:''}`); } else lines.push('【睡眠】未记录');
+            if (d.energy.length) { const e = d.energy[0]; lines.push(`【能量】上午 ${e.am_score}/10 · 下午 ${e.pm_score}/10${e.note?'，'+e.note:''}`); } else lines.push('【能量】未记录');
+            if (d.charge.length) { const tm = { rest:'休息', nature:'接触自然', social:'社交', hobby:'爱好', exercise:'轻度运动', food:'好好吃饭', other:'其他' }; lines.push('【充电】'+d.charge.map(c => `${tm[c.type]||c.type}（能量${c.delta>0?'+':''}${c.delta}）${c.note?'：'+c.note:''}`).join('；')); }
+            if (d.exercise.length) { const tm = { walk:'散步', run:'跑步', cycling:'骑行', strength:'力量', yoga:'瑜伽', ball:'球类', swim:'游泳', other:'其他' }; lines.push('【运动】'+d.exercise.map(x => `${tm[x.type]||x.type} ${x.duration}分钟${x.note?'（'+x.note+'）':''}`).join('；')); } else lines.push('【运动】未记录');
+            if (d.micro.length) { const pm = { round_shoulder:'圆肩', forward_head:'头前伸', anterior_pelvic:'骨盆前倾', hunchback:'驼背', neck_forward:'颈前倾', uneven_shoulder:'高低肩' }; const hm = { wall_stand:'靠墙站', chin_tuck:'收下巴', neck_stretch:'肩颈拉伸', shoulder_open:'开肩', squat:'深蹲', stand_reminder:'站姿提醒', walk_break:'走动休息' }; const m = d.micro[0]; const posture = (m.posture||[]).map(p => typeof p === 'string' ? (pm[p]||p) : (p.key === 'other' ? p.custom : (pm[p.key]||p.key))).join('、'); const habits = (m.habits||[]).map(h => typeof h === 'string' ? (hm[h]||h) : (h.key === 'other' ? h.custom : (hm[h.key]||h.key))).join('、'); lines.push(`【微运动】体态：${posture||'无'}；习惯：${habits||'无'}${m.note?'；'+m.note:''}`); }
+            if (d.body.length) { const sm = { fatigue:'疲劳', headache:'头痛', stomach:'肠胃不适', neck_pain:'肩颈酸', back_pain:'腰酸', eye_dry:'眼睛干涩', mood_low:'情绪低落', sleepy:'犯困' }; const b = d.body[0]; const sigs = (b.signals||[]).map(s => typeof s === 'string' ? (sm[s]||s) : (s.key === 'other' ? s.custom : (sm[s.key]||s.key))).join('、'); let at = ''; if (b.acne && (b.acne.location || b.acne.type || b.acne.note)) { const lm = { forehead:'额头', nose:'鼻子', cheek:'脸颊', chin:'下巴', back:'背部', other:'其他' }; const tm = { red:'红肿', whitehead:'白头', blackhead:'黑头', closed:'闭口' }; const ps = []; if (b.acne.location) ps.push('位置'+(b.acne.location === 'other' ? (b.acne.locationCustom||'其他') : lm[b.acne.location])); if (b.acne.type) ps.push(tm[b.acne.type]); if (b.acne.severity) ps.push('严重度'+b.acne.severity); at = '；痘痘：'+ps.join('·'); } lines.push(`【身体信号】${sigs||'无'}${at}${b.note?'；'+b.note:''}`); }
+            if (d.meal.length) { const m = d.meal[0]; lines.push(`【饮食】早：${m.breakfast||'—'}；午：${m.lunch||'—'}；晚：${m.dinner||'—'}；加餐：${m.snack||'—'}；饮水：${m.water||0}杯`); } else lines.push('【饮食】未记录');
+            if (d.innerPeace.length) lines.push(`【反内耗】今天做了 ${d.innerPeace.length} 次练习。感受：${d.innerPeace.map(x => x.feeling||'（无）').join('；')}`);
+            lines.push('', '请从以下 4 个角度输出（用 Markdown，简洁友好，不说教）：', '1. **今日状态小结**（2-3句）', '2. **亮点**（1-3条，具体到记录里的事）', '3. **需要温柔关注的地方**（1-3条，不制造焦虑）', '4. **明天的一个小建议**（1条，10-30分钟内可完成）');
+            return lines.join('\n');
+        }
+
+        function md2html(c) {
+            return c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>').replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^- (.+)$/gm, '• $1').replace(/\n/g, '<br>');
+        }
+
+        async function runAIAnalysis() {
+            const cfg = getAIConfig();
+            if (!cfg.apiKey) { alert('请先在 API 配置中填写 Key'); return; }
+            const resultEl = document.getElementById('ai-result');
+            const btn = document.getElementById('ai-analyze-btn');
+            btn.disabled = true; btn.textContent = '⏳ 分析中...';
+            resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI…</div>';
+            const d = collectDayData();
+            const prompt = buildPrompt(d);
+            try {
+                const res = await fetch(cfg.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey }, body: JSON.stringify({ model: cfg.model, messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 }) });
+                if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
+                const json = await res.json();
+                const content = json.choices?.[0]?.message?.content;
+                if (!content) throw new Error('返回为空');
+                resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
+                // 保存到云端
+                const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
+                for (const e of existing) { await deleteHealthRecord(e.id); }
+                healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+                const item = await pushHealthRecord('ai', currentDay, { content });
+                if (item) healthData.aiAnalysis.push({ id: item.id, date: currentDay, ts: item.ts, content });
+                saveCache();
+            } catch (err) {
+                console.error(err);
+                resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '✨ 生成今日分析';
+            }
+        }
+
+        function renderAIAnalysis() {
+            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+            const resultEl = document.getElementById('ai-result');
+            if (!list.length) { resultEl.innerHTML = '<div class="empty-hint">还没有今日分析</div>'; return; }
+            resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(list[0].content||'')}</div>`;
+        }
+
         /* ================= 渲染全部 ================= */
         function renderHealthAll() {
             renderSleep(); renderEnergy(); renderCharge();
