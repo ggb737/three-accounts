@@ -174,6 +174,37 @@
         /* 滚动定位时留出顶部空间 */
         tr { scroll-margin-top: 20px; }
 
+        /* 新闻样式 */
+        .news-item {
+            background: #fafcfb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3a8f6e;
+        }
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .news-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a2e2a;
+            text-decoration: none;
+        }
+        .news-title:hover {
+            color: #2d7d5a;
+            text-decoration: underline;
+        }
+        .news-content {
+            font-size: 13px;
+            color: #3a5c50;
+            line-height: 1.6;
+            margin-top: 4px;
+        }
+
         @media (max-width: 500px) {
             .grid-3 { grid-template-columns: 1fr 1fr; }
             body { padding: 10px; }
@@ -205,8 +236,10 @@
         <div class="app-nav">
             <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
             <button class="nav-btn" data-tab="health">🌿 健康系统</button>
+            <button class="nav-btn" data-tab="news">📰 每日世事</button>
         </div>
 
+        <!-- ================= TAB 1: 三账户 ================= -->
         <div id="tab-accounts" class="tab-content active">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -279,7 +312,6 @@
                 </div>
             </div>
 
-            <!-- 按月折叠的支出明细 -->
             <div class="card" id="expense-card">
                 <h2>📋 支出明细</h2>
                 <div id="expense-list"><div class="empty-hint">还没有支出记录</div></div>
@@ -302,6 +334,7 @@
             </div>
         </div>
 
+        <!-- ================= TAB 2: 健康系统 ================= -->
         <div id="tab-health" class="tab-content">
             <div class="day-bar">
                 <div>
@@ -487,6 +520,81 @@
             </div>
         </div>
 
+        <!-- ================= TAB 3: 每日世事 ================= -->
+        <div id="tab-news" class="tab-content">
+            <div class="day-bar">
+                <div>
+                    <div class="day-big" id="news-day-label">今天</div>
+                    <div class="day-sub" id="news-day-sub"></div>
+                </div>
+                <div class="day-nav">
+                    <button class="day-btn" id="news-day-prev">← 前一天</button>
+                    <input type="date" id="news-day-picker">
+                    <button class="day-btn" id="news-day-next">后一天 →</button>
+                    <button class="day-btn" id="news-day-today">回到今天</button>
+                </div>
+            </div>
+
+            <!-- 自动抓取区域 -->
+            <div class="card" style="background:#f8f9fa; border: 1px dashed #c0d3cb;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <div style="font-size:14px; font-weight:600; color:#1a5c47; margin-bottom:4px;">🌐 自动获取最新资讯</div>
+                        <div style="font-size:12px; color:#888;">点击按钮，自动抓取全球最新新闻并保留原文链接</div>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="auto-news-category" style="padding:8px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                            <option value="general">🌍 综合</option>
+                            <option value="technology">💻 科技</option>
+                            <option value="business">💰 商业</option>
+                            <option value="science">🔬 科学</option>
+                            <option value="health">🏥 健康</option>
+                        </select>
+                        <button class="btn btn-primary" id="auto-fetch-btn">自动抓取今日新闻</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📝 记录今日世事</h2>
+                <div class="grid-2">
+                    <div class="field">
+                        <label>新闻分类</label>
+                        <select id="news-category">
+                            <option value="international">🌍 国际</option>
+                            <option value="domestic">🏛️ 国内</option>
+                            <option value="finance">💰 财经</option>
+                            <option value="tech">💻 科技</option>
+                            <option value="industry">🏢 行业</option>
+                            <option value="society">🎭 社会</option>
+                            <option value="other">✨ 其他</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>新闻标题 / 事件</label>
+                        <input type="text" id="news-title" placeholder="如：美联储宣布降息">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>事件详情与思考（支持 HTML 或 链接）</label>
+                    <textarea id="news-content" placeholder="记录事件经过，以及这件事对世界、对你所在行业或个人有什么影响？"></textarea>
+                </div>
+                <button class="btn btn-primary" id="news-save">手动记录此条</button>
+                
+                <div id="news-history" style="margin-top:20px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>💡 每日宏观总结</h2>
+                <div class="field">
+                    <label>今日大事总结</label>
+                    <textarea id="news-summary" placeholder="用几句话概括今天的世界发生了什么，或者提炼出最重要的一个宏观趋势……" style="min-height: 80px;"></textarea>
+                </div>
+                <button class="btn btn-primary" id="news-summary-save">保存总结</button>
+                <div id="news-summary-history" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
         <div class="footer-note">数据自动同步 · 云端存储</div>
     </div>
 
@@ -495,6 +603,7 @@
         /* ================= Supabase 配置 ================= */
         const SUPABASE_URL = 'https://mtfqvszsqdijyzpwwhlg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
+        const NEWS_API_KEY = 'aae2391a27cd4856b29b2a238db7aef8'; // 你提供的 NewsAPI Key
         
         if (!window.supabase) {
             document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#c0392b;">Supabase 库加载失败！<br>请检查网络、关闭梯子或广告拦截插件后刷新页面。</div>';
@@ -535,7 +644,8 @@
                 localStorage.setItem(CACHE_KEY, JSON.stringify({
                     uid: currentUser.id,
                     accounts: accountsData,
-                    health: healthData
+                    health: healthData,
+                    news: newsData
                 }));
             }
         }
@@ -545,8 +655,9 @@
                 if (raw) {
                     const d = JSON.parse(raw);
                     if (d.uid && currentUser && d.uid === currentUser.id) {
-                        accountsData = d.accounts;
-                        healthData = d.health;
+                        accountsData = d.accounts || accountsData;
+                        healthData = d.health || healthData;
+                        newsData = d.news || newsData;
                         return true;
                     }
                 }
@@ -581,10 +692,20 @@
             { key: 'mood_low', label: '情绪低落' }, { key: 'sleepy', label: '犯困' },
             { key: 'other', label: '其他' }
         ];
+        const NEWS_CATEGORY = {
+            international: { label: '国际', icon: '🌍' },
+            domestic: { label: '国内', icon: '🏛️' },
+            finance: { label: '财经', icon: '💰' },
+            tech: { label: '科技', icon: '💻' },
+            industry: { label: '行业', icon: '🏢' },
+            society: { label: '社会', icon: '🎭' },
+            other: { label: '其他', icon: '✨' }
+        };
 
         /* ================= 内存数据 ================= */
         let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
         let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+        let newsData = { items: [], summaries: [] };
 
         /* ================= UI ================= */
         function showLoginUI() {
@@ -634,8 +755,7 @@
                     10000, '拉取账户数据'
                 );
                 if (err1) throw err1;
-                console.log('✅ 账户数据拉取成功，条数:', (records || []).length);
-
+                
                 accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
                 (records || []).forEach(r => {
                     if (r.type === 'income') {
@@ -659,18 +779,28 @@
                     }
                 });
 
-                console.log('⏳ 开始拉取健康数据...');
                 const { data: hd, error: err2 } = await withTimeout(
                     sb.from('health_data').select('*').order('ts', { ascending: true }),
-                    10000, '拉取健康数据'
+                    10000, '拉取健康与新闻数据'
                 );
                 if (err2) throw err2;
-                console.log('✅ 健康数据拉取成功，条数:', (hd || []).length);
 
                 healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+                newsData = { items: [], summaries: [] };
+                
                 (hd || []).forEach(r => {
                     const d = r.data || {};
                     const item = { id: r.id, date: r.date, ts: r.ts, ...d };
+                    
+                    if (r.type === 'news_item') {
+                        newsData.items.push(item);
+                        return;
+                    }
+                    if (r.type === 'news_summary') {
+                        newsData.summaries.push(item);
+                        return;
+                    }
+                    
                     switch (r.type) {
                         case 'sleep': healthData.sleep.push(item); break;
                         case 'energy': healthData.energy.push(item); break;
@@ -684,8 +814,7 @@
                     }
                 });
 
-                saveCache(); // 拉取成功后缓存到本地
-                console.log('✅ 数据全部分类完毕，开始渲染 UI...');
+                saveCache();
                 showMainUI();
                 renderAll();
                 console.log('🎉 渲染完成！');
@@ -698,14 +827,9 @@
         async function pushAccountRecord(record) {
             if (!currentUser) return null;
             const { data, error } = await sb.from('records').insert({
-                user_id: currentUser.id,
-                type: record.type, amount: record.amount,
-                account: record.account || null,
-                sub_category: record.subCategory || null,
-                description: record.desc || null,
-                day: record.day || null,
-                month: record.month || null,
-                ts: record.ts
+                user_id: currentUser.id, type: record.type, amount: record.amount,
+                account: record.account || null, sub_category: record.subCategory || null,
+                description: record.desc || null, day: record.day || null, month: record.month || null, ts: record.ts
             }).select().single();
             if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
             lastLocalChange = Date.now();
@@ -726,10 +850,9 @@
             if (!currentUser) return null;
             const ts = Date.now();
             const { data, error } = await sb.from('health_data').insert({
-                user_id: currentUser.id,
-                type, date, data: dataObj, ts
+                user_id: currentUser.id, type, date, data: dataObj, ts
             }).select().single();
-            if (error) { console.error('写入健康失败', error); alert('保存失败：' + error.message); return null; }
+            if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
             lastLocalChange = Date.now();
             return data;
         }
@@ -745,11 +868,11 @@
             realtimeChannel = sb.channel('db-realtime')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true); // 静默拉取，不转圈
+                    loadAllFromCloud(true);
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'health_data', filter: `user_id=eq.${currentUser.id}` }, () => {
                     if (Date.now() - lastLocalChange < 2000) return;
-                    loadAllFromCloud(true); // 静默拉取，不转圈
+                    loadAllFromCloud(true);
                 })
                 .subscribe();
         }
@@ -853,12 +976,10 @@
             document.getElementById('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
             document.getElementById('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
 
-            // ===== 支出明细按月折叠 =====
             const expEl = document.getElementById('expense-list');
             if (accountsData.expenses.length === 0) {
                 expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>';
             } else {
-                // 1. 按月分组
                 const grouped = {};
                 accountsData.expenses.forEach(e => {
                     const m = recordMonth(e);
@@ -866,7 +987,6 @@
                     grouped[m].push(e);
                 });
 
-                // 2. 月份排序（倒序，最新的在前）
                 const months = Object.keys(grouped).sort((a, b) => {
                     if (a === 'unknown') return 1;
                     if (b === 'unknown') return -1;
@@ -882,7 +1002,6 @@
                     });
                     const monthTotal = list.reduce((sum, e) => sum + e.amount, 0);
                     const mLabel = monthLabel(m);
-                    // 默认展开最新的一个月
                     const isOpen = idx === 0 ? 'open' : '';
 
                     html += `
@@ -927,14 +1046,11 @@
                 });
 
                 expEl.innerHTML = html;
-                // 重新绑定事件
                 expEl.querySelectorAll('.edit-expense-date').forEach(inp => inp.addEventListener('change', function() { updateExpenseDate(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('.edit-subcategory').forEach(sel => sel.addEventListener('change', function() { updateExpenseSubcategory(this.dataset.id, this.value); }));
                 expEl.querySelectorAll('[data-del-expense]').forEach(b => b.onclick = () => deleteExpense(b.dataset.delExpense));
             }
-            // =======================
 
-            // 转换明细
             const transEl = document.getElementById('transfer-list');
             if (accountsData.transfers.length === 0) {
                 transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>';
@@ -961,7 +1077,6 @@
                 transEl.querySelectorAll('[data-del-transfer]').forEach(b => b.onclick = () => deleteTransfer(b.dataset.delTransfer));
             }
 
-            // 收入明细
             const incEl = document.getElementById('income-list');
             if (accountsData.incomeRecords.length === 0) {
                 incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>';
@@ -1020,11 +1135,9 @@
                 const cls = bal >= 0 ? 'color:#2d7d46;' : 'color:#c0392b;';
                 const dayKeys = Object.keys(m.days).sort((a, b) => b.localeCompare(a));
                 
-                // 生成可点击的每日标签
                 const dayHtml = dayKeys.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;border-top:1px dashed #eee;padding-top:10px;">' + dayKeys.map(k => {
                     const d = m.days[k];
                     const label = k === 'unknown' ? '未记录' : shortDay(k);
-                    // 增加 data-day 和可点击样式
                     const isClickable = k !== 'unknown' ? `class="clickable-chip" data-day="${k}" style="cursor:pointer; font-size:11px;color:#666;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px; transition:all 0.2s;" onmouseover="this.style.borderColor='#2d7d5a'; this.style.color='#2d7d5a'" onmouseout="this.style.borderColor='#e8e8e8'; this.style.color='#666'" title="点击查看该日明细"` 
                                     : `style="font-size:11px;color:#999;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:2px 9px;"`;
                     return `<span ${isClickable}>${label} · ${d.count}笔 ¥${d.expense.toFixed(2)}</span>`;
@@ -1035,7 +1148,6 @@
 
                 const isOpen = idx === 0 ? 'open' : '';
 
-                // 将每个月的块改为 details 折叠
                 html += `
                 <details style="background:#f8f9fa;border-radius:8px;margin-bottom:8px; overflow:hidden;" ${isOpen}>
                     <summary style="padding:10px 12px; cursor:pointer; outline:none; user-select:none;">
@@ -1063,34 +1175,23 @@
             </div>`;
             listEl.innerHTML = html;
 
-            // 绑定点击事件，点击当日标签跳转并居中高亮
             listEl.querySelectorAll('.clickable-chip').forEach(chip => {
                 chip.onclick = (e) => {
                     const day = e.target.dataset.day;
                     if (!day) return;
                     const month = day.slice(0, 7);
                     
-                    // 1. 自动展开“支出明细”里对应的月份
                     const monthDetail = document.querySelector(`#expense-list details[data-month="${month}"]`);
-                    if (monthDetail) {
-                        monthDetail.open = true; // 确保对应月份是展开的
-                    }
+                    if (monthDetail) monthDetail.open = true;
                     
-                    // 2. 延迟一下等展开动画完成，再去滚动和加高亮
                     setTimeout(() => {
-                        // 找到该天对应的所有行
                         const rows = document.querySelectorAll(`#expense-list tr[data-day="${day}"]`);
                         if (rows.length > 0) {
-                            // 滚动到第一行，并让它在屏幕中居中
                             rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            
-                            // 增加高亮闪烁，让用户一眼看到
                             rows.forEach(r => {
-                                r.classList.remove('highlight-row'); // 重置旧动画
-                                void r.offsetWidth; // 触发重绘
+                                r.classList.remove('highlight-row');
+                                void r.offsetWidth;
                                 r.classList.add('highlight-row');
-                                
-                                // 2秒后移除高亮
                                 setTimeout(() => r.classList.remove('highlight-row'), 2000);
                             });
                         }
@@ -1107,11 +1208,16 @@
 
         function filterByDay(list) { return list.filter(r => r.date === currentDay); }
         function updateDayBar() {
+            const dateStr = fullDayLabel(currentDay) + ' · ' + weekdayLabel(currentDay);
             document.getElementById('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
-            document.getElementById('day-sub').textContent = fullDayLabel(currentDay) + ' · ' + weekdayLabel(currentDay);
+            document.getElementById('day-sub').textContent = dateStr;
             document.getElementById('day-picker').value = currentDay;
+            
+            document.getElementById('news-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+            document.getElementById('news-day-sub').textContent = dateStr;
+            document.getElementById('news-day-picker').value = currentDay;
         }
-        function setDay(d) { currentDay = d; updateDayBar(); resetIpSession(); renderHealthAll(); }
+        function setDay(d) { currentDay = d; updateDayBar(); resetIpSession(); renderHealthAll(); renderNews(); }
 
         function buildChipRow(containerId, items, selectedSet) {
             const el = document.getElementById(containerId);
@@ -1530,80 +1636,162 @@
             el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
         }
 
-        /* ================= AI 分析 ================= */
-        const AI_KEY = 'ai_analyze_config';
-        function getAIConfig() { try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {} return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }; }
-        function saveAIConfig(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
+        /* ================= 每日世事模块 ================= */
+        async function addNewsItem() {
+            const cat = document.getElementById('news-category').value;
+            const title = document.getElementById('news-title').value.trim();
+            const content = document.getElementById('news-content').value.trim();
+            if (!title) return alert('请填写新闻标题');
 
-        function collectDayData() {
-            const day = currentDay;
-            return {
-                date: day,
-                sleep: healthData.sleep.filter(r => r.date === day),
-                energy: healthData.energy.filter(r => r.date === day),
-                charge: healthData.charge.filter(r => r.date === day),
-                exercise: healthData.exercise.filter(r => r.date === day),
-                micro: healthData.microExercise.filter(r => r.date === day),
-                body: healthData.bodySignals.filter(r => r.date === day),
-                meal: healthData.meal.filter(r => r.date === day),
-                innerPeace: healthData.innerPeace.filter(r => r.date === day)
-            };
-        }
-
-        function buildPrompt(d) {
-            const lines = ['请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。', '', `【日期】${d.date}`, ''];
-            if (d.sleep.length) { const s = d.sleep[0]; const fm = { refreshed:'神清气爽', ok:'还行', tired:'疲惫', groggy:'昏沉' }; lines.push(`【睡眠】${s.start_time} → ${s.end_time}（${fm[s.feeling]||s.feeling}）${s.note?'，'+s.note:''}`); } else lines.push('【睡眠】未记录');
-            if (d.energy.length) { const e = d.energy[0]; lines.push(`【能量】上午 ${e.am_score}/10 · 下午 ${e.pm_score}/10${e.note?'，'+e.note:''}`); } else lines.push('【能量】未记录');
-            if (d.charge.length) { const tm = { rest:'休息', nature:'接触自然', social:'社交', hobby:'爱好', exercise:'轻度运动', food:'好好吃饭', other:'其他' }; lines.push('【充电】'+d.charge.map(c => `${tm[c.type]||c.type}（能量${c.delta>0?'+':''}${c.delta}）${c.note?'：'+c.note:''}`).join('；')); }
-            if (d.exercise.length) { const tm = { walk:'散步', run:'跑步', cycling:'骑行', strength:'力量', yoga:'瑜伽', ball:'球类', swim:'游泳', other:'其他' }; lines.push('【运动】'+d.exercise.map(x => `${tm[x.type]||x.type} ${x.duration}分钟${x.note?'（'+x.note+'）':''}`).join('；')); } else lines.push('【运动】未记录');
-            if (d.micro.length) { const pm = { round_shoulder:'圆肩', forward_head:'头前伸', anterior_pelvic:'骨盆前倾', hunchback:'驼背', neck_forward:'颈前倾', uneven_shoulder:'高低肩' }; const hm = { wall_stand:'靠墙站', chin_tuck:'收下巴', neck_stretch:'肩颈拉伸', shoulder_open:'开肩', squat:'深蹲', stand_reminder:'站姿提醒', walk_break:'走动休息' }; const m = d.micro[0]; const posture = (m.posture||[]).map(p => typeof p === 'string' ? (pm[p]||p) : (p.key === 'other' ? p.custom : (pm[p.key]||p.key))).join('、'); const habits = (m.habits||[]).map(h => typeof h === 'string' ? (hm[h]||h) : (h.key === 'other' ? h.custom : (hm[h.key]||h.key))).join('、'); lines.push(`【微运动】体态：${posture||'无'}；习惯：${habits||'无'}${m.note?'；'+m.note:''}`); }
-            if (d.body.length) { const sm = { fatigue:'疲劳', headache:'头痛', stomach:'肠胃不适', neck_pain:'肩颈酸', back_pain:'腰酸', eye_dry:'眼睛干涩', mood_low:'情绪低落', sleepy:'犯困' }; const b = d.body[0]; const sigs = (b.signals||[]).map(s => typeof s === 'string' ? (sm[s]||s) : (s.key === 'other' ? s.custom : (sm[s.key]||s.key))).join('、'); let at = ''; if (b.acne && (b.acne.location || b.acne.type || b.acne.note)) { const lm = { forehead:'额头', nose:'鼻子', cheek:'脸颊', chin:'下巴', back:'背部', other:'其他' }; const tm = { red:'红肿', whitehead:'白头', blackhead:'黑头', closed:'闭口' }; const ps = []; if (b.acne.location) ps.push('位置'+(b.acne.location === 'other' ? (b.acne.locationCustom||'其他') : lm[b.acne.location])); if (b.acne.type) ps.push(tm[b.acne.type]); if (b.acne.severity) ps.push('严重度'+b.acne.severity); at = '；痘痘：'+ps.join('·'); } lines.push(`【身体信号】${sigs||'无'}${at}${b.note?'；'+b.note:''}`); }
-            if (d.meal.length) { const m = d.meal[0]; lines.push(`【饮食】早：${m.breakfast||'—'}；午：${m.lunch||'—'}；晚：${m.dinner||'—'}；加餐：${m.snack||'—'}；饮水：${m.water||0}杯`); } else lines.push('【饮食】未记录');
-            if (d.innerPeace.length) lines.push(`【反内耗】今天做了 ${d.innerPeace.length} 次练习。感受：${d.innerPeace.map(x => x.feeling||'（无）').join('；')}`);
-            lines.push('', '请从以下 4 个角度输出（用 Markdown，简洁友好，不说教）：', '1. **今日状态小结**（2-3句）', '2. **亮点**（1-3条，具体到记录里的事）', '3. **需要温柔关注的地方**（1-3条，不制造焦虑）', '4. **明天的一个小建议**（1条，10-30分钟内可完成）');
-            return lines.join('\n');
-        }
-
-        function md2html(c) {
-            return c.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>').replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>').replace(/^- (.+)$/gm, '• $1').replace(/\n/g, '<br>');
-        }
-
-        async function runAIAnalysis() {
-            const cfg = getAIConfig();
-            if (!cfg.apiKey) { alert('请先在 API 配置中填写 Key'); return; }
-            const resultEl = document.getElementById('ai-result');
-            const btn = document.getElementById('ai-analyze-btn');
-            btn.disabled = true; btn.textContent = '⏳ 分析中...';
-            resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI…</div>';
-            const d = collectDayData();
-            const prompt = buildPrompt(d);
-            try {
-                const res = await fetch(cfg.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey }, body: JSON.stringify({ model: cfg.model, messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 }) });
-                if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
-                const json = await res.json();
-                const content = json.choices?.[0]?.message?.content;
-                if (!content) throw new Error('返回为空');
-                resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(content)}</div>`;
-                // 保存到云端
-                const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
-                for (const e of existing) { await deleteHealthRecord(e.id); }
-                healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-                const item = await pushHealthRecord('ai', currentDay, { content });
-                if (item) healthData.aiAnalysis.push({ id: item.id, date: currentDay, ts: item.ts, content });
-                saveCache();
-            } catch (err) {
-                console.error(err);
-                resultEl.innerHTML = `<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">分析失败：${esc(err.message)}</div>`;
-            } finally {
-                btn.disabled = false; btn.textContent = '✨ 生成今日分析';
+            const dataObj = { category: cat, title, content };
+            const item = await pushHealthRecord('news_item', currentDay, dataObj);
+            if (item) {
+                newsData.items.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+                saveCache(); renderNews();
+                document.getElementById('news-title').value = '';
+                document.getElementById('news-content').value = '';
             }
         }
 
-        function renderAIAnalysis() {
-            const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
-            const resultEl = document.getElementById('ai-result');
-            if (!list.length) { resultEl.innerHTML = '<div class="empty-hint">还没有今日分析</div>'; return; }
-            resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(list[0].content||'')}</div>`;
+        async function addNewsSummary() {
+            const summary = document.getElementById('news-summary').value.trim();
+            if (!summary) return alert('请填写总结内容');
+
+            const dataObj = { content: summary };
+            
+            const existing = newsData.summaries.find(x => x.date === currentDay);
+            if (existing) {
+                if (!confirm('今天已经有总结了，是否覆盖？（目前暂不支持覆盖，请先删除旧记录或清空输入）')) return;
+            }
+
+            const item = await pushHealthRecord('news_summary', currentDay, dataObj);
+            if (item) {
+                newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay);
+                newsData.summaries.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+                saveCache(); renderNews();
+                document.getElementById('news-summary').value = '';
+            }
+        }
+
+        // 自动抓取 NewsAPI
+        async function fetchAutoNews() {
+            const category = document.getElementById('auto-news-category').value;
+            const btn = document.getElementById('auto-fetch-btn');
+            
+            btn.disabled = true; 
+            btn.textContent = '⏳ 抓取中...';
+
+            try {
+                // 使用内置的 Key 发起请求
+                const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&pageSize=10&apiKey=${NEWS_API_KEY}`;
+                
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.status !== 'ok') {
+                    throw new Error(data.message || 'NewsAPI 请求失败，可能是免费额度已用完或 Key 失效');
+                }
+
+                const articles = data.articles;
+                if (!articles || articles.length === 0) {
+                    alert('没有获取到新闻。NewsAPI 免费版无法获取国内新闻，请切换其它分类试试。');
+                    return;
+                }
+
+                let count = 0;
+                for (const a of articles) {
+                    if (!a.title || a.title === '[Removed]') continue;
+
+                    // 将摘要、来源以及链接统一存入 content，并保留换行
+                    const desc = a.description || '暂无摘要';
+                    const content = `${desc}\n\n🔗 原文链接：${a.url}`;
+                    
+                    // NewsAPI 的分类映射到内部系统的分类
+                    let internalCat = 'other';
+                    if (category === 'technology') internalCat = 'tech';
+                    if (category === 'business') internalCat = 'finance';
+                    if (category === 'science' || category === 'health') internalCat = 'other';
+
+                    const dataObj = { 
+                        category: internalCat, 
+                        title: a.title, 
+                        content: content 
+                    };
+                    
+                    const item = await pushHealthRecord('news_item', currentDay, dataObj);
+                    if (item) {
+                        newsData.items.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+                        count++;
+                    }
+                }
+                
+                saveCache(); 
+                renderNews();
+                alert(`✅ 成功获取并保存了 ${count} 条新闻，请滚动到下方查看。`);
+            } catch (err) {
+                console.error(err);
+                alert(`抓取失败：${err.message}\n\n常见原因：\n1. NewsAPI 免费版不允许在线上环境请求，请尝试在本地运行，或使用梯子/代理。\n2. API Key 失效。`);
+            } finally {
+                btn.disabled = false; 
+                btn.textContent = '自动抓取今日新闻';
+            }
+        }
+
+        function renderNews() {
+            // 渲染条目
+            const itemEl = document.getElementById('news-history');
+            const todayItems = newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
+            if (!todayItems.length) {
+                itemEl.innerHTML = '<div class="empty-hint">这一天还没有记录世事</div>';
+            } else {
+                let html = '';
+                todayItems.forEach(n => {
+                    const catInfo = NEWS_CATEGORY[n.category] || NEWS_CATEGORY.other;
+                    
+                    // 把 content 中的网址提取出来转成可点击的 a 标签
+                    let displayContent = esc(n.content).replace(/\n/g, '<br>');
+                    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+                    displayContent = displayContent.replace(urlRegex, '<a href="$1" target="_blank" style="color:#2d7d5a; word-break:break-all;">$1</a>');
+
+                    html += `<div class="news-item">
+                        <div class="news-header">
+                            <div style="display:flex; align-items:flex-start; gap:8px;">
+                                <span class="tag tag-neutral" style="white-space:nowrap; margin-top:2px;">${catInfo.icon} ${catInfo.label}</span>
+                                <span class="news-title">${esc(n.title)}</span>
+                            </div>
+                            <button class="btn btn-danger btn-sm" data-del-news="${n.id}">✕</button>
+                        </div>
+                        ${n.content ? `<div class="news-content">${displayContent}</div>` : ''}
+                    </div>`;
+                });
+                itemEl.innerHTML = html;
+                itemEl.querySelectorAll('[data-del-news]').forEach(b => b.onclick = async () => {
+                    await deleteHealthRecord(b.dataset.delNews);
+                    newsData.items = newsData.items.filter(x => String(x.id) !== String(b.dataset.delNews));
+                    saveCache(); renderNews();
+                });
+            }
+
+            // 渲染总结
+            const summaryEl = document.getElementById('news-summary-history');
+            const todaySummary = newsData.summaries.find(x => x.date === currentDay);
+            if (!todaySummary) {
+                summaryEl.innerHTML = '<div class="empty-hint">这一天还没有写总结</div>';
+                document.getElementById('news-summary').value = '';
+            } else {
+                summaryEl.innerHTML = `<div style="background:#fdf6f6; padding:12px; border-radius:8px; position:relative;">
+                    <div style="font-size:13px; color:#3a5c50; line-height:1.6; padding-right:30px;">${esc(todaySummary.content).replace(/\n/g, '<br>')}</div>
+                    <button class="btn btn-danger btn-sm" style="position:absolute; top:8px; right:8px;" data-del-summary="${todaySummary.id}">✕</button>
+                </div>`;
+                document.getElementById('news-summary').value = todaySummary.content;
+                
+                summaryEl.querySelector('[data-del-summary]').onclick = async (e) => {
+                    const id = e.target.dataset.delSummary;
+                    await deleteHealthRecord(id);
+                    newsData.summaries = newsData.summaries.filter(x => String(x.id) !== String(id));
+                    saveCache(); renderNews();
+                };
+            }
         }
 
         /* ================= 渲染全部 ================= */
@@ -1612,7 +1800,7 @@
             renderExercise(); renderMicro(); renderBody(); renderMeal();
             renderInnerPeaceHistory(); renderAIAnalysis();
         }
-        function renderAll() { renderAccounts(); renderHealthAll(); }
+        function renderAll() { renderAccounts(); renderHealthAll(); renderNews(); }
 
         /* ================= 事件绑定 ================= */
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1691,10 +1879,21 @@
         document.getElementById('signal-save').onclick = addBody;
         document.getElementById('meal-save').onclick = addMeal;
 
+        // 每日世事
+        document.getElementById('news-save').onclick = addNewsItem;
+        document.getElementById('news-summary-save').onclick = addNewsSummary;
+        document.getElementById('auto-fetch-btn').onclick = fetchAutoNews;
+
+        // 日期切换
         document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
         document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
         document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
         document.getElementById('day-today').onclick = () => setDay(todayStr());
+
+        document.getElementById('news-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
+        document.getElementById('news-day-prev').onclick = () => setDay(addDays(currentDay, -1));
+        document.getElementById('news-day-next').onclick = () => setDay(addDays(currentDay, 1));
+        document.getElementById('news-day-today').onclick = () => setDay(todayStr());
 
         document.getElementById('acne-location').addEventListener('change', function () {
             document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
