@@ -140,7 +140,7 @@ th { color: #888; font-weight: 500; font-size: 12px; }
 @keyframes flash { 0% { background-color: #ffe0b2; } 100% { background-color: transparent; } }
 tr { scroll-margin-top: 20px; }
 
-/* ===== 新闻 / RSS 简报专用 ===== */
+/* ===== 新闻 / RSS 简报 ===== */
 .news-item { background: #fafcfb; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #3a8f6e; }
 .news-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 8px; }
 .news-title { font-size: 14px; font-weight: 600; color: #1a2e2a; text-decoration: none; line-height: 1.45; }
@@ -175,6 +175,19 @@ tr { scroll-margin-top: 20px; }
 .briefing-art a:hover { text-decoration: underline; color: #2d7d5a; }
 .briefing-errors { margin-top: 10px; padding: 8px 10px; background: #fdeaea; border-radius: 8px; font-size: 11px; color: #c0392b; line-height: 1.6; }
 
+/* ===== OPML 导入预览 ===== */
+.opml-preview { margin-top: 14px; background: #f7fbf9; border: 1px solid #d4e3dd; border-radius: 12px; padding: 14px; }
+.opml-preview-head { font-size: 13px; color: #1a5c47; font-weight: 600; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0eae6; line-height: 1.6; }
+.opml-preview-list { max-height: 360px; overflow-y: auto; margin-bottom: 12px; }
+.opml-preview-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #eef4f1; }
+.opml-preview-row.is-existing { opacity: 0.55; }
+.opml-cat-badge { white-space: nowrap; }
+.opml-preview-main { flex: 1; min-width: 0; }
+.opml-preview-name { font-size: 13px; font-weight: 600; color: #1a5c47; }
+.opml-preview-url { font-size: 11px; color: #9ab0a8; word-break: break-all; line-height: 1.4; margin-top: 2px; }
+.opml-cat-select { padding: 4px 6px; font-size: 12px; border: 1px solid #d4e3dd; border-radius: 6px; background: #fff; color: #3a5c50; font-family: inherit; cursor: pointer; }
+.opml-preview-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px dashed #d4e3dd; flex-wrap: wrap; }
+
 @media (max-width: 500px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     body { padding: 10px; }
@@ -182,6 +195,8 @@ tr { scroll-margin-top: 20px; }
     .day-bar { padding: 14px 16px; }
     .day-bar .day-big { font-size: 18px; }
     .ip-chat-container { padding: 12px; max-height: none; }
+    .opml-preview-row { flex-wrap: wrap; }
+    .opml-cat-select { width: 100%; }
 }
 </style>
 </head>
@@ -477,7 +492,7 @@ tr { scroll-margin-top: 20px; }
         </div>
     </div>
 
-    <!-- ========== TAB 3: 每日世事（RSS 简报核心） ========== -->
+    <!-- ========== TAB 3: 每日世事 ========== -->
     <div id="tab-news" class="tab-content">
         <div class="day-bar">
             <div>
@@ -496,9 +511,8 @@ tr { scroll-margin-top: 20px; }
         <div class="card">
             <h2>🧠 RSS 智能简报</h2>
             <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.7;">
-                源只加一次（本地 + 云端都保存，换设备也能同步回来），点「抓取并生成简报」→ 并发抓取所有启用的源 →
-                每个源压缩成最多 3 条要点 → 按分类分组给 AI → 生成分类简报。
-                拿着简报去 Feedly 深读原文即可。
+                源只加一次（本地 + 云端都保存，换设备自动同步）。可以直接从 Feedly 导出 OPML 导入，也可以单个粘贴。
+                点「抓取并生成简报」→ 并发抓取所有启用的源 → 每源压缩成 3 条要点 → 按分类打包给 AI → 生成分类简报。
             </div>
 
             <div class="grid-2">
@@ -523,9 +537,12 @@ tr { scroll-margin-top: 20px; }
 
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
                 <button class="btn btn-ghost" id="rss-add-btn">＋ 添加源</button>
+                <button class="btn btn-ghost" id="opml-import-btn">📂 导入 OPML</button>
                 <button class="btn btn-primary" id="rss-fetch-btn">🚀 抓取并生成简报</button>
                 <button class="btn btn-ghost btn-sm" id="rss-clear-btn">清空源列表</button>
             </div>
+            <input type="file" id="opml-file-input" accept=".opml,.xml,.opm,text/xml,application/xml" style="display:none">
+            <div id="opml-preview"></div>
 
             <div id="rss-status" style="font-size:12px;color:#2d7d5a;font-weight:600;margin-bottom:10px;line-height:1.6;"></div>
             <div id="rss-progress-wrap"></div>
@@ -683,26 +700,21 @@ const NEWS_CATEGORY = {
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 let newsData = { items: [], summaries: [], briefings: [] };
-let rssFeeds = [];  // { id, url, name, category, enabled }
+let rssFeeds = [];
 
-/* ================= 本地缓存 ================= */
+/* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
 
 function saveCache() {
     if (!currentUser) return;
-    // 简报存档瘦身：只有最近 3 条保留完整 articles，更早的只留正文
     const sorted = [...newsData.briefings].sort((a, b) => (b.ts || 0) - (a.ts || 0));
     sorted.forEach((b, i) => { if (i >= 3) b.articles = []; });
     try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
-            uid: currentUser.id,
-            accounts: accountsData,
-            health: healthData,
-            news: newsData
+            uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData
         }));
     } catch (e) {
-        // 撞到 localStorage 上限时，把更早的简报 articles 清空再存一次
         sorted.forEach((b, i) => { if (i >= 1) b.articles = []; });
         try {
             localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -724,7 +736,6 @@ function loadCache() {
         return true;
     } catch (e) { return false; }
 }
-
 function saveRssFeedsLocal() {
     try { localStorage.setItem(RSS_KEY, JSON.stringify(rssFeeds)); } catch (e) {}
 }
@@ -738,7 +749,7 @@ function loadRssFeedsLocal() {
     } catch (e) {}
 }
 
-/* ================= UI 切换 ================= */
+/* ================= UI ================= */
 function showLoginUI() {
     document.getElementById('auth-card').style.display = 'block';
     document.getElementById('loading-overlay').style.display = 'none';
@@ -832,7 +843,6 @@ async function loadAllFromCloud(silent = false) {
             }
         });
 
-        // RSS 源同步策略：云端有就用云端的（云端为最新），云端没有但本地有就推上去
         loadRssFeedsLocal();
         if (Array.isArray(cloudFeeds)) {
             rssFeeds = cloudFeeds;
@@ -872,7 +882,6 @@ async function deleteAccountRecord(id) {
     await sb.from('records').delete().eq('id', id);
     lastLocalChange = Date.now();
 }
-
 async function pushHealthRecord(type, date, dataObj) {
     if (!currentUser) return null;
     const ts = Date.now();
@@ -888,8 +897,6 @@ async function deleteHealthRecord(id) {
     await sb.from('health_data').delete().eq('id', id);
     lastLocalChange = Date.now();
 }
-
-// RSS 源云端同步：本地覆盖云端（先删本用户的 rss_feeds，再插入最新）
 async function pushRssFeedsToCloud() {
     if (!currentUser) return;
     try {
@@ -919,7 +926,7 @@ function setupRealtime() {
         .subscribe();
 }
 
-/* ================= 三账户逻辑 ================= */
+/* ================= 三账户 ================= */
 async function addIncome(amount, day) {
     if (isNaN(amount) || amount <= 0) return false;
     const d = isValidDay(day) ? day : todayStr();
@@ -1511,7 +1518,7 @@ function renderExerciseWeek() {
     el.querySelectorAll('.dot').forEach(dot => dot.onclick = () => setDay(dot.dataset.day));
 }
 
-/* ================= 反内耗（保留原逻辑） ================= */
+/* ================= 反内耗 ================= */
 const ipFlow = {
     step1: { title: '第 1 步：暂停与着陆', sys: '现在，停下。把脚踩在地上，感受地面的支撑。', bullets: ['吸气 4 秒，呼气 6 秒，做 3 次。'], note: '完成标志：呼吸稍微慢一点，身体松一点点。\n如果卡住：先喝一口水，或者站起来走两步。', type: 'confirm', checkboxLabel: '我完成了第 1 步', next: 'step2' },
     step2: { title: '第 2 步：身体调节', sys: '先照顾身体，再处理念头。', bullets: ['慢呼吸','拉伸肩膀和脖子','走动一下','冷水洗脸','把手放在胸口，感受温度'], type: 'confirm', checkboxLabel: '我完成了第 2 步', next: 'step3' },
@@ -1649,7 +1656,7 @@ function renderInnerPeaceHistory() {
     el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
 }
 
-/* ================= AI 配置（健康分析 + 简报共用） ================= */
+/* ================= AI 配置 ================= */
 const AI_KEY = 'ai_analyze_config';
 function getAIConfig() {
     try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {}
@@ -1737,7 +1744,7 @@ function renderRssSources() {
     const cnt = document.getElementById('rss-count');
     if (cnt) cnt.textContent = `(${rssFeeds.length})`;
     if (!rssFeeds.length) {
-        el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，先在上面粘贴一个吧</div>';
+        el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，先粘贴一个或导入 OPML 吧</div>';
         return;
     }
     let html = '';
@@ -1783,7 +1790,167 @@ function addRssFeed() {
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 3000);
 }
 
-/* ================= RSS 抓取（限流并发） ================= */
+/* ================= OPML 导入 ================= */
+const OPML_CAT_KEYWORDS = {
+    international: ['国际','world','global','全球','international','外交','地缘','geopolitics','foreign'],
+    finance: ['财经','finance','经济','economic','economy','market','markets','市场','business','金融','投资','商业'],
+    tech: ['科技','tech','technology','it','互联网','软件','ai','人工智能','程序员','编程','startup','startups'],
+    industry: ['行业','industry','sector','公司','企业','行业研究','industrial']
+};
+
+function guessOpmlCategory(name) {
+    const n = (name || '').toLowerCase();
+    if (!n) return null;
+    for (const [cat, keywords] of Object.entries(OPML_CAT_KEYWORDS)) {
+        if (keywords.some(k => n.includes(k.toLowerCase()))) return cat;
+    }
+    return null;
+}
+
+function parseOpmlFeeds(xmlText) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
+    const parseError = doc.getElementsByTagName('parsererror')[0];
+    if (parseError) throw new Error('OPML 解析失败：' + parseError.textContent.slice(0, 100));
+
+    const body = doc.getElementsByTagName('body')[0];
+    if (!body) throw new Error('OPML 格式错误：找不到 <body>');
+
+    const feeds = [];
+    const seenUrls = new Set();
+
+    function walk(node, parentName) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+            const child = node.childNodes[i];
+            if (child.nodeType !== 1) continue;
+            if (child.tagName.toLowerCase() !== 'outline') continue;
+
+            const xmlUrl = child.getAttribute('xmlUrl') || child.getAttribute('xmlurl') || child.getAttribute('xmlURL') || '';
+            const type = (child.getAttribute('type') || '').toLowerCase();
+            const text = child.getAttribute('text') || child.getAttribute('title') || '';
+
+            if (xmlUrl && (type === 'rss' || type === 'atom' || type === '')) {
+                if (!seenUrls.has(xmlUrl)) {
+                    seenUrls.add(xmlUrl);
+                    const guessed = guessOpmlCategory(text) || guessOpmlCategory(parentName);
+                    feeds.push({
+                        name: text || hostOf(xmlUrl),
+                        url: xmlUrl,
+                        category: guessed || 'international'
+                    });
+                }
+            } else {
+                walk(child, text || parentName);
+            }
+        }
+    }
+
+    walk(body, '');
+    return feeds;
+}
+
+let opmlPreviewData = null;
+
+function handleOpmlFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const feeds = parseOpmlFeeds(e.target.result);
+            if (!feeds.length) { alert('这个 OPML 文件里没有找到 RSS 源'); return; }
+            const existingUrls = new Set(rssFeeds.map(f => f.url));
+            feeds.forEach(f => { f._isExisting = existingUrls.has(f.url); });
+            opmlPreviewData = feeds;
+            renderOpmlPreview();
+        } catch (err) {
+            console.error(err);
+            alert('导入失败：' + err.message);
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function renderOpmlPreview() {
+    const el = document.getElementById('opml-preview');
+    if (!opmlPreviewData || !opmlPreviewData.length) { el.innerHTML = ''; return; }
+    const feeds = opmlPreviewData;
+    const existing = feeds.filter(f => f._isExisting).length;
+    const newCount = feeds.length - existing;
+
+    let html = `<div class="opml-preview">
+        <div class="opml-preview-head">
+            📋 预览：共 <b>${feeds.length}</b> 个源，其中 <b>${existing}</b> 个已存在（将跳过），<b>${newCount}</b> 个新源
+        </div>
+        <div class="opml-preview-list">`;
+
+    feeds.forEach((f, i) => {
+        const cat = NEWS_CATEGORY[f.category] || NEWS_CATEGORY.other;
+        const catOptions = ['international','finance','tech','industry'].map(k =>
+            `<option value="${k}" ${k === f.category ? 'selected' : ''}>${NEWS_CATEGORY[k].icon} ${NEWS_CATEGORY[k].label}</option>`
+        ).join('');
+        html += `<div class="opml-preview-row ${f._isExisting ? 'is-existing' : ''}">
+            <span class="tag tag-neutral opml-cat-badge">${cat.icon} ${cat.label}</span>
+            <div class="opml-preview-main">
+                <div class="opml-preview-name">${esc(f.name)}</div>
+                <div class="opml-preview-url">${esc(f.url)}</div>
+            </div>
+            ${f._isExisting ? '<span class="tag tag-warn">已存在</span>' : ''}
+            <select class="opml-cat-select" data-opml-idx="${i}" ${f._isExisting ? 'disabled' : ''}>${catOptions}</select>
+        </div>`;
+    });
+
+    html += `</div>
+        <div class="opml-preview-actions">
+            <button class="btn btn-ghost" id="opml-cancel-btn">取消</button>
+            <button class="btn btn-primary" id="opml-confirm-btn" ${newCount === 0 ? 'disabled' : ''}>确认导入 ${newCount} 个新源</button>
+        </div>
+    </div>`;
+    el.innerHTML = html;
+
+    el.querySelectorAll('[data-opml-idx]').forEach(sel => {
+        sel.onchange = () => {
+            const idx = parseInt(sel.dataset.opmlIdx, 10);
+            if (!opmlPreviewData[idx]) return;
+            opmlPreviewData[idx].category = sel.value;
+            const badge = sel.closest('.opml-preview-row').querySelector('.opml-cat-badge');
+            const cat = NEWS_CATEGORY[sel.value];
+            if (badge) badge.textContent = `${cat.icon} ${cat.label}`;
+        };
+    });
+
+    document.getElementById('opml-cancel-btn').onclick = () => {
+        opmlPreviewData = null;
+        document.getElementById('opml-preview').innerHTML = '';
+    };
+    document.getElementById('opml-confirm-btn').onclick = () => confirmOpmlImport();
+}
+
+function confirmOpmlImport() {
+    if (!opmlPreviewData) return;
+    const toImport = opmlPreviewData.filter(f => !f._isExisting);
+    if (!toImport.length) {
+        opmlPreviewData = null;
+        document.getElementById('opml-preview').innerHTML = '';
+        return;
+    }
+    toImport.forEach(f => {
+        rssFeeds.push({
+            id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6),
+            url: f.url, name: f.name, category: f.category, enabled: true
+        });
+    });
+    saveRssFeedsLocal();
+    pushRssFeedsToCloud();
+    renderRssSources();
+
+    const n = toImport.length;
+    opmlPreviewData = null;
+    document.getElementById('opml-preview').innerHTML = '';
+    document.getElementById('rss-status').textContent = `✅ 已导入 ${n} 个源（本地 + 云端），以后打开不用重新粘贴`;
+    setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
+}
+
+/* ================= RSS 抓取 ================= */
 async function fetchOneFeed(feed, timeoutMs = 20000) {
     const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&count=10';
     const ctrl = new AbortController();
@@ -1812,7 +1979,6 @@ async function fetchOneFeed(feed, timeoutMs = 20000) {
     }
 }
 
-// 限流并发：每批最多 5 个，批间 300ms；每批完成立即回调（先到先渲染）
 async function fetchAllFeedsConcurrent(onProgress) {
     const enabled = rssFeeds.filter(f => f.enabled !== false);
     if (!enabled.length) return { results: [], errors: [], total: 0 };
@@ -1827,8 +1993,7 @@ async function fetchAllFeedsConcurrent(onProgress) {
             if (s.status === 'fulfilled') {
                 results.push(s.value);
             } else {
-                const msg = s.reason && s.reason.name === 'AbortError'
-                    ? '请求超时' : (s.reason && s.reason.message) || '未知错误';
+                const msg = s.reason && s.reason.name === 'AbortError' ? '请求超时' : (s.reason && s.reason.message) || '未知错误';
                 errors.push({ feed, message: msg });
             }
         });
@@ -1852,7 +2017,6 @@ function renderFetchProgress(done, total, okCount, errCount) {
 }
 function clearFetchProgress() { document.getElementById('rss-progress-wrap').innerHTML = ''; }
 
-// 单源压缩为最多 3 条要点（用于两级汇总）
 function compressFeedToPoints(feedResult) {
     const items = (feedResult.items || []).slice(0, 8);
     if (!items.length) return null;
@@ -1912,7 +2076,6 @@ async function generateBriefing() {
     renderFetchProgress(0, enabled.length, 0, 0);
     statusEl.textContent = `开始抓取 ${enabled.length} 个源…`;
 
-    // 阶段 1：限流抓取 + 先到先渲染
     const fetched = await fetchAllFeedsConcurrent((partialResults, partialErrors, total) => {
         const done = partialResults.length + partialErrors.length;
         renderFetchProgress(done, total, partialResults.length, partialErrors.length);
@@ -1933,7 +2096,6 @@ async function generateBriefing() {
         return;
     }
 
-    // 阶段 2：两级汇总 → 按分类打包 → 一次 AI 调用
     const cfg = getAIConfig();
     let briefingText = '';
 
@@ -2001,7 +2163,6 @@ ${categoryText}`;
         statusEl.textContent = '⚠️ 还没配置 API Key（健康系统 → AI 每日分析 → API 配置），本次仅展示抓取结果';
     }
 
-    // 阶段 3：保存简报
     if (briefingText) {
         const articlePayload = all.slice(0, 60).map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
@@ -2114,7 +2275,6 @@ async function addNewsSummary() {
 }
 
 function renderNews() {
-    // 手动新闻
     const itemEl = document.getElementById('news-history');
     const todayItems = newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
     if (!todayItems.length) {
@@ -2145,7 +2305,6 @@ function renderNews() {
         });
     }
 
-    // 每日总结
     const summaryEl = document.getElementById('news-summary-history');
     const todaySummary = newsData.summaries.find(x => x.date === currentDay);
     if (!todaySummary) {
@@ -2273,6 +2432,14 @@ document.getElementById('rss-clear-btn').onclick = () => {
 document.getElementById('rss-url').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 document.getElementById('rss-name').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 
+// OPML 导入
+document.getElementById('opml-import-btn').onclick = () => document.getElementById('opml-file-input').click();
+document.getElementById('opml-file-input').addEventListener('change', function() {
+    const file = this.files && this.files[0];
+    if (file) handleOpmlFile(file);
+    this.value = '';
+});
+
 // 日期切换
 document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
 document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
@@ -2334,7 +2501,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('ai-api-url').value = cfg.apiUrl;
     document.getElementById('ai-model').value = cfg.model;
 
-    // RSS 源先读本地，云端拉到后会覆盖成最新的
     loadRssFeedsLocal();
     renderRssSources();
 
