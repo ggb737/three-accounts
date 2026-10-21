@@ -605,6 +605,9 @@
         const SUPABASE_KEY = 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y';
         const NEWS_API_KEY = 'aae2391a27cd4856b29b2a238db7aef8'; // 你提供的 NewsAPI Key
         
+        // 填入你刚刚申请的 Worker 网址，注意去掉结尾的 * 号
+        const CLOUDFLARE_WORKER_URL = 'https://three-accounts.3565988869.workers.dev';
+        
         if (!window.supabase) {
             document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#c0392b;">Supabase 库加载失败！<br>请检查网络、关闭梯子或广告拦截插件后刷新页面。</div>';
             throw new Error('Supabase 未加载');
@@ -1673,7 +1676,7 @@
             }
         }
 
-        // 自动抓取 NewsAPI
+        // 自动抓取 NewsAPI（通过 Cloudflare Worker 代理）
         async function fetchAutoNews() {
             const category = document.getElementById('auto-news-category').value;
             const btn = document.getElementById('auto-fetch-btn');
@@ -1682,10 +1685,13 @@
             btn.textContent = '⏳ 抓取中...';
 
             try {
-                // 使用内置的 Key 发起请求
-                const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&pageSize=10&apiKey=${NEWS_API_KEY}`;
+                // 1. 目标新闻 API 地址
+                const originalUrl = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&pageSize=10&apiKey=${NEWS_API_KEY}`;
                 
-                const res = await fetch(url);
+                // 2. 通过 Cloudflare Worker 代理请求，避免 CORS 限制
+                const proxyUrl = `${CLOUDFLARE_WORKER_URL}/?url=${encodeURIComponent(originalUrl)}`;
+                
+                const res = await fetch(proxyUrl);
                 const data = await res.json();
 
                 if (data.status !== 'ok') {
@@ -1730,7 +1736,7 @@
                 alert(`✅ 成功获取并保存了 ${count} 条新闻，请滚动到下方查看。`);
             } catch (err) {
                 console.error(err);
-                alert(`抓取失败：${err.message}\n\n常见原因：\n1. NewsAPI 免费版不允许在线上环境请求，请尝试在本地运行，或使用梯子/代理。\n2. API Key 失效。`);
+                alert(`抓取失败：${err.message}\n\n可能原因：\n1. Cloudflare Worker 地址填错了，或 Worker 代码未正确部署。\n2. NewsAPI 请求次数超限。`);
             } finally {
                 btn.disabled = false; 
                 btn.textContent = '自动抓取今日新闻';
