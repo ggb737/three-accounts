@@ -169,24 +169,24 @@ details.section-block[open] > summary { border-bottom: 1px solid #e8f2ee; }
 details.section-block[open] > summary::after { content: '－'; }
 .section-content { padding: 16px; }
 
-.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); transition: all 0.3s ease; position: relative; }
+.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); transition: all 0.3s ease; position: relative; }
 .briefing-card.read { opacity: 0.55; background: #f5f7f6; box-shadow: none; }
 .briefing-card.read:hover { opacity: 0.8; }
 
-.briefing-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #eef4f1; }
-.briefing-title { font-size: 14px; font-weight: 700; color: #1a5c47; display: flex; align-items: center; gap: 8px; }
-.briefing-meta { font-size: 11px; color: #a0bdb0; margin-top: 3px; line-height: 1.5; }
+.briefing-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px dashed #eef4f1; }
+.briefing-title { font-size: 16px; font-weight: 700; color: #1a5c47; display: flex; align-items: center; gap: 8px; }
+.briefing-meta { font-size: 12px; color: #a0bdb0; margin-top: 4px; line-height: 1.5; }
 
-.mark-read-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #2d7d5a; cursor: pointer; user-select: none; background: #e8f2ee; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
-.mark-read-label input { width: 14px; height: 14px; cursor: pointer; }
+.mark-read-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #2d7d5a; cursor: pointer; user-select: none; background: #e8f2ee; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
+.mark-read-label input { width: 16px; height: 16px; cursor: pointer; }
 .briefing-card.read .mark-read-label { background: #eee; color: #999; }
 
-.briefing-body { font-size: 13px; color: #3a5c50; line-height: 1.9; }
-.briefing-body b { color: #0d3b2e; }
-.briefing-body h3 { margin-top: 14px; margin-bottom: 6px; font-size: 14px; color: #1a5c47; }
-.briefing-arts { margin-top: 14px; }
-.briefing-arts summary { cursor: pointer; color: #2d7d5a; font-weight: 600; font-size: 12px; padding: 8px 0; outline: none; user-select: none; }
-.briefing-art { font-size: 12px; line-height: 1.65; padding: 6px 0; border-bottom: 1px dashed #eef4f1; }
+.briefing-body { font-size: 14px; color: #3a5c50; line-height: 1.8; }
+.briefing-body strong { color: #0d3b2e; font-weight: 600; }
+
+.briefing-arts { margin-top: 16px; border-top: 1px dashed #eef4f1; padding-top: 12px; }
+.briefing-arts summary { cursor: pointer; color: #2d7d5a; font-weight: 600; font-size: 13px; padding: 8px 0; outline: none; user-select: none; }
+.briefing-art { font-size: 13px; line-height: 1.65; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
 .briefing-art:last-child { border-bottom: none; }
 .briefing-art a { color: #1a5c47; text-decoration: none; }
 .briefing-art a:hover { text-decoration: underline; color: #2d7d5a; }
@@ -679,10 +679,11 @@ function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;color:#1a5c47;margin:10px 0 6px;">$1</h3>')
-        .replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
-        .replace(/^# (.+)$/gm, '<h3 style="font-size:16px;color:#1a5c47;margin:12px 0 6px;">$1</h3>')
-        .replace(/^- (.+)$/gm, '• $1')
+        // 专门处理 ### 标题格式
+        .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#0d3b2e;margin:16px 0 8px;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
+        // 专门处理列表项 * **标题**：描述
+        .replace(/^\* \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
+        .replace(/^- \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
         .replace(/\n/g, '<br>');
 }
 function withTimeout(promise, ms = 8000, stepName = '操作') {
@@ -2125,8 +2126,8 @@ function clearFetchProgress() { document.getElementById('rss-progress-wrap').inn
 function compressFeedToPoints(feedResult) {
     const items = (feedResult.items || []).slice(0, 8);
     if (!items.length) return null;
-    const points = items.slice(0, 5).map(it => { // 提取前 5 条重点
-        const sum = (it.summary || '').slice(0, 120);
+    const points = items.slice(0, 3).map(it => { // 提取前 3 条重点
+        const sum = (it.summary || '').slice(0, 100);
         return `  · ${it.title}${sum ? '——' + sum : ''}`;
     });
     return {
@@ -2231,22 +2232,39 @@ async function generateBriefing() {
             return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
         }).join('\n\n');
 
-        const prompt = `你是一位专业、克制的中文新闻主编。下面是按分类整理的 ${feedPoints.length} 个高质量信息源在【过去 24 小时】内发布的最新要点。请为每一类分别生成一份简短的中文简报。
+        // 全新的、极度严格的 Prompt 模板
+        const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请生成一份结构清晰、极度精炼的每日简报。
 
-【总体主线】
-先用 2-3 句话概括今天全球最值得注意的宏观趋势。
+【核心排版要求】
+1. **合并同类项**：如果多个源报道了同一事件（如某国大选、某公司财报），请将它们合并为一条，不要重复罗列。
+2. **拒绝流水账**：不要逐条翻译标题。提炼出"核心事实"以及"为什么重要"。
+3. **极简格式**：请严格按照以下 Markdown 模板输出，不要添加多余的寒暄或总结。每条要点控制在 40 字以内。
 
-【分类简报】
-按 🌍 国际 / 💰 财经 / 💻 科技 / 🏢 行业 分组（没有内容的组省略），每组：
-- 3-5 条要点（每条一句话，说清楚"发生了什么"和"为什么重要"）
-- 每条结尾用（来源）标注出处
+【输出模板】
+### 📌 今日主线
+（用 1-2 句话概括今天最值得关注的宏观趋势）
 
-【值得深挖】
-挑 3 条最值得去 Feedly 细读的，各一句话说明为什么。
+### 🌍 国际地缘
+* **【事件提炼】**：发生了什么？意味着什么？（来源）
+（如果无重要内容则省略此分类）
 
-要求：客观、简洁、不夸张、不编造，只基于给出的信息。总字数 600-900 字。
+### 💰 财经市场
+* **【事件提炼】**：发生了什么？意味着什么？（来源）
+（如果无重要内容则省略此分类）
 
-【已抓取的信息】
+### 💻 科技前沿
+* **【事件提炼】**：发生了什么？意味着什么？（来源）
+（如果无重要内容则省略此分类）
+
+### 🏢 行业动态
+* **【事件提炼】**：发生了什么？意味着什么？（来源）
+（如果无重要内容则省略此分类）
+
+### 💡 今日深挖建议
+**推荐阅读**：选出今天最值得去 Feedly 看原文的 1 篇文章。
+**推荐理由**：（一句话说明为什么值得读）
+
+【待处理的资讯】
 ${categoryText}`;
 
         try {
@@ -2279,7 +2297,6 @@ ${categoryText}`;
     }
 
     if (briefingText) {
-        // 只保留 24 小时内的文章存入 payload
         const articlePayload = all.map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
         }));
