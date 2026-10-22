@@ -679,9 +679,7 @@ function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // 专门处理 ### 标题格式
         .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#0d3b2e;margin:16px 0 8px;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
-        // 专门处理列表项 * **标题**：描述
         .replace(/^\* \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
         .replace(/^- \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
         .replace(/\n/g, '<br>');
@@ -916,16 +914,38 @@ async function deleteAccountRecord(id) {
     await sb.from('records').delete().eq('id', id);
     lastLocalChange = Date.now();
 }
+
+// === 修复后的 pushHealthRecord：增加数据深度清洗，防止特殊字符导致崩溃 ===
 async function pushHealthRecord(type, date, dataObj) {
     if (!currentUser) return null;
     const ts = Date.now();
-    const { data, error } = await sb.from('health_data').insert({
-        user_id: currentUser.id, type, date, data: dataObj, ts
-    }).select().single();
-    if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
-    lastLocalChange = Date.now();
-    return data;
+    
+    let sanitizedData;
+    try {
+        const jsonStr = JSON.stringify(dataObj)
+            .replace(/\\u0000/g, '') 
+            .replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); 
+        sanitizedData = JSON.parse(jsonStr);
+    } catch (e) {
+        console.error('数据序列化失败:', e);
+        alert('保存失败：数据结构包含无法解析的内容');
+        return null;
+    }
+
+    try {
+        const { data, error } = await sb.from('health_data').insert({
+            user_id: currentUser.id, type, date, data: sanitizedData, ts
+        }).select().single();
+        if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
+        lastLocalChange = Date.now();
+        return data;
+    } catch (err) {
+        console.error('网络或请求异常:', err);
+        alert('保存失败：请求被服务器断开。\n(可能原因：抓取的文章含有特殊字符，或单次请求体积过大)');
+        return null;
+    }
 }
+
 async function deleteHealthRecord(id) {
     if (!currentUser) return;
     await sb.from('health_data').delete().eq('id', id);
@@ -933,7 +953,15 @@ async function deleteHealthRecord(id) {
 }
 async function updateHealthRecord(id, dataObj) {
     if (!currentUser) return;
-    await sb.from('health_data').update({ data: dataObj }).eq('id', id);
+    let sanitizedData;
+    try {
+        const jsonStr = JSON.stringify(dataObj)
+            .replace(/\\u0000/g, '') 
+            .replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); 
+        sanitizedData = JSON.parse(jsonStr);
+    } catch (e) { return; }
+    
+    await sb.from('health_data').update({ data: sanitizedData }).eq('id', id);
     lastLocalChange = Date.now();
 }
 async function pushRssFeedsToCloud() {
@@ -2232,7 +2260,6 @@ async function generateBriefing() {
             return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
         }).join('\n\n');
 
-        // 全新的、极度严格的 Prompt 模板
         const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请生成一份结构清晰、极度精炼的每日简报。
 
 【核心排版要求】
@@ -2297,7 +2324,8 @@ ${categoryText}`;
     }
 
     if (briefingText) {
-        const articlePayload = all.map(a => ({
+        // 只保留前 40 条原文，防止请求体过大导致保存失败
+        const articlePayload = all.slice(0, 40).map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
         }));
         
@@ -2316,12 +2344,13 @@ ${categoryText}`;
             newsData.briefings.unshift({ id: inserted.id, date: currentDay, ts: inserted.ts, ...dataObj });
             saveCache();
             renderBriefings();
+            statusEl.textContent = `✅ 简报生成成功！共汇总 ${all.length} 篇新文章。`;
+        } else {
+            statusEl.textContent = `❌ 简报生成成功，但保存到云端失败（请查看弹窗提示）。`;
         }
-        statusEl.textContent = `✅ 简报生成成功！共汇总 ${all.length} 篇新文章。`;
         
         // 成功后自动收起抓取列表，让用户聚焦简报
         detailsEl.open = false;
-        // 清理状态文字
         setTimeout(() => { const s = document.getElementById('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 4000);
     }
 
