@@ -524,11 +524,17 @@ details.section-block[open] > summary::after { content: '－'; }
             </div>
         </div>
 
-        <!-- RSS 模块重排 -->
+        <!-- 1. 简报存档 (提前，作为最核心展示) -->
+        <div class="card">
+            <h2>📄 每日简报存档</h2>
+            <div id="briefing-history"><div class="empty-hint">还没有生成过简报</div></div>
+        </div>
+
+        <!-- 2. RSS 模块 -->
         <div class="card">
             <h2>🧠 RSS 智能简报</h2>
             
-            <!-- 1. 已保存的源 (默认展开) -->
+            <!-- 已保存的源 (默认展开) -->
             <details class="section-block" open>
                 <summary>📚 已保存的源 <span id="rss-count" style="color:#a0bdb0;font-weight:400;font-size:12px;margin-left:auto;margin-right:12px;">(0)</span></summary>
                 <div class="section-content">
@@ -536,7 +542,7 @@ details.section-block[open] > summary::after { content: '－'; }
                 </div>
             </details>
 
-            <!-- 2. 添加源 (默认收起) -->
+            <!-- 添加源 (默认收起) -->
             <details class="section-block" id="add-source-details">
                 <summary>➕ 添加新源</summary>
                 <div class="section-content">
@@ -569,20 +575,21 @@ details.section-block[open] > summary::after { content: '－'; }
                 </div>
             </details>
 
-            <!-- 3. 抓取并生成简报 (独立操作区) -->
+            <!-- 抓取操作区 -->
             <div style="margin-top:16px; padding:16px; background:#f7fbf9; border-radius:12px; border:1px dashed #c0d3cb; text-align:center;">
-                <button class="btn btn-primary" id="rss-fetch-btn" style="width:100%; max-width:300px; padding:12px; font-size:15px;">🚀 抓取并生成简报</button>
+                <div style="margin-bottom:12px; font-size:12px; color:#6b8a7e; line-height:1.5;">
+                    ⏱️ 系统会自动过滤，只抓取所有源中<b>过去 24 小时</b>内发布的最新文章进行汇总。
+                </div>
+                <button class="btn btn-primary" id="rss-fetch-btn" style="width:100%; max-width:300px; padding:12px; font-size:15px;">🚀 抓取24小时内文章并生成简报</button>
                 <div id="rss-status" style="font-size:13px;color:#2d7d5a;font-weight:600;margin-top:12px;line-height:1.6;"></div>
                 <div id="rss-progress-wrap"></div>
             </div>
 
-            <div id="rss-fetch-result" style="margin-top:18px;"></div>
-        </div>
-
-        <!-- 简报存档 -->
-        <div class="card">
-            <h2>📄 简报存档</h2>
-            <div id="briefing-history"><div class="empty-hint">还没有生成过简报</div></div>
+            <!-- 抓取结果 (可折叠，默认收起) -->
+            <details class="section-block" id="fetch-result-details" style="margin-top:16px;">
+                <summary>📥 查看本次抓取的原文列表</summary>
+                <div class="section-content" id="rss-fetch-result"></div>
+            </details>
         </div>
 
         <!-- 手动新闻 -->
@@ -734,7 +741,6 @@ const RSS_KEY = 'rss_feeds_v1';
 
 function saveCache() {
     if (!currentUser) return;
-    // 增加 isRead 字段的存储
     const sorted = [...newsData.briefings].sort((a, b) => (b.ts || 0) - (a.ts || 0));
     sorted.forEach((b, i) => { if (i >= 3) b.articles = []; });
     try {
@@ -2024,7 +2030,7 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
         }
 
         const items = [];
-        for (let i = 0; i < Math.min(itemNodes.length, 10); i++) {
+        for (let i = 0; i < Math.min(itemNodes.length, 30); i++) { // 提升上限到 30 条
             const node = itemNodes[i];
             
             const titleNode = node.querySelector('title');
@@ -2066,21 +2072,36 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
 async function fetchAllFeedsConcurrent(onProgress) {
     const enabled = rssFeeds.filter(f => f.enabled !== false);
     if (!enabled.length) return { results: [], errors: [], total: 0 };
-    const CONCURRENCY = 3; // 降低并发数量，提高成功率
+    
+    // 严格限制：过去 24 小时
+    const now = Date.now();
+    const threshold = now - (24 * 60 * 60 * 1000);
+
+    const CONCURRENCY = 3;
     const results = [], errors = [];
     const total = enabled.length;
+    
     for (let i = 0; i < total; i += CONCURRENCY) {
         const batch = enabled.slice(i, i + CONCURRENCY);
         const settled = await Promise.allSettled(batch.map(f => fetchOneFeed(f)));
+        
         settled.forEach((s, idx) => {
             const feed = batch[idx];
             if (s.status === 'fulfilled') {
-                results.push(s.value);
+                const feedData = s.value;
+                const originalItems = feedData.items || [];
+                
+                // 严格过滤：只保留发布在 24 小时内的文章
+                const filteredItems = originalItems.filter(it => it.ts >= threshold);
+                
+                feedData.items = filteredItems;
+                results.push(feedData);
             } else {
                 const msg = s.reason && s.reason.name === 'AbortError' ? '请求超时' : (s.reason && s.reason.message) || '未知错误';
                 errors.push({ feed, message: msg });
             }
         });
+        
         if (onProgress) onProgress(results, errors, total);
         if (i + CONCURRENCY < total) await new Promise(r => setTimeout(r, 300));
     }
@@ -2104,7 +2125,7 @@ function clearFetchProgress() { document.getElementById('rss-progress-wrap').inn
 function compressFeedToPoints(feedResult) {
     const items = (feedResult.items || []).slice(0, 8);
     if (!items.length) return null;
-    const points = items.slice(0, 3).map(it => {
+    const points = items.slice(0, 5).map(it => { // 提取前 5 条重点
         const sum = (it.summary || '').slice(0, 120);
         return `  · ${it.title}${sum ? '——' + sum : ''}`;
     });
@@ -2125,7 +2146,7 @@ function renderFetchResult(articles, errors, results) {
         </div>`;
     }
     if (results.length || articles.length) {
-        html += `<div style="font-size:12px;color:#6b8a7e;margin:10px 0;">✅ ${results.length} 个源成功 · 共 ${articles.length} 篇文章（按时间倒序）</div>`;
+        html += `<div style="font-size:12px;color:#6b8a7e;margin:10px 0;">✅ ${results.filter(r=>r.items.length>0).length} 个源有更新 · 共 ${articles.length} 篇新文章（按时间倒序）</div>`;
     }
     html += articles.map(a => {
         const cat = NEWS_CATEGORY[a.category] || NEWS_CATEGORY.other;
@@ -2150,6 +2171,7 @@ async function generateBriefing() {
     const btn = document.getElementById('rss-fetch-btn');
     const statusEl = document.getElementById('rss-status');
     const resultEl = document.getElementById('rss-fetch-result');
+    const detailsEl = document.getElementById('fetch-result-details');
 
     const enabled = rssFeeds.filter(f => f.enabled !== false);
     if (!enabled.length) return alert('请先添加至少一个 RSS 源');
@@ -2157,6 +2179,7 @@ async function generateBriefing() {
     btn.disabled = true;
     btn.textContent = '⏳ 抓取中…';
     resultEl.innerHTML = '';
+    detailsEl.open = true; // 抓取时暂时展开，让用户看到进度
     renderFetchProgress(0, enabled.length, 0, 0);
     statusEl.textContent = `开始抓取 ${enabled.length} 个源…`;
 
@@ -2175,8 +2198,9 @@ async function generateBriefing() {
     all.sort((a, b) => b.ts - a.ts);
 
     if (!all.length) {
-        statusEl.textContent = '❌ 没有抓到任何文章' + (errors.length ? `（${errors.length} 个源失败）` : '');
-        btn.disabled = false; btn.textContent = '🚀 抓取并生成简报';
+        statusEl.textContent = '💤 过去 24 小时内，所有启用的源都没有发布新文章。';
+        btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
+        detailsEl.open = false;
         return;
     }
 
@@ -2184,10 +2208,17 @@ async function generateBriefing() {
     let briefingText = '';
 
     if (cfg.apiKey) {
-        statusEl.textContent = `抓取完成（${all.length} 篇 / ${results.length} 源），AI 正在按分类生成简报…`;
+        statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成简报…`;
         btn.textContent = '🧠 生成简报中…';
 
         const feedPoints = results.map(r => compressFeedToPoints(r)).filter(Boolean);
+        
+        if (!feedPoints.length) {
+            statusEl.textContent = '⚠️ 没有提取到有效内容，无法生成简报。';
+            btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
+            return;
+        }
+
         const byCategory = {};
         feedPoints.forEach(fp => {
             if (!byCategory[fp.category]) byCategory[fp.category] = [];
@@ -2200,7 +2231,7 @@ async function generateBriefing() {
             return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
         }).join('\n\n');
 
-        const prompt = `你是一位专业、克制的中文新闻主编。下面是按分类整理的 ${feedPoints.length} 个高质量信息源的最新要点。请为每一类分别生成一份简短的中文简报。
+        const prompt = `你是一位专业、克制的中文新闻主编。下面是按分类整理的 ${feedPoints.length} 个高质量信息源在【过去 24 小时】内发布的最新要点。请为每一类分别生成一份简短的中文简报。
 
 【总体主线】
 先用 2-3 句话概括今天全球最值得注意的宏观趋势。
@@ -2241,24 +2272,27 @@ ${categoryText}`;
             if (!briefingText) throw new Error('AI 返回为空');
         } catch (err) {
             console.error(err);
-            statusEl.textContent = '⚠️ AI 生成失败：' + err.message + '（抓取结果已保留）';
+            statusEl.textContent = '⚠️ AI 生成失败：' + err.message;
         }
     } else {
         statusEl.textContent = '⚠️ 还没配置 API Key（健康系统 → AI 每日分析 → API 配置），本次仅展示抓取结果';
     }
 
     if (briefingText) {
-        const articlePayload = all.slice(0, 60).map(a => ({
+        // 只保留 24 小时内的文章存入 payload
+        const articlePayload = all.map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
         }));
+        
         const dataObj = {
             content: briefingText,
             articles: articlePayload,
-            feedCount: results.length,
+            feedCount: results.filter(r=>r.items.length>0).length,
             articleCount: all.length,
             errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message),
-            isRead: false // 新增 isRead 字段
+            isRead: false
         };
+        
         const inserted = await pushHealthRecord('briefing', currentDay, dataObj);
         if (inserted) {
             if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
@@ -2266,13 +2300,17 @@ ${categoryText}`;
             saveCache();
             renderBriefings();
         }
-        statusEl.textContent = `✅ 完成：${results.length} 个源 / ${all.length} 篇` +
-            (errors.length ? `（${errors.length} 个源失败）` : '') + ' — 简报已保存到下方存档';
+        statusEl.textContent = `✅ 简报生成成功！共汇总 ${all.length} 篇新文章。`;
+        
+        // 成功后自动收起抓取列表，让用户聚焦简报
+        detailsEl.open = false;
+        // 清理状态文字
+        setTimeout(() => { const s = document.getElementById('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 4000);
     }
 
     renderFetchResult(all.slice(0, 60), errors, results);
     btn.disabled = false;
-    btn.textContent = '🚀 抓取并生成简报';
+    btn.textContent = '🚀 抓取24小时内文章并生成简报';
 }
 
 /* ================= 简报存档 (已读功能) ================= */
