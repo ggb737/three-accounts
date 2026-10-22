@@ -1950,36 +1950,36 @@ function confirmOpmlImport() {
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
 }
 
-/* ================= RSS 抓取（优先专属 Worker 双通道兜底） ================= */
+/* ================= RSS 抓取（纯 Worker 通道，极速稳定） ================= */
 async function fetchOneFeed(feed, timeoutMs = 20000) {
     const srcName = feed.name || hostOf(feed.url);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
 
-    // 首选：你的专属 Cloudflare Worker（最快最稳）
     try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        // 彻底抛弃 rss2json，全部走你专属的 Cloudflare Worker
         const proxyUrl = 'https://rss.3565988869.workers.dev/?url=' + encodeURIComponent(feed.url);
         const res = await fetch(proxyUrl, { signal: ctrl.signal });
         clearTimeout(timer);
         
-        if (!res.ok) throw new Error(`代理返回 HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`Worker 返回 HTTP ${res.status}`);
         
         const xmlText = await res.text();
         
         // 检查 Worker 是否返回了错误字符串
         if (xmlText.includes("Missing url parameter") || xmlText.includes("Not found")) {
-            throw new Error("Worker 代理拒绝访问");
+            throw new Error("Worker 拒绝访问");
         }
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(xmlText, 'text/xml');
         
         if (doc.getElementsByTagName('parsererror').length > 0) {
-            throw new Error('XML 格式解析失败');
+            throw new Error('XML 解析失败');
         }
 
         const itemNodes = doc.querySelectorAll('item, entry'); // 兼容 RSS 2.0 和 Atom
-        if (itemNodes.length === 0) throw new Error('源中未找到文章 (item/entry)');
+        if (itemNodes.length === 0) throw new Error('未找到文章');
 
         const items = [];
         for (let i = 0; i < Math.min(itemNodes.length, 10); i++) {
@@ -2019,36 +2019,9 @@ async function fetchOneFeed(feed, timeoutMs = 20000) {
         
         return { feed, feedTitle: srcName, items };
     } catch (err) {
-        console.warn(`[${srcName}] Worker 通道失败，尝试 rss2json 备用...`, err.message);
-    }
-
-    // 备用：rss2json
-    try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-        const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&count=10';
-        const res = await fetch(apiUrl, { signal: ctrl.signal });
         clearTimeout(timer);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (data.status !== 'ok') throw new Error(data.message || '源返回异常');
-        
-        const items = (data.items || []).map(it => {
-            let ts = Date.now();
-            if (it.pubDate) { const t = new Date(it.pubDate).getTime(); if (!isNaN(t)) ts = t; }
-            return {
-                title: stripHtml(it.title || '(无标题)').slice(0, 200),
-                link: it.link || '',
-                ts,
-                summary: stripHtml(it.description || '').slice(0, 300),
-                source: srcName,
-                category: feed.category || 'other'
-            };
-        });
-        return { feed, feedTitle: srcName, items };
-    } catch (err) {
-        console.warn(`[${srcName}] 双通道均失败:`, err.message);
-        throw new Error('抓取失败: ' + err.message);
+        console.error(`[${srcName}] Worker 抓取失败:`, err.message);
+        throw new Error(err.message);
     }
 }
 
