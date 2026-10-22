@@ -160,10 +160,27 @@ tr { scroll-margin-top: 20px; }
 .rss-progress .bar { height: 6px; background: #e0eae6; border-radius: 3px; overflow: hidden; margin-top: 6px; }
 .rss-progress .bar-fill { height: 100%; background: linear-gradient(90deg, #2d7d5a, #3a8f6e); width: 0%; transition: width 0.3s; border-radius: 3px; }
 
-.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); }
+/* ===== 折叠板块与简报卡片 ===== */
+details.section-block { background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+details.section-block > summary { padding: 14px 16px; cursor: pointer; font-size: 15px; font-weight: 600; color: #1a5c47; user-select: none; display: flex; justify-content: space-between; align-items: center; list-style: none; }
+details.section-block > summary::-webkit-details-marker { display: none; }
+details.section-block > summary::after { content: '＋'; color: #a0bdb0; font-weight: bold; font-size: 16px; }
+details.section-block[open] > summary { border-bottom: 1px solid #e8f2ee; }
+details.section-block[open] > summary::after { content: '－'; }
+.section-content { padding: 16px; }
+
+.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); transition: all 0.3s ease; position: relative; }
+.briefing-card.read { opacity: 0.55; background: #f5f7f6; box-shadow: none; }
+.briefing-card.read:hover { opacity: 0.8; }
+
 .briefing-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #eef4f1; }
-.briefing-title { font-size: 14px; font-weight: 700; color: #1a5c47; }
+.briefing-title { font-size: 14px; font-weight: 700; color: #1a5c47; display: flex; align-items: center; gap: 8px; }
 .briefing-meta { font-size: 11px; color: #a0bdb0; margin-top: 3px; line-height: 1.5; }
+
+.mark-read-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #2d7d5a; cursor: pointer; user-select: none; background: #e8f2ee; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+.mark-read-label input { width: 14px; height: 14px; cursor: pointer; }
+.briefing-card.read .mark-read-label { background: #eee; color: #999; }
+
 .briefing-body { font-size: 13px; color: #3a5c50; line-height: 1.9; }
 .briefing-body b { color: #0d3b2e; }
 .briefing-body h3 { margin-top: 14px; margin-bottom: 6px; font-size: 14px; color: #1a5c47; }
@@ -507,48 +524,57 @@ tr { scroll-margin-top: 20px; }
             </div>
         </div>
 
-        <!-- RSS 智能简报 -->
+        <!-- RSS 模块重排 -->
         <div class="card">
             <h2>🧠 RSS 智能简报</h2>
-            <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.7;">
-                源只加一次（本地 + 云端都保存，换设备自动同步）。可以直接从 Feedly 导出 OPML 导入，也可以单个粘贴。
-                点「抓取并生成简报」→ 并发抓取所有启用的源 → 每源压缩成 3 条要点 → 按分类打包给 AI → 生成分类简报。
-            </div>
-
-            <div class="grid-2">
-                <div class="field">
-                    <label>RSS 链接</label>
-                    <input type="url" id="rss-url" placeholder="https://example.com/rss">
+            
+            <!-- 1. 已保存的源 (默认展开) -->
+            <details class="section-block" open>
+                <summary>📚 已保存的源 <span id="rss-count" style="color:#a0bdb0;font-weight:400;font-size:12px;margin-left:auto;margin-right:12px;">(0)</span></summary>
+                <div class="section-content">
+                    <div id="rss-source-list"></div>
                 </div>
-                <div class="field">
-                    <label>源名称（可选）</label>
-                    <input type="text" id="rss-name" placeholder="如：经济学人 · 国际">
+            </details>
+
+            <!-- 2. 添加源 (默认收起) -->
+            <details class="section-block" id="add-source-details">
+                <summary>➕ 添加新源</summary>
+                <div class="section-content">
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>RSS 链接</label>
+                            <input type="url" id="rss-url" placeholder="https://example.com/rss">
+                        </div>
+                        <div class="field">
+                            <label>源名称（可选）</label>
+                            <input type="text" id="rss-name" placeholder="如：经济学人 · 国际">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>归类</label>
+                        <select id="rss-category">
+                            <option value="international">🌍 国际</option>
+                            <option value="finance">💰 财经</option>
+                            <option value="tech">💻 科技</option>
+                            <option value="industry">🏢 行业</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                        <button class="btn btn-primary" id="rss-add-btn">＋ 确认添加</button>
+                        <button class="btn btn-ghost" id="opml-import-btn">📂 导入 OPML</button>
+                        <button class="btn btn-ghost btn-sm" id="rss-clear-btn">清空源列表</button>
+                    </div>
+                    <input type="file" id="opml-file-input" accept=".opml,.xml,.opm,text/xml,application/xml" style="display:none">
+                    <div id="opml-preview"></div>
                 </div>
-            </div>
-            <div class="field">
-                <label>归类</label>
-                <select id="rss-category">
-                    <option value="international">🌍 国际</option>
-                    <option value="finance">💰 财经</option>
-                    <option value="tech">💻 科技</option>
-                    <option value="industry">🏢 行业</option>
-                </select>
-            </div>
+            </details>
 
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-                <button class="btn btn-ghost" id="rss-add-btn">＋ 添加源</button>
-                <button class="btn btn-ghost" id="opml-import-btn">📂 导入 OPML</button>
-                <button class="btn btn-primary" id="rss-fetch-btn">🚀 抓取并生成简报</button>
-                <button class="btn btn-ghost btn-sm" id="rss-clear-btn">清空源列表</button>
+            <!-- 3. 抓取并生成简报 (独立操作区) -->
+            <div style="margin-top:16px; padding:16px; background:#f7fbf9; border-radius:12px; border:1px dashed #c0d3cb; text-align:center;">
+                <button class="btn btn-primary" id="rss-fetch-btn" style="width:100%; max-width:300px; padding:12px; font-size:15px;">🚀 抓取并生成简报</button>
+                <div id="rss-status" style="font-size:13px;color:#2d7d5a;font-weight:600;margin-top:12px;line-height:1.6;"></div>
+                <div id="rss-progress-wrap"></div>
             </div>
-            <input type="file" id="opml-file-input" accept=".opml,.xml,.opm,text/xml,application/xml" style="display:none">
-            <div id="opml-preview"></div>
-
-            <div id="rss-status" style="font-size:12px;color:#2d7d5a;font-weight:600;margin-bottom:10px;line-height:1.6;"></div>
-            <div id="rss-progress-wrap"></div>
-
-            <h3 style="margin-top:14px;">📚 已保存的源 <span id="rss-count" style="color:#a0bdb0;font-weight:400;font-size:12px;">(0)</span></h3>
-            <div id="rss-source-list"></div>
 
             <div id="rss-fetch-result" style="margin-top:18px;"></div>
         </div>
@@ -708,6 +734,7 @@ const RSS_KEY = 'rss_feeds_v1';
 
 function saveCache() {
     if (!currentUser) return;
+    // 增加 isRead 字段的存储
     const sorted = [...newsData.briefings].sort((a, b) => (b.ts || 0) - (a.ts || 0));
     sorted.forEach((b, i) => { if (i >= 3) b.articles = []; });
     try {
@@ -895,6 +922,11 @@ async function pushHealthRecord(type, date, dataObj) {
 async function deleteHealthRecord(id) {
     if (!currentUser) return;
     await sb.from('health_data').delete().eq('id', id);
+    lastLocalChange = Date.now();
+}
+async function updateHealthRecord(id, dataObj) {
+    if (!currentUser) return;
+    await sb.from('health_data').update({ data: dataObj }).eq('id', id);
     lastLocalChange = Date.now();
 }
 async function pushRssFeedsToCloud() {
@@ -1744,7 +1776,7 @@ function renderRssSources() {
     const cnt = document.getElementById('rss-count');
     if (cnt) cnt.textContent = `(${rssFeeds.length})`;
     if (!rssFeeds.length) {
-        el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，先粘贴一个或导入 OPML 吧</div>';
+        el.innerHTML = '<div class="empty-hint" style="padding:0;">还没有添加 RSS 源，展开下方“添加新源”输入吧</div>';
         return;
     }
     let html = '';
@@ -1786,7 +1818,10 @@ function addRssFeed() {
     saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
     document.getElementById('rss-url').value = '';
     document.getElementById('rss-name').value = '';
-    document.getElementById('rss-status').textContent = '✅ 已保存（本地 + 云端），以后打开不用重新粘贴';
+    
+    // 添加成功后自动收起添加面板
+    document.getElementById('add-source-details').open = false;
+    document.getElementById('rss-status').textContent = '✅ 已保存（本地 + 云端）';
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 3000);
 }
 
@@ -1946,7 +1981,8 @@ function confirmOpmlImport() {
     const n = toImport.length;
     opmlPreviewData = null;
     document.getElementById('opml-preview').innerHTML = '';
-    document.getElementById('rss-status').textContent = `✅ 已导入 ${n} 个源（本地 + 云端），以后打开不用重新粘贴`;
+    document.getElementById('add-source-details').open = false; // 收起添加面板
+    document.getElementById('rss-status').textContent = `✅ 已导入 ${n} 个源（本地 + 云端）`;
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
 }
 
@@ -1961,11 +1997,11 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
         const res = await fetch(proxyUrl, { signal: ctrl.signal });
         clearTimeout(timer);
 
-        if (!res.ok) throw new Error(`Worker 返回 HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`代理返回 HTTP ${res.status}`);
 
         const text = await res.text();
         if (text.includes("Missing url parameter") || text.includes("Not found")) {
-            throw new Error("Worker 代理拒绝访问");
+            throw new Error("Worker 代理参数错误");
         }
 
         const parser = new DOMParser();
@@ -1979,10 +2015,12 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
         }
 
         if (itemNodes.length === 0) {
-            if (text.toLowerCase().includes('<html') || text.toLowerCase().includes('access denied')) {
-                throw new Error('被目标源拦截 (返回了网页)');
+            // 精准判断报错原因
+            const lowerText = text.toLowerCase();
+            if (lowerText.includes('<html') || lowerText.includes('cloudflare') || lowerText.includes('access denied') || lowerText.includes('captcha')) {
+                throw new Error('被源站反爬/付费墙拦截');
             }
-            throw new Error('未找到文章内容 (item/entry)');
+            throw new Error('源格式异常或内容为空');
         }
 
         const items = [];
@@ -2021,7 +2059,7 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
     } catch (err) {
         clearTimeout(timer);
         const msg = err.name === 'AbortError' ? '请求超时' : err.message;
-        throw new Error(`[${srcName}] 抓取失败: ${msg}`);
+        throw new Error(`[${srcName}] ${msg}`);
     }
 }
 
@@ -2218,7 +2256,8 @@ ${categoryText}`;
             articles: articlePayload,
             feedCount: results.length,
             articleCount: all.length,
-            errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message)
+            errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message),
+            isRead: false // 新增 isRead 字段
         };
         const inserted = await pushHealthRecord('briefing', currentDay, dataObj);
         if (inserted) {
@@ -2236,16 +2275,26 @@ ${categoryText}`;
     btn.textContent = '🚀 抓取并生成简报';
 }
 
-/* ================= 简报存档 ================= */
+/* ================= 简报存档 (已读功能) ================= */
 function renderBriefings() {
     const el = document.getElementById('briefing-history');
     if (!el) return;
-    const list = [...(newsData.briefings || [])].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    
+    // 排序：未读 (isRead !== true) 在前，已读在后；同状态下按时间倒序
+    const list = [...(newsData.briefings || [])].sort((a, b) => {
+        const aRead = a.isRead ? 1 : 0;
+        const bRead = b.isRead ? 1 : 0;
+        if (aRead !== bRead) return aRead - bRead; // 未读 0 在前，已读 1 在后
+        return (b.ts || 0) - (a.ts || 0);          // 同状态按时间降序
+    });
+
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有生成过简报</div>'; return; }
 
     let html = '';
     list.forEach(b => {
         const arts = b.articles || [];
+        const isRead = b.isRead === true;
+
         const artHtml = arts.length ? `<details class="briefing-arts">
             <summary>📎 本次抓取的 ${arts.length} 篇文章（可直接点开原文）</summary>
             <div style="margin-top:6px;">
@@ -2265,7 +2314,7 @@ function renderBriefings() {
             errHtml = `<div class="briefing-errors">抓取失败：${b.errors.map(esc).join('；')}</div>`;
         }
 
-        html += `<div class="briefing-card">
+        html += `<div class="briefing-card ${isRead ? 'read' : ''}">
             <div class="briefing-head">
                 <div style="min-width:0;">
                     <div class="briefing-title">${esc(b.date)} 简报</div>
@@ -2273,7 +2322,13 @@ function renderBriefings() {
                         ${b.feedCount || 0} 个源 · ${b.articleCount || arts.length} 篇 · ${new Date(b.ts || Date.now()).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>
-                <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}">✕</button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <label class="mark-read-label">
+                        <input type="checkbox" class="mark-read-cb" data-id="${b.id}" ${isRead ? 'checked' : ''}>
+                        已读
+                    </label>
+                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}">✕</button>
+                </div>
             </div>
             <div class="briefing-body">${md2html(b.content || '')}</div>
             ${errHtml}
@@ -2282,11 +2337,29 @@ function renderBriefings() {
     });
     el.innerHTML = html;
 
+    // 绑定删除事件
     el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async () => {
         if (!confirm('删除这份简报？')) return;
         await deleteHealthRecord(btn.dataset.delBriefing);
         newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing));
         saveCache(); renderBriefings();
+    });
+
+    // 绑定已读/未读切换事件
+    el.querySelectorAll('.mark-read-cb').forEach(cb => cb.onchange = async () => {
+        const id = cb.dataset.id;
+        const isRead = cb.checked;
+        const item = newsData.briefings.find(x => String(x.id) === String(id));
+        if (!item) return;
+        
+        item.isRead = isRead;
+        saveCache(); // 立刻更新本地缓存
+        renderBriefings(); // 重新排序并渲染
+        
+        // 静默更新到云端
+        const dataObj = { ...item };
+        delete dataObj.id; delete dataObj.date; delete dataObj.ts; // 剔除不属于 JSON 数据的字段
+        await updateHealthRecord(id, dataObj);
     });
 }
 
