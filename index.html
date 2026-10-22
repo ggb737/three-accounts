@@ -675,15 +675,19 @@ function stripHtml(s) {
         .replace(/\s+/g, ' ').trim();
 }
 function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
+
+// 优化后的 md2html
 function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // 处理 ### 标题
         .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#0d3b2e;margin:16px 0 8px;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
-        .replace(/^\* \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
-        .replace(/^- \*\*(.+?)\*\*[：:](.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:8px;font-size:13px;line-height:1.6;"><span style="color:#2d7d5a;font-weight:600;margin-right:6px;white-space:nowrap;">• $1：</span><span style="color:#3a5c50;">$2</span></div>')
+        // 处理无序列表项 - 或 *
+        .replace(/^[-*] (.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:6px;"><span style="color:#2d7d5a;font-weight:bold;margin-right:6px;">•</span><span>$1</span></div>')
         .replace(/\n/g, '<br>');
 }
+
 function withTimeout(promise, ms = 8000, stepName = '操作') {
     return Promise.race([
         promise,
@@ -915,7 +919,7 @@ async function deleteAccountRecord(id) {
     lastLocalChange = Date.now();
 }
 
-// === 修复后的 pushHealthRecord：增加数据深度清洗，防止特殊字符导致崩溃 ===
+// 增加数据深度清洗
 async function pushHealthRecord(type, date, dataObj) {
     if (!currentUser) return null;
     const ts = Date.now();
@@ -941,7 +945,7 @@ async function pushHealthRecord(type, date, dataObj) {
         return data;
     } catch (err) {
         console.error('网络或请求异常:', err);
-        alert('保存失败：请求被服务器断开。\n(可能原因：抓取的文章含有特殊字符，或单次请求体积过大)');
+        alert('保存失败：请求被服务器断开。');
         return null;
     }
 }
@@ -2154,7 +2158,8 @@ function clearFetchProgress() { document.getElementById('rss-progress-wrap').inn
 function compressFeedToPoints(feedResult) {
     const items = (feedResult.items || []).slice(0, 8);
     if (!items.length) return null;
-    const points = items.slice(0, 3).map(it => { // 提取前 3 条重点
+    // 提取前 4 条作为重点，信息量更足
+    const points = items.slice(0, 4).map(it => {
         const sum = (it.summary || '').slice(0, 100);
         return `  · ${it.title}${sum ? '——' + sum : ''}`;
     });
@@ -2260,36 +2265,31 @@ async function generateBriefing() {
             return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
         }).join('\n\n');
 
-        const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请生成一份结构清晰、极度精炼的每日简报。
+        // 使用更自然、更结构化的 Prompt
+        const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请帮我生成一份结构清晰、重点突出的每日简报。
 
-【核心排版要求】
-1. **合并同类项**：如果多个源报道了同一事件（如某国大选、某公司财报），请将它们合并为一条，不要重复罗列。
-2. **拒绝流水账**：不要逐条翻译标题。提炼出"核心事实"以及"为什么重要"。
-3. **极简格式**：请严格按照以下 Markdown 模板输出，不要添加多余的寒暄或总结。每条要点控制在 40 字以内。
+【核心要求】
+1. **合并同类项**：如果多个源报道了同一事件，请合并为一条，不要重复罗列。
+2. **拒绝流水账**：提炼核心事实，并简要说明为什么重要，不要单纯复制新闻标题。
+3. **按领域分类**：按国际、财经、科技、行业等领域分类输出。如果没有该领域新闻，直接省略该分类。
 
-【输出模板】
+【排版参考】
 ### 📌 今日主线
-（用 1-2 句话概括今天最值得关注的宏观趋势）
+（用 2-3 句话概括今天最值得关注的宏观趋势）
 
-### 🌍 国际地缘
-* **【事件提炼】**：发生了什么？意味着什么？（来源）
-（如果无重要内容则省略此分类）
+### 🌍 分类简报
+**国际与地缘**
+- **[事件标题]**：核心事实 + 影响（来源）
 
-### 💰 财经市场
-* **【事件提炼】**：发生了什么？意味着什么？（来源）
-（如果无重要内容则省略此分类）
+**财经与市场**
+- **[事件标题]**：核心事实 + 影响（来源）
 
-### 💻 科技前沿
-* **【事件提炼】**：发生了什么？意味着什么？（来源）
-（如果无重要内容则省略此分类）
+**科技与行业**
+- **[事件标题]**：核心事实 + 影响（来源）
 
-### 🏢 行业动态
-* **【事件提炼】**：发生了什么？意味着什么？（来源）
-（如果无重要内容则省略此分类）
-
-### 💡 今日深挖建议
-**推荐阅读**：选出今天最值得去 Feedly 看原文的 1 篇文章。
-**推荐理由**：（一句话说明为什么值得读）
+### 💡 今日深挖
+- **推荐阅读**：选出今天最值得去 Feedly 看原文的 1 篇文章。
+- **推荐理由**：一句话说明为什么值得读。
 
 【待处理的资讯】
 ${categoryText}`;
@@ -2324,7 +2324,7 @@ ${categoryText}`;
     }
 
     if (briefingText) {
-        // 只保留前 40 条原文，防止请求体过大导致保存失败
+        // 限制保存的文章数量，防止请求体过大
         const articlePayload = all.slice(0, 40).map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
         }));
