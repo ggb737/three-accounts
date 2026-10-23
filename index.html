@@ -205,6 +205,12 @@ details.section-block[open] > summary::after { content: '－'; }
 .opml-cat-select { padding: 4px 6px; font-size: 12px; border: 1px solid #d4e3dd; border-radius: 6px; background: #fff; color: #3a5c50; font-family: inherit; cursor: pointer; }
 .opml-preview-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px dashed #d4e3dd; flex-wrap: wrap; }
 
+/* ===== 模态框 ===== */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.modal-title { font-size: 16px; font-weight: 600; color: #1a5c47; margin-bottom: 16px; }
+
 @media (max-width: 500px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     body { padding: 10px; }
@@ -235,10 +241,14 @@ details.section-block[open] > summary::after { content: '－'; }
 <div class="loading-overlay" id="loading-overlay">正在加载数据…<br><span style="font-size:12px;color:#999;">(如果长时间停在这里，请按 F12 查看控制台)</span></div>
 
 <div id="main-content" style="display:none;">
-    <div class="app-nav">
-        <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
-        <button class="nav-btn" data-tab="health">🌿 健康系统</button>
-        <button class="nav-btn" data-tab="news">📰 每日世事</button>
+    <!-- 顶部导航 -->
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <div class="app-nav" style="flex:1; margin-bottom:0;">
+            <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
+            <button class="nav-btn" data-tab="health">🌿 健康系统</button>
+            <button class="nav-btn" data-tab="news">📰 每日世事</button>
+        </div>
+        <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 16px; border-radius:12px; font-size:18px;">⚙️</button>
     </div>
 
     <!-- ========== TAB 1: 三账户 ========== -->
@@ -370,29 +380,43 @@ details.section-block[open] > summary::after { content: '－'; }
             <div class="field"><label>备注</label><input type="text" id="energy-note"></div>
             <button class="btn btn-primary" id="energy-save">记录能量</button>
             <div id="energy-history" style="margin-top:12px;"></div>
+        </div>
 
-            <h3 style="margin-top:20px;">🔋 充电系统</h3>
-            <div class="grid-2">
-                <div class="field"><label>充电活动</label>
-                    <select id="charge-type">
-                        <option value="rest">🛌 休息/小睡</option>
-                        <option value="nature">🌿 接触自然</option>
-                        <option value="social">👥 社交</option>
-                        <option value="hobby">🎨 爱好</option>
-                        <option value="exercise">🏃 轻度运动</option>
-                        <option value="food">🍵 好好吃饭</option>
-                        <option value="other">✨ 其他</option>
-                    </select>
+        <!-- 充电系统 (折叠) -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🔋 充电系统</summary>
+                <div class="section-content">
+                    <div class="grid-2">
+                        <div class="field"><label>充电活动</label>
+                            <select id="charge-type">
+                                <option value="rest">🛌 休息/小睡</option>
+                                <option value="nature">🌿 接触自然</option>
+                                <option value="social">👥 社交</option>
+                                <option value="hobby">🎨 爱好</option>
+                                <option value="exercise">🏃 轻度运动</option>
+                                <option value="food">🍵 好好吃饭</option>
+                                <option value="other">✨ 其他</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>能量变化（-5 ~ +5）</label><input type="number" id="charge-delta" min="-5" max="5" value="2"></div>
+                    </div>
+                    <div class="field"><label>备注</label><input type="text" id="charge-note"></div>
+                    <button class="btn btn-primary" id="charge-save">记录充电</button>
+                    <div id="charge-history" style="margin-top:16px;"></div>
                 </div>
-                <div class="field"><label>能量变化（-5 ~ +5）</label><input type="number" id="charge-delta" min="-5" max="5" value="2"></div>
-            </div>
-            <div class="field"><label>备注</label><input type="text" id="charge-note"></div>
-            <button class="btn btn-primary" id="charge-save">记录充电</button>
-            <div id="charge-history" style="margin-top:12px;"></div>
+            </details>
+        </div>
 
-            <h3 style="margin-top:20px;">🧘 反内耗系统</h3>
-            <div id="ip-chat-container" class="ip-chat-container"></div>
-            <div id="ip-history" style="margin-top:16px;"></div>
+        <!-- 反内耗系统 (折叠) -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🧘 反内耗系统</summary>
+                <div class="section-content">
+                    <div id="ip-chat-container" class="ip-chat-container"></div>
+                    <div id="ip-history" style="margin-top:16px;"></div>
+                </div>
+            </details>
         </div>
 
         <div class="card">
@@ -416,62 +440,76 @@ details.section-block[open] > summary::after { content: '－'; }
             <div class="field"><label>备注</label><input type="text" id="exercise-note"></div>
             <button class="btn btn-primary" id="exercise-save">记录运动</button>
             <div id="exercise-history" style="margin-top:12px;"></div>
+        </div>
 
-            <h3 style="margin-top:24px;">🧘 微运动管理</h3>
-            <div class="field">
-                <label>体态问题</label>
-                <div class="chip-row" id="posture-chips"></div>
-                <input type="text" id="posture-other" class="other-input hidden" placeholder="其他体态问题…">
-            </div>
-            <div class="field">
-                <label>微运动习惯</label>
-                <div class="chip-row" id="habit-chips"></div>
-                <input type="text" id="habit-other" class="other-input hidden" placeholder="其他微运动习惯…">
-            </div>
-            <div class="field"><label>备注</label><input type="text" id="micro-note"></div>
-            <button class="btn btn-primary" id="micro-save">记录微运动</button>
-            <div id="micro-history" style="margin-top:12px;"></div>
+        <!-- 微运动管理 (折叠) -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🧘 微运动管理</summary>
+                <div class="section-content">
+                    <div class="field">
+                        <label>体态问题</label>
+                        <div class="chip-row" id="posture-chips"></div>
+                        <input type="text" id="posture-other" class="other-input hidden" placeholder="其他体态问题…">
+                    </div>
+                    <div class="field">
+                        <label>微运动习惯</label>
+                        <div class="chip-row" id="habit-chips"></div>
+                        <input type="text" id="habit-other" class="other-input hidden" placeholder="其他微运动习惯…">
+                    </div>
+                    <div class="field"><label>备注</label><input type="text" id="micro-note"></div>
+                    <button class="btn btn-primary" id="micro-save">记录微运动</button>
+                    <div id="micro-history" style="margin-top:16px;"></div>
+                </div>
+            </details>
+        </div>
 
-            <h3 style="margin-top:24px;">💗 身体管理</h3>
-            <div class="field">
-                <label>身体信号</label>
-                <div class="chip-row" id="signal-chips"></div>
-                <input type="text" id="signal-other" class="other-input hidden" placeholder="其他身体信号…">
-            </div>
-            <div class="acne-card">
-                <div class="title">🫥 痘痘记录（选填）</div>
-                <div class="grid-3">
-                    <div class="field"><label>位置</label>
-                        <select id="acne-location">
-                            <option value="">无</option>
-                            <option value="forehead">额头</option>
-                            <option value="nose">鼻子</option>
-                            <option value="cheek">脸颊</option>
-                            <option value="chin">下巴</option>
-                            <option value="back">背部</option>
-                            <option value="other">其他</option>
-                        </select>
+        <!-- 身体管理 (折叠) -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>💗 身体管理</summary>
+                <div class="section-content">
+                    <div class="field">
+                        <label>身体信号</label>
+                        <div class="chip-row" id="signal-chips"></div>
+                        <input type="text" id="signal-other" class="other-input hidden" placeholder="其他身体信号…">
                     </div>
-                    <div class="field"><label>类型</label>
-                        <select id="acne-type">
-                            <option value="">无</option>
-                            <option value="red">红肿</option>
-                            <option value="whitehead">白头</option>
-                            <option value="blackhead">黑头</option>
-                            <option value="closed">闭口</option>
-                        </select>
+                    <div class="acne-card">
+                        <div class="title">🫥 痘痘记录（选填）</div>
+                        <div class="grid-3">
+                            <div class="field"><label>位置</label>
+                                <select id="acne-location">
+                                    <option value="">无</option>
+                                    <option value="forehead">额头</option>
+                                    <option value="nose">鼻子</option>
+                                    <option value="cheek">脸颊</option>
+                                    <option value="chin">下巴</option>
+                                    <option value="back">背部</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            <div class="field"><label>类型</label>
+                                <select id="acne-type">
+                                    <option value="">无</option>
+                                    <option value="red">红肿</option>
+                                    <option value="whitehead">白头</option>
+                                    <option value="blackhead">黑头</option>
+                                    <option value="closed">闭口</option>
+                                </select>
+                            </div>
+                            <div class="field"><label>严重（1-5）</label><input type="number" id="acne-severity" min="1" max="5"></div>
+                        </div>
+                        <div class="field" id="acne-location-other-field" style="display:none;">
+                            <label>位置（其他）</label>
+                            <input type="text" id="acne-location-other">
+                        </div>
+                        <div class="field" style="margin-bottom:0;"><label>痘痘备注</label><input type="text" id="acne-note"></div>
                     </div>
-                    <div class="field"><label>严重（1-5）</label><input type="number" id="acne-severity" min="1" max="5"></div>
+                    <div class="field" style="margin-top:10px;"><label>身体信号备注</label><input type="text" id="signal-note"></div>
+                    <button class="btn btn-primary" id="signal-save">记录身体信号</button>
+                    <div id="body-history" style="margin-top:16px;"></div>
                 </div>
-                <div class="field" id="acne-location-other-field" style="display:none;">
-                    <label>位置（其他）</label>
-                    <input type="text" id="acne-location-other">
-                </div>
-                <div class="field" style="margin-bottom:0;"><label>痘痘备注</label><input type="text" id="acne-note"></div>
-            </div>
-            <div class="field" style="margin-top:10px;"><label>身体信号备注</label><input type="text" id="signal-note"></div>
-            <button class="btn btn-primary" id="signal-save">记录身体信号</button>
-            <div id="body-history" style="margin-top:12px;"></div>
+            </details>
         </div>
 
         <div class="card">
@@ -492,15 +530,6 @@ details.section-block[open] > summary::after { content: '－'; }
 
         <div class="card">
             <h2>🤖 AI 每日分析</h2>
-            <details style="margin-bottom:10px;">
-                <summary style="cursor:pointer;color:#2d7d5a;font-weight:600;font-size:13px;">⚙️ API 配置（RSS 简报也复用这里）</summary>
-                <div style="margin-top:10px;">
-                    <div class="field"><label>API Key</label><input type="password" id="ai-api-key" placeholder="sk-..."></div>
-                    <div class="field"><label>API 地址</label><input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions"></div>
-                    <div class="field"><label>模型</label><input type="text" id="ai-model" value="deepseek-chat"></div>
-                    <button class="btn btn-ghost btn-sm" id="ai-save-config">保存配置</button>
-                </div>
-            </details>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
                 <button class="btn btn-primary" id="ai-analyze-btn">✨ 生成今日分析</button>
                 <button class="btn btn-ghost btn-sm" id="ai-clear-btn">清除今日分析</button>
@@ -534,7 +563,6 @@ details.section-block[open] > summary::after { content: '－'; }
         <div class="card">
             <h2>🧠 RSS 智能简报</h2>
             
-            <!-- 已保存的源 (默认展开) -->
             <details class="section-block" open>
                 <summary>📚 已保存的源 <span id="rss-count" style="color:#a0bdb0;font-weight:400;font-size:12px;margin-left:auto;margin-right:12px;">(0)</span></summary>
                 <div class="section-content">
@@ -542,7 +570,6 @@ details.section-block[open] > summary::after { content: '－'; }
                 </div>
             </details>
 
-            <!-- 添加源 (默认收起) -->
             <details class="section-block" id="add-source-details">
                 <summary>➕ 添加新源</summary>
                 <div class="section-content">
@@ -635,6 +662,32 @@ details.section-block[open] > summary::after { content: '－'; }
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
+<!-- ================= 设置模态框 ================= -->
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal-box">
+        <div class="modal-title">⚙️ API 配置（DeepSeek）</div>
+        <div class="field">
+            <label>API Key</label>
+            <input type="password" id="ai-api-key" placeholder="sk-...">
+        </div>
+        <div class="field">
+            <label>API 地址</label>
+            <input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions">
+        </div>
+        <div class="field">
+            <label>模型</label>
+            <input type="text" id="ai-model" value="deepseek-chat">
+        </div>
+        <div style="font-size:12px;color:#888;margin-top:10px;line-height:1.5;">
+            💡 填入后会自动保存到本地，并同步至你的云端账号。换设备登录无需重新配置。
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+            <button class="btn btn-ghost" id="close-settings-btn">取消</button>
+            <button class="btn btn-primary" id="ai-save-config">保存配置</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ================= Supabase ================= */
@@ -649,6 +702,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let realtimeChannel = null;
 let lastLocalChange = 0;
+let cloudApiConfigId = null; // 记录云端 API 配置的 id，用于更新
 
 /* ================= 工具 ================= */
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -737,10 +791,18 @@ let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stab
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 let newsData = { items: [], summaries: [], briefings: [] };
 let rssFeeds = [];
+let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
+const AI_KEY = 'ai_analyze_config';
+
+function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
+function loadAIConfigLocal() {
+    try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {}
+    return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
+}
 
 function saveCache() {
     if (!currentUser) return;
@@ -859,9 +921,19 @@ async function loadAllFromCloud(silent = false) {
         newsData = { items: [], summaries: [], briefings: [] };
         let cloudFeeds = null;
 
+        // 重置云端 API 配置 ID
+        cloudApiConfigId = null;
+
         (hd || []).forEach(r => {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
+            
+            if (r.type === 'ai_config') {
+                cloudApiConfigId = r.id;
+                aiConfig = { ...aiConfig, ...d };
+                saveAIConfigLocal(aiConfig);
+                return;
+            }
             if (r.type === 'news_item') { newsData.items.push(item); return; }
             if (r.type === 'news_summary') { newsData.summaries.push(item); return; }
             if (r.type === 'briefing') { newsData.briefings.push(item); return; }
@@ -886,6 +958,11 @@ async function loadAllFromCloud(silent = false) {
         } else if (rssFeeds.length) {
             await pushRssFeedsToCloud();
         }
+
+        // 将最新的 API 配置填入设置框
+        document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
+        document.getElementById('ai-api-url').value = aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
+        document.getElementById('ai-model').value = aiConfig.model || 'deepseek-chat';
 
         saveCache();
         showMainUI();
@@ -918,8 +995,6 @@ async function deleteAccountRecord(id) {
     await sb.from('records').delete().eq('id', id);
     lastLocalChange = Date.now();
 }
-
-// 增加数据深度清洗
 async function pushHealthRecord(type, date, dataObj) {
     if (!currentUser) return null;
     const ts = Date.now();
@@ -949,7 +1024,6 @@ async function pushHealthRecord(type, date, dataObj) {
         return null;
     }
 }
-
 async function deleteHealthRecord(id) {
     if (!currentUser) return;
     await sb.from('health_data').delete().eq('id', id);
@@ -980,6 +1054,25 @@ async function pushRssFeedsToCloud() {
         }
         lastLocalChange = Date.now();
     } catch (e) { console.warn('RSS 源同步云端失败', e); }
+}
+
+// 保存 AI 配置到云端
+async function saveAIConfigToCloud(config) {
+    if (!currentUser) return;
+    try {
+        if (cloudApiConfigId) {
+            // 更新已有记录
+            await sb.from('health_data').update({ data: config, ts: Date.now() }).eq('id', cloudApiConfigId);
+        } else {
+            // 新建记录
+            const { data, error } = await sb.from('health_data').insert({
+                user_id: currentUser.id, type: 'ai_config', date: todayStr(),
+                data: config, ts: Date.now()
+            }).select().single();
+            if (data) cloudApiConfigId = data.id;
+        }
+        lastLocalChange = Date.now();
+    } catch (e) { console.warn('API 配置同步云端失败', e); }
 }
 
 /* ================= 实时监听 ================= */
@@ -1727,14 +1820,7 @@ function renderInnerPeaceHistory() {
     el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
 }
 
-/* ================= AI 配置 ================= */
-const AI_KEY = 'ai_analyze_config';
-function getAIConfig() {
-    try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {}
-    return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
-}
-function saveAIConfig(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
-
+/* ================= AI 每日分析 ================= */
 function collectDayData() {
     const day = currentDay;
     return {
@@ -1765,8 +1851,7 @@ function buildHealthPrompt(d) {
 }
 
 async function runAIAnalysis() {
-    const cfg = getAIConfig();
-    if (!cfg.apiKey) { alert('请先在 API 配置中填写 Key'); return; }
+    if (!aiConfig.apiKey) { alert('请先在右上角 ⚙️ 设置中配置 API Key'); return; }
     const resultEl = document.getElementById('ai-result');
     const btn = document.getElementById('ai-analyze-btn');
     btn.disabled = true; btn.textContent = '⏳ 分析中...';
@@ -1774,11 +1859,11 @@ async function runAIAnalysis() {
     const d = collectDayData();
     const prompt = buildHealthPrompt(d);
     try {
-        const res = await fetch(cfg.apiUrl, {
+        const res = await fetch(aiConfig.apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiConfig.apiKey },
             body: JSON.stringify({
-                model: cfg.model,
+                model: aiConfig.model,
                 messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }],
                 temperature: 0.7, max_tokens: 800
             })
@@ -2158,8 +2243,8 @@ function clearFetchProgress() { document.getElementById('rss-progress-wrap').inn
 function compressFeedToPoints(feedResult) {
     const items = (feedResult.items || []).slice(0, 8);
     if (!items.length) return null;
-    // 提取前 4 条作为重点，信息量更足
-    const points = items.slice(0, 4).map(it => {
+    // 提取前 3 条重点
+    const points = items.slice(0, 3).map(it => {
         const sum = (it.summary || '').slice(0, 100);
         return `  · ${it.title}${sum ? '——' + sum : ''}`;
     });
@@ -2238,35 +2323,36 @@ async function generateBriefing() {
         return;
     }
 
-    const cfg = getAIConfig();
-    let briefingText = '';
+    if (!aiConfig.apiKey) {
+        statusEl.textContent = '⚠️ 还没配置 API Key（请点击右上角 ⚙️ 设置），本次仅展示抓取结果';
+        btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
+        return;
+    }
 
-    if (cfg.apiKey) {
-        statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成简报…`;
-        btn.textContent = '🧠 生成简报中…';
+    statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成简报…`;
+    btn.textContent = '🧠 生成简报中…';
 
-        const feedPoints = results.map(r => compressFeedToPoints(r)).filter(Boolean);
-        
-        if (!feedPoints.length) {
-            statusEl.textContent = '⚠️ 没有提取到有效内容，无法生成简报。';
-            btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
-            return;
-        }
+    const feedPoints = results.map(r => compressFeedToPoints(r)).filter(Boolean);
+    
+    if (!feedPoints.length) {
+        statusEl.textContent = '⚠️ 没有提取到有效内容，无法生成简报。';
+        btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
+        return;
+    }
 
-        const byCategory = {};
-        feedPoints.forEach(fp => {
-            if (!byCategory[fp.category]) byCategory[fp.category] = [];
-            byCategory[fp.category].push(fp);
-        });
+    const byCategory = {};
+    feedPoints.forEach(fp => {
+        if (!byCategory[fp.category]) byCategory[fp.category] = [];
+        byCategory[fp.category].push(fp);
+    });
 
-        const categoryText = Object.keys(byCategory).map(cat => {
-            const catInfo = NEWS_CATEGORY[cat] || NEWS_CATEGORY.other;
-            const lines = byCategory[cat].map(fp => `【${fp.feed}】\n${fp.points.join('\n')}`).join('\n\n');
-            return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
-        }).join('\n\n');
+    const categoryText = Object.keys(byCategory).map(cat => {
+        const catInfo = NEWS_CATEGORY[cat] || NEWS_CATEGORY.other;
+        const lines = byCategory[cat].map(fp => `【${fp.feed}】\n${fp.points.join('\n')}`).join('\n\n');
+        return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
+    }).join('\n\n');
 
-        // 使用更自然、更结构化的 Prompt
-        const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请帮我生成一份结构清晰、重点突出的每日简报。
+    const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请帮我生成一份结构清晰、重点突出的每日简报。
 
 【核心要求】
 1. **合并同类项**：如果多个源报道了同一事件，请合并为一条，不要重复罗列。
@@ -2294,33 +2380,31 @@ async function generateBriefing() {
 【待处理的资讯】
 ${categoryText}`;
 
-        try {
-            const aiRes = await fetch(cfg.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey },
-                body: JSON.stringify({
-                    model: cfg.model,
-                    messages: [
-                        { role: 'system', content: '你是严谨、专业、不说空话的新闻主编。' },
-                        { role: 'user', content: prompt }
-                    ],
-                    temperature: 0.5,
-                    max_tokens: 2000
-                })
-            });
-            if (!aiRes.ok) {
-                const t = await aiRes.text();
-                throw new Error('AI 请求失败 HTTP ' + aiRes.status + '：' + t.slice(0, 150));
-            }
-            const aiJson = await aiRes.json();
-            briefingText = aiJson.choices?.[0]?.message?.content || '';
-            if (!briefingText) throw new Error('AI 返回为空');
-        } catch (err) {
-            console.error(err);
-            statusEl.textContent = '⚠️ AI 生成失败：' + err.message;
+    let briefingText = '';
+    try {
+        const aiRes = await fetch(aiConfig.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiConfig.apiKey },
+            body: JSON.stringify({
+                model: aiConfig.model,
+                messages: [
+                    { role: 'system', content: '你是严谨、专业、不说空话的新闻主编。' },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.5,
+                max_tokens: 2000
+            })
+        });
+        if (!aiRes.ok) {
+            const t = await aiRes.text();
+            throw new Error('AI 请求失败 HTTP ' + aiRes.status + '：' + t.slice(0, 150));
         }
-    } else {
-        statusEl.textContent = '⚠️ 还没配置 API Key（健康系统 → AI 每日分析 → API 配置），本次仅展示抓取结果';
+        const aiJson = await aiRes.json();
+        briefingText = aiJson.choices?.[0]?.message?.content || '';
+        if (!briefingText) throw new Error('AI 返回为空');
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = '⚠️ AI 生成失败：' + err.message;
     }
 
     if (briefingText) {
@@ -2553,6 +2637,25 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     };
 });
 
+// 设置面板逻辑
+document.getElementById('open-settings-btn').onclick = () => {
+    document.getElementById('settings-modal').classList.add('active');
+};
+document.getElementById('close-settings-btn').onclick = () => {
+    document.getElementById('settings-modal').classList.remove('active');
+};
+document.getElementById('ai-save-config').onclick = async () => {
+    aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
+    aiConfig.apiUrl = document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+    aiConfig.model = document.getElementById('ai-model').value.trim() || 'deepseek-chat';
+    
+    saveAIConfigLocal(aiConfig);
+    await saveAIConfigToCloud(aiConfig);
+    
+    alert('配置已保存，并同步至云端 ✓');
+    document.getElementById('settings-modal').classList.remove('active');
+};
+
 document.getElementById('login-btn').onclick = async () => {
     const email = document.getElementById('auth-email').value.trim();
     const pwd = document.getElementById('auth-password').value;
@@ -2657,14 +2760,6 @@ document.getElementById('acne-location').addEventListener('change', function () 
     document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
 });
 
-document.getElementById('ai-save-config').onclick = () => {
-    saveAIConfig({
-        apiKey: document.getElementById('ai-api-key').value.trim(),
-        apiUrl: document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions',
-        model: document.getElementById('ai-model').value.trim() || 'deepseek-chat'
-    });
-    alert('已保存 ✓');
-};
 document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
 document.getElementById('ai-clear-btn').onclick = async () => {
     if (!confirm('清除今天的 AI 分析？')) return;
@@ -2699,10 +2794,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
     buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
 
-    const cfg = getAIConfig();
-    document.getElementById('ai-api-key').value = cfg.apiKey || '';
-    document.getElementById('ai-api-url').value = cfg.apiUrl;
-    document.getElementById('ai-model').value = cfg.model;
+    aiConfig = loadAIConfigLocal();
+    document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
+    document.getElementById('ai-api-url').value = aiConfig.apiUrl;
+    document.getElementById('ai-model').value = aiConfig.model;
 
     loadRssFeedsLocal();
     renderRssSources();
