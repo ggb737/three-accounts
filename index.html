@@ -583,9 +583,13 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                 一次只养成一个习惯。点击卡片即可打卡/取消，系统自动记录连续天数。
             </div>
             <div id="habit-list"></div>
-            <div class="add-habit-row">
-                <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
-                <button id="add-habit-btn">添加</button>
+            
+            <div style="margin-top:16px; border-top:1px dashed #d4e3dd; padding-top:12px;">
+                <div class="add-habit-row">
+                    <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
+                    <button id="add-habit-btn">添加</button>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:10px; width:100%;" id="import-morning-btn">📋 一键导入早晨流程 (唤醒→出门)</button>
             </div>
         </div>
     </div>
@@ -1234,6 +1238,35 @@ function deleteHabit(id) {
     saveHabitsLocal();
     saveHabitsToCloud();
     renderHabits();
+}
+
+function importMorningRoutine() {
+    const morningHabits = [
+        { name: '伸懒腰 + 拉开窗帘见光', icon: '🌅' },
+        { name: '喝温水 + 如厕排毒', icon: '💧' },
+        { name: '刷牙洗脸 + 护肤防晒', icon: '🧴' },
+        { name: '换衣 + 拿早餐 + 检查出门', icon: '🎒' }
+    ];
+    let added = 0;
+    morningHabits.forEach(mh => {
+        if (!habits.some(h => h.name === mh.name)) {
+            habits.push({
+                id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6),
+                name: mh.name,
+                icon: mh.icon,
+                dates: []
+            });
+            added++;
+        }
+    });
+    if (added > 0) {
+        saveHabitsLocal();
+        saveHabitsToCloud();
+        renderHabits();
+        alert(`已成功导入 ${added} 个早晨流程步骤！`);
+    } else {
+        alert('早晨流程已经在你的习惯列表里了。');
+    }
 }
 
 function renderHabits() {
@@ -2912,6 +2945,7 @@ document.getElementById('meal-save').onclick = addMeal;
 
 // 新增习惯打卡事件
 document.getElementById('add-habit-btn').onclick = addNewHabit;
+document.getElementById('import-morning-btn').onclick = importMorningRoutine;
 document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addNewHabit(); });
 
 // 每日世事
