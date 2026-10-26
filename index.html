@@ -124,7 +124,7 @@ th { color: #888; font-weight: 500; font-size: 12px; }
 .day-bar .day-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; font-weight: 600; }
 .day-bar .day-btn:hover { background: rgba(255,255,255,0.3); }
 .app-nav { display: flex; gap: 8px; margin-bottom: 16px; }
-.nav-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; background: #e8f2ee; color: #2d7d5a; font-weight: 600; cursor: pointer; font-size: 15px; transition: all 0.2s; font-family: inherit; }
+.nav-btn { flex: 1; padding: 12px 4px; border: none; border-radius: 12px; background: #e8f2ee; color: #2d7d5a; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
 .nav-btn.active { background: #2d7d5a; color: #fff; box-shadow: 0 4px 12px rgba(45,125,90,0.3); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
@@ -242,6 +242,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     .ip-chat-container { padding: 12px; max-height: none; }
     .opml-preview-row { flex-wrap: wrap; }
     .opml-cat-select { width: 100%; }
+    .nav-btn { font-size: 13px; padding: 12px 2px; }
 }
 </style>
 </head>
@@ -265,11 +266,12 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 <div id="main-content" style="display:none;">
     <!-- 顶部导航：设置靠左，导航靠右平分 -->
     <div style="display:flex; gap:8px; margin-bottom:16px;">
-        <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 20px; border-radius:12px; font-size:20px; flex: 0 0 auto;">⚙️</button>
-        <div class="app-nav" style="flex:1; margin-bottom:0;">
-            <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
-            <button class="nav-btn" data-tab="health">🌿 健康系统</button>
-            <button class="nav-btn" data-tab="news">📰 每日世事</button>
+        <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 16px; border-radius:12px; font-size:20px; flex: 0 0 auto;">⚙️</button>
+        <div class="app-nav" style="flex:1; margin-bottom:0; gap:4px;">
+            <button class="nav-btn active" data-tab="accounts">💰 账户</button>
+            <button class="nav-btn" data-tab="health">🌿 健康</button>
+            <button class="nav-btn" data-tab="habits">🎯 习惯</button>
+            <button class="nav-btn" data-tab="news">📰 世事</button>
         </div>
     </div>
 
@@ -369,19 +371,6 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                 <input type="date" id="day-picker">
                 <button class="day-btn" id="day-next">后一天 →</button>
                 <button class="day-btn" id="day-today">回到今天</button>
-            </div>
-        </div>
-
-        <!-- 🎯 微习惯打卡 (新增模块) -->
-        <div class="card">
-            <h2>🎯 微习惯打卡</h2>
-            <div style="font-size:12px;color:#6b8a7e;margin-bottom:12px;line-height:1.5;">
-                一次只养成一个习惯。点击卡片即可打卡/取消，系统自动记录连续天数。
-            </div>
-            <div id="habit-list"></div>
-            <div class="add-habit-row">
-                <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
-                <button id="add-habit-btn">添加</button>
             </div>
         </div>
 
@@ -573,7 +562,35 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         </div>
     </div>
 
-    <!-- ========== TAB 3: 每日世事 ========== -->
+    <!-- ========== TAB 3: 习惯系统 ========== -->
+    <div id="tab-habits" class="tab-content">
+        <div class="day-bar">
+            <div>
+                <div class="day-big" id="habit-day-label">今天</div>
+                <div class="day-sub" id="habit-day-sub"></div>
+            </div>
+            <div class="day-nav">
+                <button class="day-btn" id="habit-day-prev">← 前一天</button>
+                <input type="date" id="habit-day-picker">
+                <button class="day-btn" id="habit-day-next">后一天 →</button>
+                <button class="day-btn" id="habit-day-today">回到今天</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 微习惯打卡</h2>
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:12px;line-height:1.5;">
+                一次只养成一个习惯。点击卡片即可打卡/取消，系统自动记录连续天数。
+            </div>
+            <div id="habit-list"></div>
+            <div class="add-habit-row">
+                <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
+                <button id="add-habit-btn">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== TAB 4: 每日世事 ========== -->
     <div id="tab-news" class="tab-content">
         <div class="day-bar">
             <div>
@@ -831,7 +848,7 @@ let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], in
 let newsData = { items: [], summaries: [], briefings: [] };
 let rssFeeds = [];
 let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
-let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS)); // 深度拷贝默认习惯
+let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
@@ -1550,6 +1567,11 @@ function updateDayBar() {
     document.getElementById('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
     document.getElementById('day-sub').textContent = dateStr;
     document.getElementById('day-picker').value = currentDay;
+    
+    document.getElementById('habit-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+    document.getElementById('habit-day-sub').textContent = dateStr;
+    document.getElementById('habit-day-picker').value = currentDay;
+    
     document.getElementById('news-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
     document.getElementById('news-day-sub').textContent = dateStr;
     document.getElementById('news-day-picker').value = currentDay;
@@ -2783,7 +2805,7 @@ function renderNews() {
 
 /* ================= 渲染全部 ================= */
 function renderHealthAll() {
-    renderHabits(); // 新增
+    renderHabits();
     renderSleep(); renderEnergy(); renderCharge();
     renderExercise(); renderMicro(); renderBody(); renderMeal();
     renderInnerPeaceHistory(); renderAIAnalysis();
@@ -2923,6 +2945,12 @@ document.getElementById('day-picker').addEventListener('change', function () { i
 document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
 document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
 document.getElementById('day-today').onclick = () => setDay(todayStr());
+
+document.getElementById('habit-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
+document.getElementById('habit-day-prev').onclick = () => setDay(addDays(currentDay, -1));
+document.getElementById('habit-day-next').onclick = () => setDay(addDays(currentDay, 1));
+document.getElementById('habit-day-today').onclick = () => setDay(todayStr());
+
 document.getElementById('news-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
 document.getElementById('news-day-prev').onclick = () => setDay(addDays(currentDay, -1));
 document.getElementById('news-day-next').onclick = () => setDay(addDays(currentDay, 1));
