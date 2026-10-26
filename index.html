@@ -217,6 +217,22 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .modal-box { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 .modal-title { font-size: 16px; font-weight: 600; color: #1a5c47; margin-bottom: 16px; }
 
+/* ===== 微习惯打卡样式 ===== */
+.habit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; transition: all 0.2s; }
+.habit-item:hover { background: #f0f7f4; }
+.habit-item.done { background: #e8f5ee; border-color: #a8cec0; }
+.habit-item.done .habit-name { text-decoration: line-through; color: #6b8a7e; }
+.habit-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.habit-icon { font-size: 18px; }
+.habit-name { font-size: 14px; font-weight: 600; color: #1a2e2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.habit-streak { font-size: 11px; color: #e67e22; background: #fdf0e6; padding: 2px 6px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
+.habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4e3dd; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
+.habit-item.done .habit-check { background: #2d7d5a; border-color: #2d7d5a; color: #fff; }
+.add-habit-row { display: flex; gap: 8px; margin-top: 12px; }
+.add-habit-row input { flex: 1; padding: 8px 12px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
+.add-habit-row input:focus { border-color: #3a8f6e; }
+.add-habit-row button { flex: 0 0 auto; padding: 8px 16px; background: #2d7d5a; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
 @media (max-width: 500px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     body { padding: 10px; }
@@ -353,6 +369,19 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                 <input type="date" id="day-picker">
                 <button class="day-btn" id="day-next">后一天 →</button>
                 <button class="day-btn" id="day-today">回到今天</button>
+            </div>
+        </div>
+
+        <!-- 🎯 微习惯打卡 (新增模块) -->
+        <div class="card">
+            <h2>🎯 微习惯打卡</h2>
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:12px;line-height:1.5;">
+                一次只养成一个习惯。点击卡片即可打卡/取消，系统自动记录连续天数。
+            </div>
+            <div id="habit-list"></div>
+            <div class="add-habit-row">
+                <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
+                <button id="add-habit-btn">添加</button>
             </div>
         </div>
 
@@ -708,7 +737,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let realtimeChannel = null;
 let lastLocalChange = 0;
-let cloudApiConfigId = null; // 记录云端 API 配置的 id，用于更新
+let cloudApiConfigId = null;
+let cloudHabitsId = null;
 
 /* ================= 工具 ================= */
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -736,14 +766,11 @@ function stripHtml(s) {
 }
 function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
 
-// 优化后的 md2html
 function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // 处理 ### 标题
         .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#0d3b2e;margin:16px 0 8px;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
-        // 处理无序列表项 - 或 *
         .replace(/^[-*] (.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:6px;"><span style="color:#2d7d5a;font-weight:bold;margin-right:6px;">•</span><span>$1</span></div>')
         .replace(/\n/g, '<br>');
 }
@@ -792,22 +819,34 @@ const NEWS_CATEGORY = {
     other: { label: '其他', icon: '✨' }
 };
 
+const DEFAULT_HABITS = [
+    { id: 'h1', name: '22:30 放下手机', icon: '📴', dates: [] },
+    { id: 'h2', name: '23:00 准时闭眼', icon: '🛌', dates: [] },
+    { id: 'h3', name: '07:00 起床迎光', icon: '⏰', dates: [] }
+];
+
 /* ================= 数据 ================= */
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 let newsData = { items: [], summaries: [], briefings: [] };
 let rssFeeds = [];
 let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
+let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS)); // 深度拷贝默认习惯
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
 const AI_KEY = 'ai_analyze_config';
+const HABITS_KEY = 'habits_config_v1';
 
 function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 function loadAIConfigLocal() {
     try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {}
     return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
+}
+function saveHabitsLocal() { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
+function loadHabitsLocal() {
+    try { const r = localStorage.getItem(HABITS_KEY); if (r) habits = JSON.parse(r); } catch(e) {}
 }
 
 function saveCache() {
@@ -927,8 +966,9 @@ async function loadAllFromCloud(silent = false) {
         newsData = { items: [], summaries: [], briefings: [] };
         let cloudFeeds = null;
 
-        // 重置云端 API 配置 ID
         cloudApiConfigId = null;
+        cloudHabitsId = null;
+        loadHabitsLocal(); // 先用本地垫底
 
         (hd || []).forEach(r => {
             const d = r.data || {};
@@ -938,6 +978,14 @@ async function loadAllFromCloud(silent = false) {
                 cloudApiConfigId = r.id;
                 aiConfig = { ...aiConfig, ...d };
                 saveAIConfigLocal(aiConfig);
+                return;
+            }
+            if (r.type === 'habits_config') {
+                cloudHabitsId = r.id;
+                if (Array.isArray(d.habits)) {
+                    habits = d.habits;
+                    saveHabitsLocal();
+                }
                 return;
             }
             if (r.type === 'news_item') { newsData.items.push(item); return; }
@@ -1067,10 +1115,8 @@ async function saveAIConfigToCloud(config) {
     if (!currentUser) return;
     try {
         if (cloudApiConfigId) {
-            // 更新已有记录
             await sb.from('health_data').update({ data: config, ts: Date.now() }).eq('id', cloudApiConfigId);
         } else {
-            // 新建记录
             const { data, error } = await sb.from('health_data').insert({
                 user_id: currentUser.id, type: 'ai_config', date: todayStr(),
                 data: config, ts: Date.now()
@@ -1079,6 +1125,23 @@ async function saveAIConfigToCloud(config) {
         }
         lastLocalChange = Date.now();
     } catch (e) { console.warn('API 配置同步云端失败', e); }
+}
+
+// 保存打卡配置到云端
+async function saveHabitsToCloud() {
+    if (!currentUser) return;
+    try {
+        if (cloudHabitsId) {
+            await sb.from('health_data').update({ data: { habits }, ts: Date.now() }).eq('id', cloudHabitsId);
+        } else {
+            const { data, error } = await sb.from('health_data').insert({
+                user_id: currentUser.id, type: 'habits_config', date: todayStr(),
+                data: { habits }, ts: Date.now()
+            }).select().single();
+            if (data) cloudHabitsId = data.id;
+        }
+        lastLocalChange = Date.now();
+    } catch (e) { console.warn('打卡配置同步云端失败', e); }
 }
 
 /* ================= 实时监听 ================= */
@@ -1094,6 +1157,93 @@ function setupRealtime() {
             loadAllFromCloud(true);
         })
         .subscribe();
+}
+
+/* ================= 微习惯打卡 ================= */
+function calcStreak(habit) {
+    if (!habit.dates || habit.dates.length === 0) return 0;
+    const sorted = [...habit.dates].sort((a, b) => b.localeCompare(a));
+    let streak = 0;
+    let checkDate = todayStr();
+    
+    // 如果今天没打卡，从昨天开始往前算
+    if (!sorted.includes(todayStr())) {
+        checkDate = addDays(todayStr(), -1);
+    }
+    
+    while (sorted.includes(checkDate)) {
+        streak++;
+        checkDate = addDays(checkDate, -1);
+    }
+    return streak;
+}
+
+function toggleHabit(id) {
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+    
+    if (!habit.dates) habit.dates = [];
+    const idx = habit.dates.indexOf(currentDay);
+    if (idx > -1) {
+        habit.dates.splice(idx, 1);
+    } else {
+        habit.dates.push(currentDay);
+    }
+    
+    saveHabitsLocal();
+    saveHabitsToCloud();
+    renderHabits();
+}
+
+function addNewHabit() {
+    const input = document.getElementById('new-habit-name');
+    const name = input.value.trim();
+    if (!name) return;
+    habits.push({
+        id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6),
+        name,
+        icon: '🎯',
+        dates: []
+    });
+    input.value = '';
+    saveHabitsLocal();
+    saveHabitsToCloud();
+    renderHabits();
+}
+
+function deleteHabit(id) {
+    if (!confirm('确定删除这个微习惯和所有打卡记录吗？')) return;
+    habits = habits.filter(h => h.id !== id);
+    saveHabitsLocal();
+    saveHabitsToCloud();
+    renderHabits();
+}
+
+function renderHabits() {
+    const el = document.getElementById('habit-list');
+    if (!habits.length) {
+        el.innerHTML = '<div class="empty-hint">还没有微习惯，添加一个开始吧</div>';
+        return;
+    }
+    
+    let html = '';
+    habits.forEach(h => {
+        const done = h.dates && h.dates.includes(currentDay);
+        const streak = calcStreak(h);
+        
+        html += `<div class="habit-item ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+            <div class="habit-left">
+                <span class="habit-icon">${esc(h.icon)}</span>
+                <span class="habit-name">${esc(h.name)}</span>
+                ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}天</span>` : ''}
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="habit-check">✓</div>
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteHabit('${h.id}')" style="padding:0 4px; color:#c0392b; border:none; background:transparent; font-size:16px;">✕</button>
+            </div>
+        </div>`;
+    });
+    el.innerHTML = html;
 }
 
 /* ================= 三账户 ================= */
@@ -2633,6 +2783,7 @@ function renderNews() {
 
 /* ================= 渲染全部 ================= */
 function renderHealthAll() {
+    renderHabits(); // 新增
     renderSleep(); renderEnergy(); renderCharge();
     renderExercise(); renderMicro(); renderBody(); renderMeal();
     renderInnerPeaceHistory(); renderAIAnalysis();
@@ -2736,6 +2887,10 @@ document.getElementById('exercise-save').onclick = addExercise;
 document.getElementById('micro-save').onclick = addMicro;
 document.getElementById('signal-save').onclick = addBody;
 document.getElementById('meal-save').onclick = addMeal;
+
+// 新增习惯打卡事件
+document.getElementById('add-habit-btn').onclick = addNewHabit;
+document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addNewHabit(); });
 
 // 每日世事
 document.getElementById('news-save').onclick = addNewsItem;
