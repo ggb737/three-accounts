@@ -169,18 +169,24 @@ details.section-block[open] > summary { border-bottom: 1px solid #e8f2ee; }
 details.section-block[open] > summary::after { content: '－'; }
 .section-content { padding: 16px; }
 
-.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); transition: all 0.3s ease; position: relative; }
-.briefing-card.read { opacity: 0.55; background: #f5f7f6; box-shadow: none; }
-.briefing-card.read:hover { opacity: 0.8; }
+/* 简报卡片折叠定制 */
+details.briefing-card { background: #fff; border: 1px solid #e0eae6; border-radius: 12px; padding: 0; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,80,60,0.04); transition: all 0.3s ease; position: relative; overflow: hidden; }
+details.briefing-card.read { opacity: 0.55; background: #f5f7f6; box-shadow: none; }
+details.briefing-card.read:hover { opacity: 0.8; }
 
-.briefing-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px dashed #eef4f1; }
+details.briefing-card > summary { padding: 20px; cursor: pointer; outline: none; list-style: none; }
+details.briefing-card > summary::-webkit-details-marker { display: none; }
+details.briefing-card > summary.briefing-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin: 0; border-bottom: none; }
+details.briefing-card[open] > summary.briefing-head { border-bottom: 1px dashed #eef4f1; padding-bottom: 14px; margin-bottom: 14px; }
+
 .briefing-title { font-size: 16px; font-weight: 700; color: #1a5c47; display: flex; align-items: center; gap: 8px; }
 .briefing-meta { font-size: 12px; color: #a0bdb0; margin-top: 4px; line-height: 1.5; }
 
 .mark-read-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #2d7d5a; cursor: pointer; user-select: none; background: #e8f2ee; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
 .mark-read-label input { width: 16px; height: 16px; cursor: pointer; }
-.briefing-card.read .mark-read-label { background: #eee; color: #999; }
+details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 
+.briefing-content-wrap { padding: 0 20px 20px 20px; }
 .briefing-body { font-size: 14px; color: #3a5c50; line-height: 1.8; }
 .briefing-body strong { color: #0d3b2e; font-weight: 600; }
 
@@ -241,14 +247,14 @@ details.section-block[open] > summary::after { content: '－'; }
 <div class="loading-overlay" id="loading-overlay">正在加载数据…<br><span style="font-size:12px;color:#999;">(如果长时间停在这里，请按 F12 查看控制台)</span></div>
 
 <div id="main-content" style="display:none;">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航：设置靠左，导航靠右平分 -->
     <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 20px; border-radius:12px; font-size:20px; flex: 0 0 auto;">⚙️</button>
         <div class="app-nav" style="flex:1; margin-bottom:0;">
             <button class="nav-btn active" data-tab="accounts">💰 三账户</button>
             <button class="nav-btn" data-tab="health">🌿 健康系统</button>
             <button class="nav-btn" data-tab="news">📰 每日世事</button>
         </div>
-        <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 16px; border-radius:12px; font-size:18px;">⚙️</button>
     </div>
 
     <!-- ========== TAB 1: 三账户 ========== -->
@@ -2462,6 +2468,8 @@ function renderBriefings() {
     list.forEach(b => {
         const arts = b.articles || [];
         const isRead = b.isRead === true;
+        const isToday = b.date === currentDay;
+        const openAttr = isToday ? 'open' : '';
 
         const artHtml = arts.length ? `<details class="briefing-arts">
             <summary>📎 本次抓取的 ${arts.length} 篇文章（可直接点开原文）</summary>
@@ -2482,31 +2490,37 @@ function renderBriefings() {
             errHtml = `<div class="briefing-errors">抓取失败：${b.errors.map(esc).join('；')}</div>`;
         }
 
-        html += `<div class="briefing-card ${isRead ? 'read' : ''}">
-            <div class="briefing-head">
+        html += `<details class="briefing-card ${isRead ? 'read' : ''}" ${openAttr}>
+            <summary class="briefing-head">
                 <div style="min-width:0;">
-                    <div class="briefing-title">${esc(b.date)} 简报</div>
+                    <div class="briefing-title">
+                        ${esc(b.date)} 简报
+                        ${isToday ? '<span class="tag tag-good" style="font-size:10px;margin-left:6px;vertical-align:middle;">今天</span>' : ''}
+                    </div>
                     <div class="briefing-meta">
                         ${b.feedCount || 0} 个源 · ${b.articleCount || arts.length} 篇 · ${new Date(b.ts || Date.now()).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <label class="mark-read-label">
+                    <label class="mark-read-label" onclick="event.stopPropagation()">
                         <input type="checkbox" class="mark-read-cb" data-id="${b.id}" ${isRead ? 'checked' : ''}>
                         已读
                     </label>
-                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}">✕</button>
+                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}" onclick="event.stopPropagation()">✕</button>
                 </div>
+            </summary>
+            <div class="briefing-content-wrap">
+                <div class="briefing-body">${md2html(b.content || '')}</div>
+                ${errHtml}
+                ${artHtml}
             </div>
-            <div class="briefing-body">${md2html(b.content || '')}</div>
-            ${errHtml}
-            ${artHtml}
-        </div>`;
+        </details>`;
     });
     el.innerHTML = html;
 
     // 绑定删除事件
-    el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async () => {
+    el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async (e) => {
+        e.stopPropagation(); // 防止触发展开折叠
         if (!confirm('删除这份简报？')) return;
         await deleteHealthRecord(btn.dataset.delBriefing);
         newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing));
@@ -2514,20 +2528,23 @@ function renderBriefings() {
     });
 
     // 绑定已读/未读切换事件
-    el.querySelectorAll('.mark-read-cb').forEach(cb => cb.onchange = async () => {
-        const id = cb.dataset.id;
-        const isRead = cb.checked;
-        const item = newsData.briefings.find(x => String(x.id) === String(id));
-        if (!item) return;
-        
-        item.isRead = isRead;
-        saveCache(); // 立刻更新本地缓存
-        renderBriefings(); // 重新排序并渲染
-        
-        // 静默更新到云端
-        const dataObj = { ...item };
-        delete dataObj.id; delete dataObj.date; delete dataObj.ts; // 剔除不属于 JSON 数据的字段
-        await updateHealthRecord(id, dataObj);
+    el.querySelectorAll('.mark-read-cb').forEach(cb => {
+        cb.onclick = (e) => e.stopPropagation(); // 防止触发展开折叠
+        cb.onchange = async () => {
+            const id = cb.dataset.id;
+            const isRead = cb.checked;
+            const item = newsData.briefings.find(x => String(x.id) === String(id));
+            if (!item) return;
+            
+            item.isRead = isRead;
+            saveCache(); // 立刻更新本地缓存
+            renderBriefings(); // 重新排序并渲染
+            
+            // 静默更新到云端
+            const dataObj = { ...item };
+            delete dataObj.id; delete dataObj.date; delete dataObj.ts; // 剔除不属于 JSON 数据的字段
+            await updateHealthRecord(id, dataObj);
+        };
     });
 }
 
