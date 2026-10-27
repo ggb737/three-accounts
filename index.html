@@ -218,6 +218,8 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .modal-title { font-size: 16px; font-weight: 600; color: #1a5c47; margin-bottom: 16px; }
 
 /* ===== 微习惯打卡样式 ===== */
+.habit-section-title { font-size: 13px; font-weight: 700; color: #6b8a7e; margin: 16px 0 8px 4px; display: flex; align-items: center; gap: 6px; }
+.habit-section-title:first-child { margin-top: 0; }
 .habit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; transition: all 0.2s; }
 .habit-item:hover { background: #f0f7f4; }
 .habit-item.done { background: #e8f5ee; border-color: #a8cec0; }
@@ -225,12 +227,14 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .habit-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .habit-icon { font-size: 18px; }
 .habit-name { font-size: 14px; font-weight: 600; color: #1a2e2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.habit-edit-input { font-size: 14px; font-weight: 600; color: #1a2e2a; width: 100%; border: 1px solid #3a8f6e; border-radius: 4px; padding: 2px 4px; outline: none; }
 .habit-streak { font-size: 11px; color: #e67e22; background: #fdf0e6; padding: 2px 6px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
 .habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4e3dd; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
 .habit-item.done .habit-check { background: #2d7d5a; border-color: #2d7d5a; color: #fff; }
 .add-habit-row { display: flex; gap: 8px; margin-top: 12px; }
+.add-habit-row select { flex: 0 0 90px; padding: 8px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
 .add-habit-row input { flex: 1; padding: 8px 12px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
-.add-habit-row input:focus { border-color: #3a8f6e; }
+.add-habit-row input:focus, .add-habit-row select:focus { border-color: #3a8f6e; }
 .add-habit-row button { flex: 0 0 auto; padding: 8px 16px; background: #2d7d5a; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
 @media (max-width: 500px) {
@@ -243,6 +247,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     .opml-preview-row { flex-wrap: wrap; }
     .opml-cat-select { width: 100%; }
     .nav-btn { font-size: 13px; padding: 12px 2px; }
+    .add-habit-row select { flex: 0 0 80px; }
 }
 </style>
 </head>
@@ -264,7 +269,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 <div class="loading-overlay" id="loading-overlay">正在加载数据…<br><span style="font-size:12px;color:#999;">(如果长时间停在这里，请按 F12 查看控制台)</span></div>
 
 <div id="main-content" style="display:none;">
-    <!-- 顶部导航：设置靠左，导航靠右平分 -->
+    <!-- 顶部导航 -->
     <div style="display:flex; gap:8px; margin-bottom:16px;">
         <button class="btn btn-ghost" id="open-settings-btn" style="padding:0 16px; border-radius:12px; font-size:20px; flex: 0 0 auto;">⚙️</button>
         <div class="app-nav" style="flex:1; margin-bottom:0; gap:4px;">
@@ -580,13 +585,20 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         <div class="card">
             <h2>🎯 微习惯打卡</h2>
             <div style="font-size:12px;color:#6b8a7e;margin-bottom:12px;line-height:1.5;">
-                一次只养成一个习惯。点击卡片即可打卡/取消，系统自动记录连续天数。
+                点击卡片打卡，<b>双击文字</b>可修改习惯名称。系统自动记录连续天数。
             </div>
             <div id="habit-list"></div>
             
             <div style="margin-top:16px; border-top:1px dashed #d4e3dd; padding-top:12px;">
                 <div class="add-habit-row">
-                    <input type="text" id="new-habit-name" placeholder="添加新微习惯，如：喝够8杯水">
+                    <select id="new-habit-category">
+                        <option value="睡眠">睡眠</option>
+                        <option value="早晨">早晨</option>
+                        <option value="学习">学习</option>
+                        <option value="健康">健康</option>
+                        <option value="其他" selected>其他</option>
+                    </select>
+                    <input type="text" id="new-habit-name" placeholder="添加新习惯名称">
                     <button id="add-habit-btn">添加</button>
                 </div>
                 <button class="btn btn-ghost btn-sm" style="margin-top:10px; width:100%;" id="import-morning-btn">📋 一键导入早晨流程 (唤醒→出门)</button>
@@ -841,9 +853,9 @@ const NEWS_CATEGORY = {
 };
 
 const DEFAULT_HABITS = [
-    { id: 'h1', name: '22:30 放下手机', icon: '📴', dates: [] },
-    { id: 'h2', name: '23:00 准时闭眼', icon: '🛌', dates: [] },
-    { id: 'h3', name: '07:00 起床迎光', icon: '⏰', dates: [] }
+    { id: 'h1', name: '22:30 放下手机', category: '睡眠', icon: '📴', dates: [] },
+    { id: 'h2', name: '23:00 准时闭眼', category: '睡眠', icon: '🛌', dates: [] },
+    { id: 'h3', name: '07:00 起床迎光', category: '早晨', icon: '⏰', dates: [] }
 ];
 
 /* ================= 数据 ================= */
@@ -858,7 +870,7 @@ let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
 const AI_KEY = 'ai_analyze_config';
-const HABITS_KEY = 'habits_config_v1';
+const HABITS_KEY = 'habits_config_v2'; // 升级版本号，兼容旧数据
 
 function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 function loadAIConfigLocal() {
@@ -867,7 +879,14 @@ function loadAIConfigLocal() {
 }
 function saveHabitsLocal() { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
 function loadHabitsLocal() {
-    try { const r = localStorage.getItem(HABITS_KEY); if (r) habits = JSON.parse(r); } catch(e) {}
+    try { 
+        const r = localStorage.getItem(HABITS_KEY); 
+        if (r) {
+            const arr = JSON.parse(r);
+            // 兼容旧数据，如果没有分类字段，给个默认值
+            habits = arr.map(h => ({ category: '其他', ...h }));
+        }
+    } catch(e) {}
 }
 
 function saveCache() {
@@ -1004,7 +1023,7 @@ async function loadAllFromCloud(silent = false) {
             if (r.type === 'habits_config') {
                 cloudHabitsId = r.id;
                 if (Array.isArray(d.habits)) {
-                    habits = d.habits;
+                    habits = d.habits.map(h => ({ category: '其他', ...h }));
                     saveHabitsLocal();
                 }
                 return;
@@ -1187,7 +1206,6 @@ function calcStreak(habit) {
     let streak = 0;
     let checkDate = todayStr();
     
-    // 如果今天没打卡，从昨天开始往前算
     if (!sorted.includes(todayStr())) {
         checkDate = addDays(todayStr(), -1);
     }
@@ -1216,13 +1234,51 @@ function toggleHabit(id) {
     renderHabits();
 }
 
+function startEditHabit(id, spanEl) {
+    // 防止多次点击重复生成输入框
+    if (spanEl.nextElementSibling && spanEl.nextElementSibling.tagName === 'INPUT') return;
+    
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'habit-edit-input';
+    input.value = habit.name;
+    
+    spanEl.style.display = 'none';
+    spanEl.parentNode.insertBefore(input, spanEl.nextSibling);
+    input.focus();
+    input.select();
+    
+    function saveEdit() {
+        const newName = input.value.trim();
+        if (newName && newName !== habit.name) {
+            habit.name = newName;
+            saveHabitsLocal();
+            saveHabitsToCloud();
+        }
+        spanEl.style.display = '';
+        input.remove();
+        renderHabits(); // 重新渲染以更新文字
+    }
+    
+    input.onblur = saveEdit;
+    input.onkeydown = (e) => {
+        if (e.key === 'Enter') input.blur();
+    };
+}
+
 function addNewHabit() {
     const input = document.getElementById('new-habit-name');
+    const select = document.getElementById('new-habit-category');
     const name = input.value.trim();
     if (!name) return;
+    
     habits.push({
         id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6),
         name,
+        category: select.value,
         icon: '🎯',
         dates: []
     });
@@ -1242,10 +1298,10 @@ function deleteHabit(id) {
 
 function importMorningRoutine() {
     const morningHabits = [
-        { name: '伸懒腰 + 拉开窗帘见光', icon: '🌅' },
-        { name: '喝温水 + 如厕排毒', icon: '💧' },
-        { name: '刷牙洗脸 + 护肤防晒', icon: '🧴' },
-        { name: '换衣 + 拿早餐 + 检查出门', icon: '🎒' }
+        { name: '伸懒腰 + 拉开窗帘见光', icon: '🌅', category: '早晨' },
+        { name: '喝温水 + 如厕排毒', icon: '💧', category: '早晨' },
+        { name: '刷牙洗脸 + 护肤防晒', icon: '🧴', category: '早晨' },
+        { name: '换衣 + 拿早餐 + 检查出门', icon: '🎒', category: '早晨' }
     ];
     let added = 0;
     morningHabits.forEach(mh => {
@@ -1253,6 +1309,7 @@ function importMorningRoutine() {
             habits.push({
                 id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6),
                 name: mh.name,
+                category: mh.category,
                 icon: mh.icon,
                 dates: []
             });
@@ -1276,23 +1333,43 @@ function renderHabits() {
         return;
     }
     
-    let html = '';
+    // 按分类分组
+    const grouped = {};
     habits.forEach(h => {
-        const done = h.dates && h.dates.includes(currentDay);
-        const streak = calcStreak(h);
-        
-        html += `<div class="habit-item ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
-            <div class="habit-left">
-                <span class="habit-icon">${esc(h.icon)}</span>
-                <span class="habit-name">${esc(h.name)}</span>
-                ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}天</span>` : ''}
-            </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="habit-check">✓</div>
-                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteHabit('${h.id}')" style="padding:0 4px; color:#c0392b; border:none; background:transparent; font-size:16px;">✕</button>
-            </div>
-        </div>`;
+        const cat = h.category || '其他';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(h);
     });
+
+    let html = '';
+    // 预设的分类顺序
+    const catOrder = ['早晨', '睡眠', '学习', '健康', '其他'];
+    const sortedCats = Object.keys(grouped).sort((a, b) => {
+        const ia = catOrder.indexOf(a);
+        const ib = catOrder.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+
+    sortedCats.forEach(cat => {
+        html += `<div class="habit-section-title">📂 ${esc(cat)}</div>`;
+        grouped[cat].forEach(h => {
+            const done = h.dates && h.dates.includes(currentDay);
+            const streak = calcStreak(h);
+            
+            html += `<div class="habit-item ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+                <div class="habit-left">
+                    <span class="habit-icon">${esc(h.icon)}</span>
+                    <span class="habit-name" ondblclick="event.stopPropagation(); startEditHabit('${h.id}', this)" title="双击修改">${esc(h.name)}</span>
+                    ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}天</span>` : ''}
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="habit-check">✓</div>
+                    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteHabit('${h.id}')" style="padding:0 4px; color:#c0392b; border:none; background:transparent; font-size:16px;">✕</button>
+                </div>
+            </div>`;
+        });
+    });
+    
     el.innerHTML = html;
 }
 
