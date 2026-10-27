@@ -220,17 +220,23 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 /* ===== 微习惯打卡样式 ===== */
 .habit-section-title { font-size: 13px; font-weight: 700; color: #6b8a7e; margin: 16px 0 8px 4px; display: flex; align-items: center; gap: 6px; }
 .habit-section-title:first-child { margin-top: 0; }
-.habit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; transition: all 0.2s; }
+.habit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; margin-bottom: 8px; transition: all 0.2s; }
 .habit-item:hover { background: #f0f7f4; }
 .habit-item.done { background: #e8f5ee; border-color: #a8cec0; }
 .habit-item.done .habit-name { text-decoration: line-through; color: #6b8a7e; }
-.habit-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.habit-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; padding: 4px 0; }
 .habit-icon { font-size: 18px; }
 .habit-name { font-size: 14px; font-weight: 600; color: #1a2e2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.habit-edit-input { font-size: 14px; font-weight: 600; color: #1a2e2a; width: 100%; border: 1px solid #3a8f6e; border-radius: 4px; padding: 2px 4px; outline: none; }
 .habit-streak { font-size: 11px; color: #e67e22; background: #fdf0e6; padding: 2px 6px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
-.habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4e3dd; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
+.habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4e3dd; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 14px; transition: all 0.2s; flex-shrink: 0; margin-right: 10px; }
 .habit-item.done .habit-check { background: #2d7d5a; border-color: #2d7d5a; color: #fff; }
+
+/* 操作区按钮样式 */
+.habit-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.habit-action-btn { background: transparent; border: none; color: #a0bdb0; font-size: 14px; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: all 0.15s; }
+.habit-action-btn:hover { background: #e8f2ee; color: #1a5c47; }
+.habit-action-btn.del-btn:hover { background: #fdeaea; color: #c0392b; }
+
 .add-habit-row { display: flex; gap: 8px; margin-top: 12px; }
 .add-habit-row select { flex: 0 0 90px; padding: 8px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
 .add-habit-row input { flex: 1; padding: 8px 12px; border: 1px solid #d4e3dd; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
@@ -248,6 +254,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     .opml-cat-select { width: 100%; }
     .nav-btn { font-size: 13px; padding: 12px 2px; }
     .add-habit-row select { flex: 0 0 80px; }
+    .habit-action-btn { padding: 4px 4px; }
 }
 </style>
 </head>
@@ -585,7 +592,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         <div class="card">
             <h2>🎯 微习惯打卡</h2>
             <div style="font-size:12px;color:#6b8a7e;margin-bottom:12px;line-height:1.5;">
-                点击卡片打卡，<b>双击文字</b>可修改习惯名称。系统自动记录连续天数。
+                点击左侧卡片打卡。右侧可编辑、排序或删除。
             </div>
             <div id="habit-list"></div>
             
@@ -1234,39 +1241,50 @@ function toggleHabit(id) {
     renderHabits();
 }
 
-function startEditHabit(id, spanEl) {
-    // 防止多次点击重复生成输入框
-    if (spanEl.nextElementSibling && spanEl.nextElementSibling.tagName === 'INPUT') return;
-    
+// 修改习惯名称
+function editHabitName(id) {
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+    const newName = prompt('修改习惯名称：', habit.name);
+    if (newName !== null) {
+        const trimmed = newName.trim();
+        if (trimmed !== '') {
+            habit.name = trimmed;
+            saveHabitsLocal();
+            saveHabitsToCloud();
+            renderHabits();
+        }
+    }
+}
+
+// 移动习惯顺序 (同类之间)
+function moveHabit(id, dir) {
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
     
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'habit-edit-input';
-    input.value = habit.name;
+    const cat = habit.category || '其他';
+    const catHabits = habits.filter(h => (h.category || '其他') === cat);
+    const idx = catHabits.findIndex(h => h.id === id);
     
-    spanEl.style.display = 'none';
-    spanEl.parentNode.insertBefore(input, spanEl.nextSibling);
-    input.focus();
-    input.select();
-    
-    function saveEdit() {
-        const newName = input.value.trim();
-        if (newName && newName !== habit.name) {
-            habit.name = newName;
-            saveHabitsLocal();
-            saveHabitsToCloud();
-        }
-        spanEl.style.display = '';
-        input.remove();
-        renderHabits(); // 重新渲染以更新文字
+    if (dir === -1 && idx > 0) {
+        // 和上一个同类交换在总数组中的位置
+        const target = catHabits[idx - 1];
+        const globalIdx1 = habits.findIndex(h => h.id === habit.id);
+        const globalIdx2 = habits.findIndex(h => h.id === target.id);
+        [habits[globalIdx1], habits[globalIdx2]] = [habits[globalIdx2], habits[globalIdx1]];
+    } else if (dir === 1 && idx < catHabits.length - 1) {
+        // 和下一个同类交换
+        const target = catHabits[idx + 1];
+        const globalIdx1 = habits.findIndex(h => h.id === habit.id);
+        const globalIdx2 = habits.findIndex(h => h.id === target.id);
+        [habits[globalIdx1], habits[globalIdx2]] = [habits[globalIdx2], habits[globalIdx1]];
+    } else {
+        return; // 已经在最上面或最下面
     }
     
-    input.onblur = saveEdit;
-    input.onkeydown = (e) => {
-        if (e.key === 'Enter') input.blur();
-    };
+    saveHabitsLocal();
+    saveHabitsToCloud();
+    renderHabits();
 }
 
 function addNewHabit() {
@@ -1356,15 +1374,18 @@ function renderHabits() {
             const done = h.dates && h.dates.includes(currentDay);
             const streak = calcStreak(h);
             
-            html += `<div class="habit-item ${done ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
-                <div class="habit-left">
+            html += `<div class="habit-item ${done ? 'done' : ''}">
+                <div class="habit-left" onclick="toggleHabit('${h.id}')">
                     <span class="habit-icon">${esc(h.icon)}</span>
-                    <span class="habit-name" ondblclick="event.stopPropagation(); startEditHabit('${h.id}', this)" title="双击修改">${esc(h.name)}</span>
+                    <span class="habit-name">${esc(h.name)}</span>
                     ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}天</span>` : ''}
+                    <div class="habit-check" style="margin-left:auto; margin-right:0;">✓</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="habit-check">✓</div>
-                    <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteHabit('${h.id}')" style="padding:0 4px; color:#c0392b; border:none; background:transparent; font-size:16px;">✕</button>
+                <div class="habit-actions">
+                    <button class="habit-action-btn" onclick="editHabitName('${h.id}')" title="修改名称">✏️</button>
+                    <button class="habit-action-btn" onclick="moveHabit('${h.id}', -1)" title="上移">↑</button>
+                    <button class="habit-action-btn" onclick="moveHabit('${h.id}', 1)" title="下移">↓</button>
+                    <button class="habit-action-btn del-btn" onclick="deleteHabit('${h.id}')" title="删除">✕</button>
                 </div>
             </div>`;
         });
