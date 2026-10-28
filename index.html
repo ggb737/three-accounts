@@ -244,6 +244,77 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 /* 简报板块标题配色 */
 .briefing-body .briefing-section-title { font-size: 14px; font-weight: 700; color: #1a5c47; margin: 14px 0 6px; padding-left: 8px; border-left: 3px solid #2d7d5a; }
 
+/* ===== 英语学习系统 ===== */
+.en-stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.en-stat { background: #f8f9fa; border-radius: 10px; padding: 10px 8px; text-align: center; }
+.en-stat .num { font-size: 18px; font-weight: 700; color: #2d7d5a; }
+.en-stat .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+
+.en-flow { background: #f7fbf9; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px dashed #c0d3cb; }
+.en-flow-title { font-size: 14px; font-weight: 700; color: #1a5c47; margin-bottom: 4px; }
+.en-flow-sub { font-size: 12px; color: #6b8a7e; margin-bottom: 12px; }
+.en-flow-steps { display: flex; flex-direction: column; gap: 8px; }
+.en-flow-step { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border-radius: 10px; border: 1px solid #e8f2ee; }
+.en-flow-step.done { background: #e8f5ee; border-color: #a8cec0; }
+.en-flow-step .ico { font-size: 20px; width: 32px; text-align: center; }
+.en-flow-step .info { flex: 1; }
+.en-flow-step .info .t { font-size: 13px; font-weight: 600; color: #1a2e2a; }
+.en-flow-step .info .s { font-size: 11px; color: #6b8a7e; margin-top: 2px; }
+.en-flow-step .act { padding: 6px 14px; font-size: 12px; background: #2d7d5a; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.en-flow-step.done .act { background: #a0bdb0; cursor: default; }
+
+.en-vocab-list { max-height: 400px; overflow-y: auto; }
+.en-vocab-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #eef4f1; font-size: 13px; gap: 8px; }
+.en-vocab-item .w { font-weight: 600; color: #1a5c47; font-family: Georgia, serif; }
+.en-vocab-item .m { color: #6b8a7e; font-size: 12px; margin-left: 8px; }
+
+/* ===== 学习 Tab · 目标看板 ===== */
+.study-goal-card { background: linear-gradient(135deg, #2d7d5a, #1a5c47); color: #fff; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(45,125,90,0.2); }
+.study-goal-top { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.study-goal-top .g-item { text-align: center; }
+.study-goal-top .g-lbl { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+.study-goal-top .g-val { font-size: 22px; font-weight: 700; }
+.study-goal-top .g-val small { font-size: 12px; font-weight: 400; opacity: 0.8; }
+.study-goal-vocab { margin-bottom: 12px; }
+.study-goal-vocab .g-vocab-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; opacity: 0.95; }
+.study-goal-vocab .g-bar { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+.study-goal-vocab .g-fill { height: 100%; background: linear-gradient(90deg, #b8e6cf, #fff); border-radius: 4px; transition: width 0.6s ease; }
+.study-goal-week { display: flex; justify-content: space-between; align-items: center; font-size: 12px; opacity: 0.95; }
+.study-goal-week .g-dots { display: flex; gap: 5px; }
+.study-goal-week .g-dot { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+.study-goal-week .g-dot.done { background: #fff; color: #1a5c47; }
+.study-goal-week .g-dot.today { box-shadow: 0 0 0 2px rgba(255,255,255,0.6); }
+
+.study-task { display: flex; align-items: center; gap: 12px; padding: 14px; background: #fff; border: 1px solid #e8f2ee; border-radius: 12px; margin-bottom: 10px; transition: all 0.2s; }
+.study-task.done { background: #e8f5ee; border-color: #a8cec0; }
+.study-task.locked { opacity: 0.5; background: #f5f5f5; }
+.study-task .t-ico { font-size: 24px; width: 40px; text-align: center; }
+.study-task .t-info { flex: 1; min-width: 0; }
+.study-task .t-title { font-size: 14px; font-weight: 600; color: #1a2e2a; }
+.study-task .t-sub { font-size: 12px; color: #6b8a7e; margin-top: 2px; line-height: 1.5; }
+.study-task .t-btn { padding: 8px 16px; font-size: 13px; font-weight: 600; background: #2d7d5a; color: #fff; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.study-task.done .t-btn { background: #a0bdb0; cursor: default; }
+
+.study-milestone { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 12px; color: #6b8a7e; border-bottom: 1px dashed #eef4f1; }
+.study-milestone:last-child { border-bottom: none; }
+.study-milestone .m-dot { width: 10px; height: 10px; border-radius: 50%; background: #e0eae6; flex-shrink: 0; }
+.study-milestone.reached .m-dot { background: #2d7d5a; }
+.study-milestone.reached .m-lbl { color: #1a5c47; font-weight: 600; }
+.study-milestone.near .m-dot { background: #e8a838; animation: pulse 1.5s infinite; }
+.study-milestone .m-info { flex: 1; }
+.study-milestone .m-reading { color: #a0bdb0; font-size: 11px; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.study-reading-box { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e8f2ee; margin-bottom: 12px; }
+.study-reading-title { font-size: 15px; font-weight: 700; color: #0d3b2e; margin-bottom: 10px; }
+.study-reading-body { font-size: 14px; color: #3a5c50; line-height: 1.8; font-family: Georgia, serif; }
+.study-reading-q { margin-top: 14px; font-size: 13px; color: #1a5c47; }
+.study-reading-opts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.study-reading-opt { padding: 8px 12px; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.study-reading-opt:hover { background: #e8f2ee; }
+.study-reading-opt.correct { background: #e0f2e8; border-color: #2d7d5a; color: #1a7a4a; font-weight: 600; }
+.study-reading-opt.wrong { background: #fdeaea; border-color: #c0392b; color: #c0392b; }
+
 @media (max-width: 500px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     body { padding: 10px; }
@@ -253,9 +324,13 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     .ip-chat-container { padding: 12px; max-height: none; }
     .opml-preview-row { flex-wrap: wrap; }
     .opml-cat-select { width: 100%; }
-    .nav-btn { font-size: 13px; padding: 12px 2px; }
+    .nav-btn { font-size: 12px; padding: 12px 2px; }
     .add-habit-row select { flex: 0 0 80px; }
     .habit-action-btn { padding: 4px 2px; }
+    .en-stat-bar { grid-template-columns: 1fr 1fr; }
+    .study-goal-top .g-val { font-size: 18px; }
+    .study-goal-card { padding: 14px 16px; }
+    .study-task .t-ico { width: 32px; font-size: 20px; }
 }
 </style>
 </head>
@@ -285,6 +360,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
             <button class="nav-btn" data-tab="health">🌿 健康</button>
             <button class="nav-btn" data-tab="habits">🎯 习惯</button>
             <button class="nav-btn" data-tab="news">📰 世事</button>
+            <button class="nav-btn" data-tab="study">📚 学习</button>
         </div>
     </div>
 
@@ -740,6 +816,175 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         </div>
     </div>
 
+    <!-- ========== TAB 5: 学习 ========== -->
+    <div id="tab-study" class="tab-content">
+
+        <!-- 英语模块（目标驱动版） -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" open style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🔤 英语模块 <span id="en-module-badge" style="color:#e67e22;font-weight:600;font-size:13px;margin-left:8px;"></span></summary>
+                <div class="section-content">
+
+                    <!-- 目标看板 -->
+                    <div class="study-goal-card">
+                        <div class="study-goal-top">
+                            <div class="g-item">
+                                <div class="g-lbl">🎯 雅思目标</div>
+                                <div class="g-val" id="goal-target-score">7.0</div>
+                            </div>
+                            <div class="g-item">
+                                <div class="g-lbl">📊 当前预估</div>
+                                <div class="g-val" id="goal-current-score">—</div>
+                            </div>
+                            <div class="g-item">
+                                <div class="g-lbl">⏳ 距离考试</div>
+                                <div class="g-val" id="goal-days-left">—<small>天</small></div>
+                            </div>
+                        </div>
+                        <div class="study-goal-vocab">
+                            <div class="g-vocab-label">
+                                <span>词汇量：<b id="goal-vocab-cur">0</b> / <b id="goal-vocab-target">7000</b></span>
+                                <span id="goal-vocab-gap">还差 7000 词</span>
+                            </div>
+                            <div class="g-bar"><div class="g-fill" id="goal-vocab-fill" style="width:0%"></div></div>
+                        </div>
+                        <div class="study-goal-week">
+                            <span>本周完成 <b id="goal-week-done">0</b> / 5 天</span>
+                            <div class="g-dots" id="goal-week-dots"></div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:12px;color:#6b8a7e;line-height:1.6;background:#f7fbf9;padding:8px 12px;border-radius:8px;margin-bottom:14px;">
+                        💡 预估分数基于累计新词数，非真实模考。词汇量到 7000 时，雅思阅读通常能到 7.0–7.5。
+                    </div>
+
+                    <!-- 今日任务 -->
+                    <h3>🎯 今日任务</h3>
+                    <div id="study-today-tasks"></div>
+
+                    <!-- 墨墨打卡区 -->
+                    <div id="en-momo-card" style="display:none; margin-top:14px;">
+                        <h3>📱 墨墨打卡</h3>
+                        <div class="grid-3">
+                            <div class="field"><label>今日新词数</label><input type="number" id="momo-new" min="0" placeholder="0"></div>
+                            <div class="field"><label>今日复习数</label><input type="number" id="momo-review" min="0" placeholder="0"></div>
+                            <div class="field"><label>用时（分钟）</label><input type="number" id="momo-min" min="0" placeholder="15"></div>
+                        </div>
+                        <div class="field"><label>备注（可选）</label><input type="text" id="momo-note" placeholder="例如：状态好 / 某几个词反复记不住"></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-primary" id="momo-save-btn">✅ 完成打卡</button>
+                            <button class="btn btn-ghost btn-sm" id="momo-cancel-btn">取消</button>
+                        </div>
+                    </div>
+
+                    <!-- 赖世雄区 -->
+                    <div id="en-ls-card" style="display:none; margin-top:14px;">
+                        <h3>🎧 赖世雄课程</h3>
+                        <div class="field">
+                            <label>选择课程</label>
+                            <select id="ls-course-select"></select>
+                        </div>
+                        <div id="ls-course-detail"></div>
+                    </div>
+
+                    <!-- 外刊精读区 -->
+                    <div id="en-reading-card" style="display:none; margin-top:14px;">
+                        <h3>📖 外刊精读</h3>
+                        <div id="study-reading-area"></div>
+                    </div>
+
+                    <!-- 里程碑 -->
+                    <h3 style="margin-top:20px;">🏁 里程碑</h3>
+                    <div id="study-milestones"></div>
+
+                    <!-- 生词本 -->
+                    <h3 style="margin-top:20px;">📒 生词本</h3>
+                    <div style="font-size:12px;color:#6b8a7e;margin-bottom:10px;">
+                        记录从课程、外刊、生活中遇到的词。不强制复习，只做存档。
+                    </div>
+                    <div class="grid-2">
+                        <div class="field"><label>单词</label><input type="text" id="vocab-word" placeholder="例如：apple"></div>
+                        <div class="field"><label>音标（可选）</label><input type="text" id="vocab-phonetic" placeholder="例如：/ˈæpl/"></div>
+                    </div>
+                    <div class="field"><label>释义</label><input type="text" id="vocab-meaning" placeholder="例如：n. 苹果"></div>
+                    <div class="field"><label>出处（可选）</label><input type="text" id="vocab-source" placeholder="例如：赖世雄初级第 5 课 / The Economist"></div>
+                    <button class="btn btn-primary" id="vocab-add-btn">＋ 添加到生词本</button>
+                    <div class="en-vocab-list" id="vocab-list" style="margin-top:12px;">
+                        <div class="empty-hint">还没有记录生词</div>
+                    </div>
+
+                    <!-- 目标设置 -->
+                    <details class="section-block" style="margin-top:20px;">
+                        <summary>⚙️ 目标设置</summary>
+                        <div class="section-content">
+                            <div class="grid-2">
+                                <div class="field"><label>目标总分（雅思）</label><input type="number" id="goal-setting-score" step="0.5" min="4" max="9" value="7.0"></div>
+                                <div class="field"><label>考试日期</label><input type="date" id="goal-setting-date"></div>
+                            </div>
+                            <div class="field"><label>目标词汇量</label><input type="number" id="goal-setting-vocab" min="1000" step="500" value="7000"></div>
+                            <button class="btn btn-primary" id="goal-save-btn">保存目标</button>
+                        </div>
+                    </details>
+
+                    <!-- 学习记录 -->
+                    <h3 style="margin-top:20px;">📅 学习记录</h3>
+                    <div id="en-daily-history"><div class="empty-hint">还没有学习记录</div></div>
+
+                </div>
+            </details>
+        </div>
+
+        <!-- 雅思模块（占位） -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>📝 雅思模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary>
+                <div class="section-content">
+                    <div class="empty-hint" style="line-height:1.7;">
+                        暂未开放。计划包括：<br>
+                        · 雅思真题词汇（按话题分组）<br>
+                        · 写作 Task 1 / Task 2 模板<br>
+                        · 口语 Part 1/2/3 题库<br>
+                        · 每日听力精听（BBC 6 Minute English）
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- 考研模块（占位） -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🎓 考研模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary>
+                <div class="section-content">
+                    <div class="empty-hint" style="line-height:1.7;">
+                        暂未开放。计划包括：<br>
+                        · 北航 VR 学硕专业课（408 / 数学一）<br>
+                        · 每日 1 道真题 + 错题本<br>
+                        · 考研英语阅读理解训练<br>
+                        · 复试 C 语言上机练习
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- 硬凭证模块（占位） -->
+        <div class="card" style="padding:0; overflow:hidden;">
+            <details class="section-block" style="margin-bottom:0; border:none; border-radius:16px;">
+                <summary>🏅 硬凭证模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary>
+                <div class="section-content">
+                    <div class="empty-hint" style="line-height:1.7;">
+                        暂未开放。计划包括：<br>
+                        · 驾驶证（如有需要）<br>
+                        · 社会工作者职业资格（初级）<br>
+                        · 计算机二级（Office）<br>
+                        · 人工智能训练师（五级）<br>
+                        · 西部计划服务期专项政策提醒
+                    </div>
+                </div>
+            </details>
+        </div>
+
+    </div>
+
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
@@ -848,7 +1093,7 @@ function stripHtml(s) {
 }
 function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
 
-/* ===== RSS 源黑名单兜底（防止用户手动加违规源） ===== */
+/* ===== RSS 源黑名单兜底 ===== */
 const BLOCKED_FEED_KEYWORDS = [
     'crypto', 'coindesk', 'cointelegraph', 'bitcoin', 'blockchain',
     'binance', 'okx', 'nft', 'web3', 'defi',
@@ -863,8 +1108,8 @@ function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/^### (.+)$/gm, '<div class="briefing-section-title" style="border-left:none;padding-left:0;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
         .replace(/^#### (.+)$/gm, '<div class="briefing-section-title">$1</div>')
+        .replace(/^### (.+)$/gm, '<div class="briefing-section-title" style="border-left:none;padding-left:0;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
         .replace(/^[-*] (.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:6px;"><span style="color:#2d7d5a;font-weight:bold;margin-right:6px;">•</span><span>$1</span></div>')
         .replace(/^> (.+)$/gm, '<div style="background:#f7fbf9;border-left:3px solid #d4e3dd;padding:10px 12px;border-radius:6px;margin:8px 0;font-size:13px;color:#4a5c4a;">$1</div>')
         .replace(/\n/g, '<br>');
@@ -959,6 +1204,98 @@ const DEFAULT_HABITS = [
     { id: 'h3', name: '07:00 起床迎光', category: '早晨', icon: '⏰', dates: [] }
 ];
 
+/* ================= 学习系统：英语模块常量 ================= */
+const LS_COURSES = {
+    phonetics:    { name: '美语音标',          total: 30, icon: '🔤' },
+    basic:        { name: '美语从头学·入门篇',   total: 30, icon: '📗' },
+    elementary:   { name: '美语从头学·初级篇',   total: 40, icon: '📘' },
+    intermediate: { name: '美语从头学·中级篇',   total: 40, icon: '📙' },
+    advanced:     { name: '美语从头学·高级篇',   total: 30, icon: '📕' },
+    grammar:      { name: '赖世雄经典语法',      total: 50, icon: '📓' }
+};
+
+const IELTS_MILESTONES = [
+    { vocab: 1500, label: '雅思 4.5', reading: '能读简单英文新闻标题' },
+    { vocab: 3000, label: '雅思 5.5', reading: '能读 BBC / 简单外刊短讯' },
+    { vocab: 4500, label: '雅思 6.0', reading: '能读 FT 短文章、抓主旨' },
+    { vocab: 5500, label: '雅思 6.5', reading: '能读 The Economist 中等难度文章' },
+    { vocab: 7000, label: '雅思 7.0', reading: '能流畅读懂 Economist / FT 长文' },
+    { vocab: 8500, label: '雅思 7.5+', reading: '能读外刊社论、学术摘要' }
+];
+
+const READING_POOL = [
+    {
+        level: 'A2', title: 'The Village Library',
+        body: 'In a small village, there is a library in an old house. It has only 500 books, but people love it. Children come after school to read stories. Old people come to read newspapers. The librarian, Ms. Chen, says, "A book can open a window to the world. Even in a small village, we can travel through reading."',
+        q: 'What does Ms. Chen think a book can do?',
+        opts: ['Close a door', 'Open a window to the world', 'Make money', 'Build a house'],
+        ans: 1
+    },
+    {
+        level: 'A2', title: 'Morning in the Fields',
+        body: 'At six in the morning, farmers in the village start working. The air is cool and fresh. They check the rice fields and water the vegetables. Some of them use small machines, but many still work by hand. "Technology helps," one farmer says, "but the land still needs our eyes every day."',
+        q: 'Why do farmers still work by hand?',
+        opts: ['They have no machines', 'They do not like technology', 'The land needs their daily attention', 'They are too old'],
+        ans: 2
+    },
+    {
+        level: 'B1', title: 'The Rise of Online Learning',
+        body: 'Over the past five years, online learning has grown quickly in China. Students in small towns can now attend classes taught by teachers in big cities. This change has given many young people access to better education. However, some experts warn that online learning cannot replace face-to-face communication. "Knowledge can travel through screens," one teacher said, "but motivation often needs a human connection."',
+        q: 'What do some experts worry about?',
+        opts: ['Online learning is too expensive', 'Students cannot use computers', 'Online learning cannot replace human connection', 'Teachers do not like online classes'],
+        ans: 2
+    },
+    {
+        level: 'B1', title: 'AI Tools in Daily Work',
+        body: 'Many companies now use AI tools to handle repetitive tasks, such as writing reports and organizing data. This allows employees to spend more time on creative work. But experts remind workers that AI is a tool, not a replacement. "The people who benefit most from AI," one researcher explained, "are those who learn to use it well, not those who fear it."',
+        q: 'According to the researcher, who benefits most from AI?',
+        opts: ['People who fear it', 'People who avoid it', 'People who learn to use it well', 'People who build it'],
+        ans: 2
+    },
+    {
+        level: 'B1', title: 'Saving Money in Small Steps',
+        body: 'Many young people find it hard to save money. One simple method is the "50/30/20 rule": 50% for necessary costs, 30% for personal spending, and 20% for savings. Experts say this rule is not perfect, but it gives people a clear structure. "The most important thing," one financial adviser said, "is not how much you save in one month, but whether you can keep the habit for years."',
+        q: 'What is the most important thing about saving, according to the adviser?',
+        opts: ['Saving a large amount quickly', 'Keeping the habit for years', 'Following the rule strictly', 'Earning more money'],
+        ans: 1
+    },
+    {
+        level: 'B2', title: 'Why Reading Foreign Articles Matters',
+        body: 'Reading articles from other countries is not only about learning English. It is about seeing how other people think. Different cultures organize ideas in different ways, and reading widely can help us notice these differences. For students preparing for exams like IELTS, reading foreign news is also practical: the exam often uses texts from magazines and newspapers. The more you read, the more familiar the language becomes.',
+        q: 'What does reading foreign articles help us do, besides learning English?',
+        opts: ['Earn more money', 'See how other people think', 'Write better Chinese', 'Travel abroad'],
+        ans: 1
+    },
+    {
+        level: 'B2', title: 'Technology and Rural Education',
+        body: 'Technology has brought new possibilities to rural education. Online platforms allow students in remote areas to access courses from top universities. However, access alone is not enough. Studies show that without local support — teachers, parents, and community — technology often fails to improve learning outcomes. The real challenge is not building networks, but building habits of learning.',
+        q: 'What is the real challenge in rural education?',
+        opts: ['Building internet networks', 'Buying more computers', 'Building habits of learning', 'Sending students to cities'],
+        ans: 2
+    },
+    {
+        level: 'B2', title: 'The Value of Deliberate Practice',
+        body: 'Many people believe that talent determines success, but research suggests otherwise. Studies on musicians, athletes, and language learners show that deliberate practice — focused, repetitive, and guided by feedback — is far more important than natural ability. The key is not how long you practice, but how you practice. Short, focused sessions often produce better results than long, distracted ones.',
+        q: 'What makes deliberate practice effective?',
+        opts: ['Long hours without breaks', 'Natural talent', 'Focus and feedback', 'Practicing many skills at once'],
+        ans: 2
+    },
+    {
+        level: 'B2', title: 'Reading Between the Lines',
+        body: 'In international news, the same event is often reported in very different ways. A newspaper in one country may emphasize economic effects, while another focuses on political meaning. Careful readers learn to notice not only what is said, but also what is left out. "News is not a mirror," one media scholar noted. "It is a window, and every window has a frame."',
+        q: 'What does the media scholar mean by "every window has a frame"?',
+        opts: ['Windows are expensive', 'News always has a perspective', 'News is always true', 'Newspapers are old-fashioned'],
+        ans: 1
+    },
+    {
+        level: 'B2', title: 'From Input to Output',
+        body: 'Language learners often spend most of their time on input — reading and listening. But output — speaking and writing — is equally important. When learners try to express ideas, they discover gaps in their knowledge and become more aware of grammar. The most effective learners switch regularly between input and output, allowing each to support the other.',
+        q: 'Why is output (speaking and writing) important?',
+        opts: ['It is easier than input', 'It reveals knowledge gaps', 'It replaces reading', 'It is required for exams only'],
+        ans: 1
+    }
+];
+
 /* ================= 数据 ================= */
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
@@ -967,6 +1304,14 @@ let rssFeeds = [];
 let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
 let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 let currentEditingHabitId = null;
+
+/* 学习系统状态 */
+let studyGoal = { targetScore: 7.0, examDate: '2027-06-01', targetVocab: 7000 };
+let momoDaily = [];
+let lsProgress = {};
+let studyVocab = [];
+let readingDaily = [];
+let goalCloudId = null;
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
@@ -996,13 +1341,17 @@ function saveCache() {
     sorted.forEach((b, i) => { if (i >= 3) b.articles = []; });
     try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
-            uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData
+            uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData,
+            momo: momoDaily, ls: lsProgress, vocab: studyVocab,
+            reading: readingDaily, goal: studyGoal
         }));
     } catch (e) {
         sorted.forEach((b, i) => { if (i >= 1) b.articles = []; });
         try {
             localStorage.setItem(CACHE_KEY, JSON.stringify({
-                uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData
+                uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData,
+                momo: momoDaily, ls: lsProgress, vocab: studyVocab,
+                reading: readingDaily, goal: studyGoal
             }));
         } catch (e2) { console.warn('localStorage 已满，缓存失败'); }
     }
@@ -1017,6 +1366,11 @@ function loadCache() {
         healthData = d.health || healthData;
         newsData = d.news || newsData;
         if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
+        momoDaily = d.momo || momoDaily;
+        lsProgress = d.ls || lsProgress;
+        studyVocab = d.vocab || studyVocab;
+        readingDaily = d.reading || readingDaily;
+        if (d.goal) studyGoal = { ...studyGoal, ...d.goal };
         return true;
     } catch (e) { return false; }
 }
@@ -1105,6 +1459,11 @@ async function loadAllFromCloud(silent = false) {
 
         healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
         newsData = { items: [], summaries: [], briefings: [] };
+        momoDaily = [];
+        readingDaily = [];
+        lsProgress = {};
+        studyVocab = [];
+        goalCloudId = null;
         let cloudFeeds = null;
 
         cloudApiConfigId = null;
@@ -1126,6 +1485,29 @@ async function loadAllFromCloud(silent = false) {
                 if (Array.isArray(d.habits)) {
                     habits = d.habits.map(h => ({ category: '其他', ...h }));
                     saveHabitsLocal();
+                }
+                return;
+            }
+            if (r.type === 'momo_daily') { momoDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'reading_daily') { readingDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'ls_progress') {
+                if (d.progress) {
+                    lsProgress = d.progress;
+                    lsProgress._cloudId = r.id;
+                }
+                return;
+            }
+            if (r.type === 'study_vocab') {
+                if (Array.isArray(d.vocab)) {
+                    studyVocab = d.vocab;
+                    studyVocab._cloudId = r.id;
+                }
+                return;
+            }
+            if (r.type === 'study_goal') {
+                if (d.goal) {
+                    studyGoal = { ...studyGoal, ...d.goal };
+                    goalCloudId = r.id;
                 }
                 return;
             }
@@ -2379,16 +2761,16 @@ function addRssFeed() {
 
 /* ================= 一键优化源列表 ================= */
 const FEEDS_TO_DELETE = [
-    'feeds.bloomberg.com/crypto',      // 币圈
-    'ft.com/markets',                  // 与 FTChinese 重叠
-    'ft.com/technology',               // 与 FTChinese 重叠
-    'seekingalpha.com',                // 付费墙 + 失效
-    'sciencedaily.com',                // 动植物科学，无关
-    'ark-invest.com',                  // 被 Cloudflare 拦截 + 信仰型投资
-    'propublica.org',                  // 长调查报道，不适合速览
-    'meduza.io',                       // 俄罗斯/乌克兰
-    'economist.com/finance-and-economics', // 与 The World This Week 重叠
-    'macromicro.me'                    // 宏观仪表盘，无解读价值
+    'feeds.bloomberg.com/crypto',
+    'ft.com/markets',
+    'ft.com/technology',
+    'seekingalpha.com',
+    'sciencedaily.com',
+    'ark-invest.com',
+    'propublica.org',
+    'meduza.io',
+    'economist.com/finance-and-economics',
+    'macromicro.me'
 ];
 
 const FEED_CATEGORY_FIX = {
@@ -2610,7 +2992,7 @@ function confirmOpmlImport() {
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
 }
 
-/* ================= RSS 抓取（带 HTML 容错解析） ================= */
+/* ================= RSS 抓取 ================= */
 async function fetchOneFeed(feed, timeoutMs = 25000) {
     const srcName = feed.name || hostOf(feed.url);
     const ctrl = new AbortController();
@@ -2811,7 +3193,6 @@ async function generateBriefing() {
     statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成速览…`;
     btn.textContent = '🧠 生成简报中…';
 
-    /* ===== 新版：按分类聚合，每类保留最近 8 条 ===== */
     const allArticles = [];
     results.forEach(r => {
         r.items.forEach(it => {
@@ -2913,7 +3294,7 @@ ${categoryText || '（今日未抓到有效材料，请直接输出「今日无�
     btn.textContent = '🚀 抓取24小时内文章并生成简报';
 }
 
-/* ================= 简报存档 (已读功能) ================= */
+/* ================= 简报存档 ================= */
 function renderBriefings() {
     const el = document.getElementById('briefing-history');
     if (!el) return;
@@ -3091,6 +3472,514 @@ function renderNews() {
     renderBriefings();
 }
 
+/* ================= 学习系统：英语模块（目标驱动） ================= */
+function calcVocabEstimate() {
+    return momoDaily.reduce((s, m) => s + (m.newWords || 0), 0);
+}
+function estimateIELTS(vocab) {
+    if (vocab < 1500) return '4.0';
+    if (vocab < 3000) return '4.5';
+    if (vocab < 4500) return '5.0';
+    if (vocab < 5500) return '5.5';
+    if (vocab < 7000) return '6.0';
+    if (vocab < 8500) return '6.5';
+    return '7.0+';
+}
+function calcDaysLeft() {
+    if (!studyGoal.examDate) return null;
+    const exam = new Date(studyGoal.examDate + 'T00:00:00');
+    const now = new Date(todayStr() + 'T00:00:00');
+    return Math.round((exam - now) / (1000 * 60 * 60 * 24));
+}
+function getTodayMomo() { return momoDaily.find(x => x.date === todayStr()) || null; }
+function getTodayReading() { return readingDaily.find(x => x.date === todayStr()) || null; }
+function lsDoneToday() {
+    return Object.keys(lsProgress).some(k => {
+        if (k === '_cloudId') return false;
+        const p = lsProgress[k];
+        return p && p.history && p.history.some(h => h.date === todayStr());
+    });
+}
+
+function getStudyWeekDays() {
+    const base = new Date(todayStr() + 'T00:00:00');
+    const day = base.getDay() || 7;
+    const mon = new Date(base); mon.setDate(base.getDate() - day + 1);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(mon); d.setDate(mon.getDate() + i);
+        days.push(fmtDay(d));
+    }
+    return days;
+}
+function isStudyDayCompleted(date) {
+    if (momoDaily.some(m => m.date === date)) return true;
+    if (readingDaily.some(r => r.date === date)) return true;
+    for (const k of Object.keys(lsProgress)) {
+        if (k === '_cloudId') continue;
+        const p = lsProgress[k];
+        if (p && p.history && p.history.some(h => h.date === date)) return true;
+    }
+    return false;
+}
+function calcWeekProgress() {
+    const days = getStudyWeekDays();
+    const today = todayStr();
+    const done = days.filter(d => d <= today && isStudyDayCompleted(d)).length;
+    return { done, target: 5, days };
+}
+
+function getStudyStage(vocab) {
+    if (vocab < 3000) return 'basic';
+    if (vocab < 5500) return 'intermediate';
+    if (vocab < 7000) return 'advanced';
+    return 'maintain';
+}
+function generateTodayTasks() {
+    const vocab = calcVocabEstimate();
+    const stage = getStudyStage(vocab);
+    const tasks = [];
+
+    tasks.push({
+        key: 'momo', icon: '📱', title: '墨墨背单词',
+        sub: stage === 'basic' ? '新词 20 + 复习（约 15 分钟）'
+           : stage === 'intermediate' ? '新词 15 + 复习（约 15 分钟）'
+           : stage === 'advanced' ? '新词 15 + 复习（约 15 分钟）'
+           : '新词 10 + 复习（维持）',
+        done: !!getTodayMomo()
+    });
+
+    if (stage !== 'maintain') {
+        tasks.push({
+            key: 'ls', icon: '🎧', title: '赖世雄一课',
+            sub: stage === 'basic' ? '入门 / 音标为主（约 20 分钟）'
+               : stage === 'intermediate' ? '初级 / 中级推进（约 20 分钟）'
+               : '中级 / 高级 + 语法（约 20 分钟）',
+            done: lsDoneToday()
+        });
+    }
+
+    if (stage === 'intermediate' || stage === 'advanced' || stage === 'maintain') {
+        tasks.push({
+            key: 'reading', icon: '📖', title: '外刊精读',
+            sub: stage === 'intermediate' ? '读一段 B1 短文 + 答 1 题（约 10 分钟）'
+               : stage === 'advanced' ? '读一段 B2 短文 + 答 1 题 + 记生词（约 15 分钟）'
+               : '读一篇 B2 / 外刊长文 + 抓主旨',
+            done: !!getTodayReading()
+        });
+    }
+
+    return tasks;
+}
+
+function renderGoalCard() {
+    const vocab = calcVocabEstimate();
+    const target = studyGoal.targetVocab || 7000;
+    document.getElementById('goal-target-score').textContent = (studyGoal.targetScore || 7.0).toFixed(1);
+    document.getElementById('goal-current-score').textContent = estimateIELTS(vocab);
+    const days = calcDaysLeft();
+    document.getElementById('goal-days-left').innerHTML = days !== null ? `${days}<small>天</small>` : '—';
+    document.getElementById('goal-vocab-cur').textContent = vocab;
+    document.getElementById('goal-vocab-target').textContent = target;
+    const gap = Math.max(0, target - vocab);
+    document.getElementById('goal-vocab-gap').textContent = gap > 0 ? `还差 ${gap} 词` : '🎉 已达成';
+    document.getElementById('goal-vocab-fill').style.width = Math.min(100, (vocab / target * 100)) + '%';
+
+    const week = calcWeekProgress();
+    document.getElementById('goal-week-done').textContent = week.done;
+    const dotsEl = document.getElementById('goal-week-dots');
+    const today = todayStr();
+    dotsEl.innerHTML = week.days.map((d, i) => {
+        const done = isStudyDayCompleted(d);
+        const isToday = d === today;
+        return `<div class="g-dot ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${['一','二','三','四','五','六','日'][i]}</div>`;
+    }).join('');
+}
+
+function renderTodayTasks() {
+    const tasks = generateTodayTasks();
+    const el = document.getElementById('study-today-tasks');
+    if (!tasks.length) {
+        el.innerHTML = '<div class="empty-hint">今日无任务</div>';
+        return;
+    }
+    el.innerHTML = tasks.map(t => `
+        <div class="study-task ${t.done ? 'done' : ''}">
+            <div class="t-ico">${t.icon}</div>
+            <div class="t-info">
+                <div class="t-title">${t.done ? '✅ ' : ''}${esc(t.title)}</div>
+                <div class="t-sub">${esc(t.sub)}</div>
+            </div>
+            <button class="t-btn" data-task-key="${t.key}" ${t.done ? 'disabled' : ''}>${t.done ? '完成' : '开始'}</button>
+        </div>
+    `).join('');
+    el.querySelectorAll('[data-task-key]').forEach(btn => {
+        btn.onclick = () => {
+            const key = btn.dataset.taskKey;
+            if (key === 'momo') window.openMomoCard();
+            else if (key === 'ls') window.openLSCard();
+            else if (key === 'reading') window.openReadingCard();
+        };
+    });
+}
+
+function renderMilestones() {
+    const vocab = calcVocabEstimate();
+    const el = document.getElementById('study-milestones');
+    el.innerHTML = IELTS_MILESTONES.map(m => {
+        const reached = vocab >= m.vocab;
+        const near = !reached && (m.vocab - vocab) <= 500;
+        return `<div class="study-milestone ${reached ? 'reached' : ''} ${near ? 'near' : ''}">
+            <div class="m-dot"></div>
+            <div class="m-info">
+                <div class="m-lbl">${m.label}（${m.vocab} 词）</div>
+                <div class="m-reading">${m.reading}</div>
+            </div>
+            ${reached ? '<span style="color:#2d7d5a;font-size:12px;">✓</span>' : near ? '<span style="color:#e8a838;font-size:11px;">快到了</span>' : ''}
+        </div>`;
+    }).join('');
+}
+
+function renderENStats() {
+    const vocab = calcVocabEstimate();
+    const badge = document.getElementById('en-module-badge');
+    if (badge) {
+        const gap = Math.max(0, (studyGoal.targetVocab || 7000) - vocab);
+        badge.textContent = gap > 0 ? `词汇 ${vocab} / 还差 ${gap}` : '🎉 目标达成';
+    }
+}
+
+function renderENHistory() {
+    const el = document.getElementById('en-daily-history');
+    const allDates = new Set();
+    momoDaily.forEach(m => allDates.add(m.date));
+    readingDaily.forEach(r => allDates.add(r.date));
+    Object.keys(lsProgress).forEach(k => {
+        if (k === '_cloudId') return;
+        const p = lsProgress[k];
+        if (p && p.history) p.history.forEach(h => allDates.add(h.date));
+    });
+    const sorted = Array.from(allDates).filter(isValidDay).sort((a, b) => b.localeCompare(a));
+    if (!sorted.length) {
+        el.innerHTML = '<div class="empty-hint">还没有学习记录</div>';
+        return;
+    }
+    el.innerHTML = sorted.slice(0, 30).map(date => {
+        const m = momoDaily.find(x => x.date === date);
+        const r = readingDaily.find(x => x.date === date);
+        const lsList = [];
+        Object.keys(lsProgress).forEach(k => {
+            if (k === '_cloudId') return;
+            const p = lsProgress[k];
+            if (p && p.history) {
+                p.history.filter(h => h.date === date).forEach(h => {
+                    lsList.push(`${LS_COURSES[k].icon} ${LS_COURSES[k].name} 第 ${h.lesson} 讲`);
+                });
+            }
+        });
+        return `<div class="list-item">
+            <div class="main">
+                <div style="font-weight:600;color:#1a5c47;">${esc(date)}</div>
+                ${m ? `<div class="meta">📱 墨墨：新词 ${m.newWords || 0} · 复习 ${m.reviewWords || 0} · ${m.minutes || 0} 分钟</div>` : ''}
+                ${lsList.length ? `<div class="meta">${lsList.map(esc).join('；')}</div>` : ''}
+                ${r ? `<div class="meta">📖 外刊精读：${esc(READING_POOL[r.passageIdx]?.title || '')}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderVocabList() {
+    const el = document.getElementById('vocab-list');
+    const list = [...studyVocab].filter(v => v && v.word).sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
+    if (!list.length) {
+        el.innerHTML = '<div class="empty-hint">还没有记录生词</div>';
+        return;
+    }
+    el.innerHTML = list.map((v, i) => `
+        <div class="en-vocab-item">
+            <div>
+                <span class="w">${esc(v.word)}</span>
+                ${v.phonetic ? `<span style="font-size:11px;color:#6b8a7e;font-family:monospace;margin-left:4px;">${esc(v.phonetic)}</span>` : ''}
+                <span class="m">${esc(v.meaning || '')}</span>
+                ${v.source ? `<div class="m" style="margin-left:0;font-size:11px;color:#a0bdb0;">${esc(v.source)}</div>` : ''}
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteVocabItem(${i})">✕</button>
+        </div>
+    `).join('');
+}
+
+function renderEnglishAll() {
+    renderGoalCard();
+    renderTodayTasks();
+    renderMilestones();
+    renderENStats();
+    renderENHistory();
+    renderVocabList();
+    loadStudyGoalToUI();
+}
+
+/* 墨墨打卡 */
+window.openMomoCard = function() {
+    document.getElementById('en-momo-card').style.display = '';
+    document.getElementById('en-ls-card').style.display = 'none';
+    document.getElementById('en-reading-card').style.display = 'none';
+    const m = getTodayMomo();
+    if (m) {
+        document.getElementById('momo-new').value = m.newWords || '';
+        document.getElementById('momo-review').value = m.reviewWords || '';
+        document.getElementById('momo-min').value = m.minutes || '';
+        document.getElementById('momo-note').value = m.note || '';
+    } else {
+        document.getElementById('momo-new').value = '';
+        document.getElementById('momo-review').value = '';
+        document.getElementById('momo-min').value = 15;
+        document.getElementById('momo-note').value = '';
+    }
+};
+
+async function saveMomo() {
+    const newWords = parseInt(document.getElementById('momo-new').value, 10) || 0;
+    const reviewWords = parseInt(document.getElementById('momo-review').value, 10) || 0;
+    const minutes = parseInt(document.getElementById('momo-min').value, 10) || 0;
+    const note = document.getElementById('momo-note').value.trim();
+    if (newWords === 0 && reviewWords === 0) {
+        if (!confirm('新词和复习数都是 0，确定保存吗？')) return;
+    }
+    const record = { date: todayStr(), newWords, reviewWords, minutes, note };
+    const idx = momoDaily.findIndex(x => x.date === record.date);
+    if (idx >= 0) {
+        const existing = momoDaily[idx];
+        if (existing._cloudId) await updateHealthRecord(existing._cloudId, record);
+        momoDaily[idx] = { ...existing, ...record };
+    } else {
+        const item = await pushHealthRecord('momo_daily', record.date, record);
+        if (item) momoDaily.push({ ...record, _cloudId: item.id });
+    }
+    saveCache();
+    document.getElementById('en-momo-card').style.display = 'none';
+    renderEnglishAll();
+}
+
+/* 赖世雄 */
+window.openLSCard = function() {
+    document.getElementById('en-momo-card').style.display = 'none';
+    document.getElementById('en-ls-card').style.display = '';
+    document.getElementById('en-reading-card').style.display = 'none';
+    renderLSCourseSelect();
+};
+
+function renderLSCourseSelect() {
+    const sel = document.getElementById('ls-course-select');
+    const currentVal = sel.value;
+    sel.innerHTML = Object.keys(LS_COURSES).map(k => {
+        const p = lsProgress[k] || { current: 0 };
+        const c = LS_COURSES[k];
+        return `<option value="${k}" ${currentVal === k ? 'selected' : ''}>${c.icon} ${c.name} (${p.current || 0}/${c.total})</option>`;
+    }).join('');
+    if (!currentVal) sel.value = Object.keys(LS_COURSES)[0];
+    renderLSCourseDetail();
+}
+
+function renderLSCourseDetail() {
+    const key = document.getElementById('ls-course-select').value;
+    if (!key) return;
+    const course = LS_COURSES[key];
+    const p = lsProgress[key] || { current: 0, total: course.total, history: [], note: '' };
+    const pct = Math.min(100, Math.round((p.current || 0) / course.total * 100));
+    const nextLesson = Math.min((p.current || 0) + 1, course.total);
+    const finished = (p.current || 0) >= course.total;
+
+    const el = document.getElementById('ls-course-detail');
+    el.innerHTML = `
+        <div style="background:#f7fbf9;border-radius:10px;padding:14px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:13px;color:#1a5c47;font-weight:600;">${esc(course.name)}</span>
+                <span style="font-size:12px;color:#6b8a7e;">${p.current || 0} / ${course.total} 讲</span>
+            </div>
+            <div class="bar" style="height:6px;background:#e0eae6;border-radius:3px;overflow:hidden;"><div class="bar-fill" style="width:${pct}%;height:100%;background:#2d7d5a;border-radius:3px;"></div></div>
+            <div style="font-size:12px;color:#6b8a7e;margin-top:6px;">${finished ? '🎉 全部完成' : `下一讲：第 ${nextLesson} 讲`}</div>
+        </div>
+        ${finished ? '' : `<button class="btn btn-primary" id="ls-finish-next-btn" style="width:100%;margin-bottom:12px;">✅ 完成第 ${nextLesson} 讲</button>`}
+        <div class="field">
+            <label>本课程笔记（可选）</label>
+            <textarea id="ls-note" placeholder="例如：第 5 讲重点：/θ/ 和 /ð/ 的区别…" style="min-height:60px;">${esc(p.note || '')}</textarea>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="ls-save-note-btn">保存笔记</button>
+        <div style="margin-top:16px;">
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:6px;">最近记录：</div>
+            ${(p.history || []).slice(-5).reverse().map(h => `<div style="font-size:12px;color:#3a5c50;padding:4px 0;">· ${esc(h.date)} 完成第 ${h.lesson} 讲</div>`).join('') || '<div style="font-size:12px;color:#a0bdb0;">暂无</div>'}
+        </div>
+    `;
+
+    if (!finished) {
+        document.getElementById('ls-finish-next-btn').onclick = async () => {
+            if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
+            const p2 = lsProgress[key];
+            p2.current = Math.min((p2.current || 0) + 1, course.total);
+            if (!p2.history) p2.history = [];
+            p2.history.push({ date: todayStr(), lesson: p2.current });
+            await saveLSProgressCloud();
+            renderEnglishAll();
+            renderLSCourseSelect();
+        };
+    }
+    document.getElementById('ls-save-note-btn').onclick = async () => {
+        const note = document.getElementById('ls-note').value.trim();
+        if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
+        lsProgress[key].note = note;
+        await saveLSProgressCloud();
+        alert('笔记已保存');
+    };
+}
+
+async function saveLSProgressCloud() {
+    if (!currentUser) return;
+    const clean = { progress: {} };
+    Object.keys(lsProgress).forEach(k => {
+        if (k !== '_cloudId') clean.progress[k] = lsProgress[k];
+    });
+    if (lsProgress._cloudId) {
+        await updateHealthRecord(lsProgress._cloudId, clean);
+    } else {
+        const item = await pushHealthRecord('ls_progress', todayStr(), clean);
+        if (item) lsProgress._cloudId = item.id;
+    }
+    saveCache();
+}
+
+/* 外刊精读 */
+window.openReadingCard = function() {
+    document.getElementById('en-momo-card').style.display = 'none';
+    document.getElementById('en-ls-card').style.display = 'none';
+    document.getElementById('en-reading-card').style.display = '';
+    renderReadingPassage();
+};
+
+function renderReadingPassage() {
+    const el = document.getElementById('study-reading-area');
+    const existing = getTodayReading();
+    const readCount = readingDaily.length;
+    const idx = existing ? existing.passageIdx : (readCount % READING_POOL.length);
+    const p = READING_POOL[idx];
+
+    if (existing && existing.done) {
+        el.innerHTML = `<div class="study-reading-box">
+            <div style="color:#1a7a4a;font-weight:600;margin-bottom:8px;">✅ 今天已完成精读</div>
+            <div class="study-reading-title">${esc(p.title)}</div>
+            <div class="study-reading-body">${esc(p.body)}</div>
+            <div style="margin-top:12px;font-size:12px;color:#6b8a7e;">答案：${esc(p.opts[p.ans])}</div>
+        </div>`;
+        return;
+    }
+
+    el.innerHTML = `<div class="study-reading-box">
+        <div style="font-size:11px;color:#a0bdb0;margin-bottom:4px;">Level ${p.level}</div>
+        <div class="study-reading-title">${esc(p.title)}</div>
+        <div class="study-reading-body">${esc(p.body)}</div>
+        <div class="study-reading-q">${esc(p.q)}</div>
+        <div class="study-reading-opts">
+            ${p.opts.map((opt, oi) => `<div class="study-reading-opt" data-oi="${oi}">${esc(opt)}</div>`).join('')}
+        </div>
+        <div id="study-reading-result" style="margin-top:12px;font-size:13px;"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px;" id="study-reading-finish-btn">标记完成精读</button>
+    </div>`;
+
+    el.querySelectorAll('.study-reading-opt').forEach(opt => {
+        opt.onclick = () => {
+            const oi = parseInt(opt.dataset.oi, 10);
+            el.querySelectorAll('.study-reading-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+            el.querySelectorAll('.study-reading-opt').forEach((o, i) => {
+                if (i === p.ans) o.classList.add('correct');
+                else if (i === oi && i !== p.ans) o.classList.add('wrong');
+            });
+            document.getElementById('study-reading-result').innerHTML = oi === p.ans
+                ? '<span style="color:#1a7a4a;">✅ 正确！</span>'
+                : `<span style="color:#c0392b;">❌ 正确答案：${esc(p.opts[p.ans])}</span>`;
+        };
+    });
+
+    document.getElementById('study-reading-finish-btn').onclick = () => finishReading(idx);
+}
+
+async function finishReading(passageIdx) {
+    const record = { date: todayStr(), passageIdx, done: true };
+    const idx = readingDaily.findIndex(x => x.date === record.date);
+    if (idx >= 0) {
+        const existing = readingDaily[idx];
+        if (existing._cloudId) await updateHealthRecord(existing._cloudId, record);
+        readingDaily[idx] = { ...existing, ...record };
+    } else {
+        const item = await pushHealthRecord('reading_daily', record.date, record);
+        if (item) readingDaily.push({ ...record, _cloudId: item.id });
+    }
+    saveCache();
+    document.getElementById('en-reading-card').style.display = 'none';
+    renderEnglishAll();
+}
+
+/* 生词本 */
+async function addVocabItem() {
+    const word = document.getElementById('vocab-word').value.trim();
+    const phonetic = document.getElementById('vocab-phonetic').value.trim();
+    const meaning = document.getElementById('vocab-meaning').value.trim();
+    const source = document.getElementById('vocab-source').value.trim();
+    if (!word || !meaning) return alert('单词和释义必填');
+    if (studyVocab.some(v => v.word === word)) return alert('这个单词已经在生词本里了');
+    studyVocab.push({ word, phonetic, meaning, source, addedAt: todayStr() });
+    await saveStudyVocabCloud();
+    ['vocab-word', 'vocab-phonetic', 'vocab-meaning', 'vocab-source'].forEach(id => document.getElementById(id).value = '');
+    renderVocabList();
+}
+
+async function saveStudyVocabCloud() {
+    if (!currentUser) return;
+    const clean = { vocab: studyVocab.map(v => {
+        const o = { ...v };
+        delete o._cloudId;
+        return o;
+    }) };
+    if (studyVocab._cloudId) {
+        await updateHealthRecord(studyVocab._cloudId, clean);
+    } else {
+        const item = await pushHealthRecord('study_vocab', todayStr(), clean);
+        if (item) studyVocab._cloudId = item.id;
+    }
+    saveCache();
+}
+
+window.deleteVocabItem = async function(idx) {
+    if (!confirm('删除这个生词？')) return;
+    studyVocab.splice(idx, 1);
+    await saveStudyVocabCloud();
+    renderVocabList();
+};
+
+/* 目标设置 */
+async function saveStudyGoal() {
+    studyGoal.targetScore = parseFloat(document.getElementById('goal-setting-score').value) || 7.0;
+    studyGoal.examDate = document.getElementById('goal-setting-date').value || '2027-06-01';
+    studyGoal.targetVocab = parseInt(document.getElementById('goal-setting-vocab').value, 10) || 7000;
+    if (!currentUser) return;
+    if (goalCloudId) {
+        await updateHealthRecord(goalCloudId, { goal: studyGoal });
+    } else {
+        const item = await pushHealthRecord('study_goal', todayStr(), { goal: studyGoal });
+        if (item) goalCloudId = item.id;
+    }
+    saveCache();
+    renderEnglishAll();
+    alert('目标已保存');
+}
+
+function loadStudyGoalToUI() {
+    const el1 = document.getElementById('goal-setting-score');
+    const el2 = document.getElementById('goal-setting-date');
+    const el3 = document.getElementById('goal-setting-vocab');
+    if (el1) el1.value = studyGoal.targetScore || 7.0;
+    if (el2) el2.value = studyGoal.examDate || '2027-06-01';
+    if (el3) el3.value = studyGoal.targetVocab || 7000;
+}
+
 /* ================= 渲染全部 ================= */
 function renderHealthAll() {
     renderHabits();
@@ -3103,6 +3992,7 @@ function renderAll() {
     renderHealthAll();
     renderNews();
     renderRssSources();
+    renderEnglishAll();
 }
 
 /* ================= 事件绑定 ================= */
@@ -3275,6 +4165,15 @@ document.getElementById('ai-clear-btn').onclick = async () => {
     saveCache(); renderAIAnalysis();
 };
 
+/* 学习系统事件绑定 */
+document.getElementById('momo-save-btn').onclick = saveMomo;
+document.getElementById('momo-cancel-btn').onclick = () => { document.getElementById('en-momo-card').style.display = 'none'; };
+document.getElementById('ls-course-select').onchange = renderLSCourseDetail;
+document.getElementById('vocab-add-btn').onclick = addVocabItem;
+document.getElementById('vocab-word').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
+document.getElementById('vocab-meaning').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
+document.getElementById('goal-save-btn').onclick = saveStudyGoal;
+
 /* ================= 启动 ================= */
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('expense-date').value = todayStr();
@@ -3310,6 +4209,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateDayBar();
     resetIpSession();
+    loadStudyGoalToUI();
+    renderEnglishAll();
 
     try {
         console.log('⏳ 正在检查登录状态...');
