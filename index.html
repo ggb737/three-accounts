@@ -241,6 +241,9 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .add-habit-row input:focus, .add-habit-row select:focus { border-color: #3a8f6e; }
 .add-habit-row button { flex: 0 0 auto; padding: 8px 16px; background: #2d7d5a; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
+/* 简报板块标题配色 */
+.briefing-body .briefing-section-title { font-size: 14px; font-weight: 700; color: #1a5c47; margin: 14px 0 6px; padding-left: 8px; border-left: 3px solid #2d7d5a; }
+
 @media (max-width: 500px) {
     .grid-3 { grid-template-columns: 1fr 1fr; }
     body { padding: 10px; }
@@ -593,7 +596,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                 点击左侧卡片打卡。右侧可编辑、排序或删除。
             </div>
             <div id="habit-list"></div>
-            
+
             <div style="margin-top:16px; border-top:1px dashed #d4e3dd; padding-top:12px;">
                 <div class="add-habit-row">
                     <select id="new-habit-category">
@@ -626,7 +629,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
             </div>
         </div>
 
-        <!-- 1. 简报存档 (提前，作为最核心展示) -->
+        <!-- 1. 简报存档 -->
         <div class="card">
             <h2>📄 每日简报存档</h2>
             <div id="briefing-history"><div class="empty-hint">还没有生成过简报</div></div>
@@ -635,7 +638,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         <!-- 2. RSS 模块 -->
         <div class="card">
             <h2>🧠 RSS 智能简报</h2>
-            
+
             <details class="section-block" open>
                 <summary>📚 已保存的源 <span id="rss-count" style="color:#a0bdb0;font-weight:400;font-size:12px;margin-left:auto;margin-right:12px;">(0)</span></summary>
                 <div class="section-content">
@@ -660,14 +663,18 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                         <label>归类</label>
                         <select id="rss-category">
                             <option value="international">🌍 国际</option>
+                            <option value="domestic">🏛️ 国内政策与基层</option>
                             <option value="finance">💰 财经</option>
                             <option value="tech">💻 科技</option>
                             <option value="industry">🏢 行业</option>
+                            <option value="society">🎭 社会</option>
+                            <option value="other">✨ 其他</option>
                         </select>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
                         <button class="btn btn-primary" id="rss-add-btn">＋ 确认添加</button>
                         <button class="btn btn-ghost" id="opml-import-btn">📂 导入 OPML</button>
+                        <button class="btn btn-sm" id="rss-optimize-btn" style="background:#b8860b;color:#fff;">⚡ 一键优化源列表</button>
                         <button class="btn btn-ghost btn-sm" id="rss-clear-btn">清空源列表</button>
                     </div>
                     <input type="file" id="opml-file-input" accept=".opml,.xml,.opm,text/xml,application/xml" style="display:none">
@@ -678,7 +685,8 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
             <!-- 抓取操作区 -->
             <div style="margin-top:16px; padding:16px; background:#f7fbf9; border-radius:12px; border:1px dashed #c0d3cb; text-align:center;">
                 <div style="margin-bottom:12px; font-size:12px; color:#6b8a7e; line-height:1.5;">
-                    ⏱️ 系统会自动过滤，只抓取所有源中<b>过去 24 小时</b>内发布的最新文章进行汇总。
+                    ⏱️ 系统会自动过滤，只抓取所有源中<b>过去 24 小时</b>内发布的最新文章进行汇总。<br>
+                    🎯 <b>5 分钟天下事速览</b>：只做视野层，不教你学技能。
                 </div>
                 <button class="btn btn-primary" id="rss-fetch-btn" style="width:100%; max-width:300px; padding:12px; font-size:15px;">🚀 抓取24小时内文章并生成简报</button>
                 <div id="rss-status" style="font-size:13px;color:#2d7d5a;font-weight:600;margin-top:12px;line-height:1.6;"></div>
@@ -765,12 +773,12 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 <div class="modal-overlay" id="edit-habit-modal">
     <div class="modal-box">
         <div class="modal-title">✏️ 编辑微习惯</div>
-        
+
         <div class="field">
             <label>习惯名称</label>
             <input type="text" id="edit-habit-name-input" placeholder="例如：喝够8杯水">
         </div>
-        
+
         <div class="field">
             <label>分类</label>
             <select id="edit-habit-category">
@@ -781,12 +789,12 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                 <option value="其他">其他</option>
             </select>
         </div>
-        
+
         <div style="display:flex; gap:8px; margin-top:16px;">
             <button class="btn btn-ghost" id="edit-habit-up-btn" style="flex:1;">↑ 上移</button>
             <button class="btn btn-ghost" id="edit-habit-down-btn" style="flex:1;">↓ 下移</button>
         </div>
-        
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:16px; border-top:1px dashed #d4e3dd;">
             <button class="btn btn-danger" id="edit-habit-del-btn">删除习惯</button>
             <div style="display:flex; gap:8px;">
@@ -840,12 +848,25 @@ function stripHtml(s) {
 }
 function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
 
+/* ===== RSS 源黑名单兜底（防止用户手动加违规源） ===== */
+const BLOCKED_FEED_KEYWORDS = [
+    'crypto', 'coindesk', 'cointelegraph', 'bitcoin', 'blockchain',
+    'binance', 'okx', 'nft', 'web3', 'defi',
+    'rt.com', 'sputnik', 'tass', 'russia', 'ukraine', '俄', '乌克兰'
+];
+function isBlockedFeed(feed) {
+    const t = `${feed.url || ''} ${feed.name || feed.title || ''} ${feed.category || ''}`.toLowerCase();
+    return BLOCKED_FEED_KEYWORDS.some(k => t.includes(k.toLowerCase()));
+}
+
 function md2html(c) {
     return String(c || '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#0d3b2e;margin:16px 0 8px;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
+        .replace(/^### (.+)$/gm, '<div class="briefing-section-title" style="border-left:none;padding-left:0;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>')
+        .replace(/^#### (.+)$/gm, '<div class="briefing-section-title">$1</div>')
         .replace(/^[-*] (.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:6px;"><span style="color:#2d7d5a;font-weight:bold;margin-right:6px;">•</span><span>$1</span></div>')
+        .replace(/^> (.+)$/gm, '<div style="background:#f7fbf9;border-left:3px solid #d4e3dd;padding:10px 12px;border-radius:6px;margin:8px 0;font-size:13px;color:#4a5c4a;">$1</div>')
         .replace(/\n/g, '<br>');
 }
 
@@ -885,13 +906,52 @@ const BODY_SIGNALS = [
 ];
 const NEWS_CATEGORY = {
     international: { label: '国际', icon: '🌍' },
-    domestic: { label: '国内', icon: '🏛️' },
+    domestic: { label: '国内政策与基层', icon: '🏛️' },
     finance: { label: '财经', icon: '💰' },
     tech: { label: '科技', icon: '💻' },
     industry: { label: '行业', icon: '🏢' },
     society: { label: '社会', icon: '🎭' },
     other: { label: '其他', icon: '✨' }
 };
+
+/* ================= 简报系统：个人情报主编 ================= */
+const BRIEFING_SYSTEM = `
+你是一位高效、克制、不废话的「个人情报主编」。服务对象是一位在基层参加西部计划、2 年后计划考北航 VR 学硕、未来可能走选调或出国读博的年轻人。他每天只愿意花 5 分钟读简报。
+
+你的任务：把过去 24 小时的高密度资讯，压缩成一份可扫读、全面、信息密度高的天下事速览。他不是来学技能的，他是来「用最短时间知道世界发生了什么」。
+
+【信息筛选】
+保留：国际地缘（仅重大事件）、国内政策与基层治理、AI/VR/科技、财经与个人钱袋子、教育/考研/选调相关政策。
+剔除：币圈/NFT/Web3、俄罗斯乌克兰战况细节、纯娱乐八卦、明星绯闻、体育赛事、无信息增量的评论文章。
+同一事件多源报道只保留一条，注明来源。
+
+【输出格式】严格按以下 Markdown 结构，不要前言后记：
+
+### 今日速览 · {DATE}
+
+**一句话头条**：（今天最值得知道的一件事，1 句，不超过 40 字）
+
+#### 🌍 国际与地缘
+- **[事件标题]**：核心事实 + 为什么重要（来源）
+（只保留真正重大的，没有就写「今日无重大事件」）
+
+#### 🏛️ 国内政策与基层
+- **[事件标题]**：核心事实 + 影响（来源）
+
+#### 💻 科技与 AI / VR
+- **[事件标题]**：核心事实 + 影响（来源）
+
+#### 💰 财经与钱袋子
+- **[事件标题]**：核心事实 + 对个人储蓄/利率/定投的影响（来源）
+
+#### 📌 和你有关
+（从以上板块中挑 1–2 条，用 2–3 句话说明对「基层服务 / 考研 / 选调 / 理财」的具体影响。只挑真正相关的，没有就写「今日无直接影响」。不要硬凑。）
+
+【标注规则】
+- 在每条情报末尾，如果和「基层/考研/选调/理财」直接相关，加 ★。
+- 每条不超过 2 行，全文 600–800 字。
+- 涉及投资的内容句末加「（不构成投资建议）」。
+`.trim();
 
 const DEFAULT_HABITS = [
     { id: 'h1', name: '22:30 放下手机', category: '睡眠', icon: '📴', dates: [] },
@@ -906,13 +966,13 @@ let newsData = { items: [], summaries: [], briefings: [] };
 let rssFeeds = [];
 let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
 let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
-let currentEditingHabitId = null; // 用于模态框编辑
+let currentEditingHabitId = null;
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
 const AI_KEY = 'ai_analyze_config';
-const HABITS_KEY = 'habits_config_v2'; // 升级版本号，兼容旧数据
+const HABITS_KEY = 'habits_config_v2';
 
 function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 function loadAIConfigLocal() {
@@ -921,11 +981,10 @@ function loadAIConfigLocal() {
 }
 function saveHabitsLocal() { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
 function loadHabitsLocal() {
-    try { 
-        const r = localStorage.getItem(HABITS_KEY); 
+    try {
+        const r = localStorage.getItem(HABITS_KEY);
         if (r) {
             const arr = JSON.parse(r);
-            // 兼容旧数据，如果没有分类字段，给个默认值
             habits = arr.map(h => ({ category: '其他', ...h }));
         }
     } catch(e) {}
@@ -1050,12 +1109,12 @@ async function loadAllFromCloud(silent = false) {
 
         cloudApiConfigId = null;
         cloudHabitsId = null;
-        loadHabitsLocal(); // 先用本地垫底
+        loadHabitsLocal();
 
         (hd || []).forEach(r => {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
-            
+
             if (r.type === 'ai_config') {
                 cloudApiConfigId = r.id;
                 aiConfig = { ...aiConfig, ...d };
@@ -1095,7 +1154,6 @@ async function loadAllFromCloud(silent = false) {
             await pushRssFeedsToCloud();
         }
 
-        // 将最新的 API 配置填入设置框
         document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
         document.getElementById('ai-api-url').value = aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
         document.getElementById('ai-model').value = aiConfig.model || 'deepseek-chat';
@@ -1134,12 +1192,12 @@ async function deleteAccountRecord(id) {
 async function pushHealthRecord(type, date, dataObj) {
     if (!currentUser) return null;
     const ts = Date.now();
-    
+
     let sanitizedData;
     try {
         const jsonStr = JSON.stringify(dataObj)
-            .replace(/\\u0000/g, '') 
-            .replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); 
+            .replace(/\\u0000/g, '')
+            .replace(/[\u0001-\u001F\u007F-\u009F]/g, '');
         sanitizedData = JSON.parse(jsonStr);
     } catch (e) {
         console.error('数据序列化失败:', e);
@@ -1170,11 +1228,11 @@ async function updateHealthRecord(id, dataObj) {
     let sanitizedData;
     try {
         const jsonStr = JSON.stringify(dataObj)
-            .replace(/\\u0000/g, '') 
-            .replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); 
+            .replace(/\\u0000/g, '')
+            .replace(/[\u0001-\u001F\u007F-\u009F]/g, '');
         sanitizedData = JSON.parse(jsonStr);
     } catch (e) { return; }
-    
+
     await sb.from('health_data').update({ data: sanitizedData }).eq('id', id);
     lastLocalChange = Date.now();
 }
@@ -1192,7 +1250,6 @@ async function pushRssFeedsToCloud() {
     } catch (e) { console.warn('RSS 源同步云端失败', e); }
 }
 
-// 保存 AI 配置到云端
 async function saveAIConfigToCloud(config) {
     if (!currentUser) return;
     try {
@@ -1209,7 +1266,6 @@ async function saveAIConfigToCloud(config) {
     } catch (e) { console.warn('API 配置同步云端失败', e); }
 }
 
-// 保存打卡配置到云端
 async function saveHabitsToCloud() {
     if (!currentUser) return;
     try {
@@ -1247,11 +1303,11 @@ function calcStreak(habit) {
     const sorted = [...habit.dates].sort((a, b) => b.localeCompare(a));
     let streak = 0;
     let checkDate = todayStr();
-    
+
     if (!sorted.includes(todayStr())) {
         checkDate = addDays(todayStr(), -1);
     }
-    
+
     while (sorted.includes(checkDate)) {
         streak++;
         checkDate = addDays(checkDate, -1);
@@ -1262,7 +1318,7 @@ function calcStreak(habit) {
 function toggleHabit(id) {
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
-    
+
     if (!habit.dates) habit.dates = [];
     const idx = habit.dates.indexOf(currentDay);
     if (idx > -1) {
@@ -1270,7 +1326,7 @@ function toggleHabit(id) {
     } else {
         habit.dates.push(currentDay);
     }
-    
+
     saveHabitsLocal();
     saveHabitsToCloud();
     renderHabits();
@@ -1280,10 +1336,10 @@ function openEditHabitModal(id) {
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
     currentEditingHabitId = id;
-    
+
     document.getElementById('edit-habit-name-input').value = habit.name;
     document.getElementById('edit-habit-category').value = habit.category || '其他';
-    
+
     updateModalMoveButtons();
     document.getElementById('edit-habit-modal').classList.add('active');
 }
@@ -1292,11 +1348,11 @@ function updateModalMoveButtons() {
     if (!currentEditingHabitId) return;
     const habit = habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
-    
+
     const cat = habit.category || '其他';
     const catHabits = habits.filter(h => (h.category || '其他') === cat);
     const idx = catHabits.findIndex(h => h.id === currentEditingHabitId);
-    
+
     document.getElementById('edit-habit-up-btn').disabled = (idx === 0);
     document.getElementById('edit-habit-down-btn').disabled = (idx === catHabits.length - 1);
 }
@@ -1305,11 +1361,11 @@ function moveHabitInModal(dir) {
     if (!currentEditingHabitId) return;
     const habit = habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
-    
+
     const cat = habit.category || '其他';
     const catHabits = habits.filter(h => (h.category || '其他') === cat);
     const idx = catHabits.findIndex(h => h.id === currentEditingHabitId);
-    
+
     if (dir === -1 && idx > 0) {
         const target = catHabits[idx - 1];
         const globalIdx1 = habits.findIndex(h => h.id === habit.id);
@@ -1323,7 +1379,7 @@ function moveHabitInModal(dir) {
     } else {
         return;
     }
-    
+
     saveHabitsLocal();
     saveHabitsToCloud();
     renderHabits();
@@ -1334,19 +1390,19 @@ function saveHabitModal() {
     if (!currentEditingHabitId) return;
     const habit = habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
-    
+
     const name = document.getElementById('edit-habit-name-input').value.trim();
     const category = document.getElementById('edit-habit-category').value;
-    
+
     if (!name) return alert('名称不能为空');
-    
+
     habit.name = name;
     habit.category = category;
-    
+
     saveHabitsLocal();
     saveHabitsToCloud();
     renderHabits();
-    
+
     document.getElementById('edit-habit-modal').classList.remove('active');
     currentEditingHabitId = null;
 }
@@ -1354,12 +1410,12 @@ function saveHabitModal() {
 function deleteHabitInModal() {
     if (!currentEditingHabitId) return;
     if (!confirm('确定删除这个微习惯和所有打卡记录吗？')) return;
-    
+
     habits = habits.filter(h => h.id !== currentEditingHabitId);
     saveHabitsLocal();
     saveHabitsToCloud();
     renderHabits();
-    
+
     document.getElementById('edit-habit-modal').classList.remove('active');
     currentEditingHabitId = null;
 }
@@ -1369,7 +1425,7 @@ function addNewHabit() {
     const select = document.getElementById('new-habit-category');
     const name = input.value.trim();
     if (!name) return;
-    
+
     habits.push({
         id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6),
         name,
@@ -1419,8 +1475,7 @@ function renderHabits() {
         el.innerHTML = '<div class="empty-hint">还没有微习惯，添加一个开始吧</div>';
         return;
     }
-    
-    // 按分类分组
+
     const grouped = {};
     habits.forEach(h => {
         const cat = h.category || '其他';
@@ -1429,7 +1484,6 @@ function renderHabits() {
     });
 
     let html = '';
-    // 预设的分类顺序
     const catOrder = ['早晨', '睡眠', '学习', '健康', '其他'];
     const sortedCats = Object.keys(grouped).sort((a, b) => {
         const ia = catOrder.indexOf(a);
@@ -1442,7 +1496,7 @@ function renderHabits() {
         grouped[cat].forEach(h => {
             const done = h.dates && h.dates.includes(currentDay);
             const streak = calcStreak(h);
-            
+
             html += `<div class="habit-item ${done ? 'done' : ''}">
                 <div class="habit-left" onclick="toggleHabit('${h.id}')">
                     <span class="habit-icon">${esc(h.icon)}</span>
@@ -1456,7 +1510,7 @@ function renderHabits() {
             </div>`;
         });
     });
-    
+
     el.innerHTML = html;
 }
 
@@ -1764,11 +1818,11 @@ function updateDayBar() {
     document.getElementById('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
     document.getElementById('day-sub').textContent = dateStr;
     document.getElementById('day-picker').value = currentDay;
-    
+
     document.getElementById('habit-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
     document.getElementById('habit-day-sub').textContent = dateStr;
     document.getElementById('habit-day-picker').value = currentDay;
-    
+
     document.getElementById('news-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
     document.getElementById('news-day-sub').textContent = dateStr;
     document.getElementById('news-day-picker').value = currentDay;
@@ -2317,16 +2371,87 @@ function addRssFeed() {
     saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
     document.getElementById('rss-url').value = '';
     document.getElementById('rss-name').value = '';
-    
-    // 添加成功后自动收起添加面板
+
     document.getElementById('add-source-details').open = false;
     document.getElementById('rss-status').textContent = '✅ 已保存（本地 + 云端）';
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 3000);
 }
 
+/* ================= 一键优化源列表 ================= */
+const FEEDS_TO_DELETE = [
+    'feeds.bloomberg.com/crypto',      // 币圈
+    'ft.com/markets',                  // 与 FTChinese 重叠
+    'ft.com/technology',               // 与 FTChinese 重叠
+    'seekingalpha.com',                // 付费墙 + 失效
+    'sciencedaily.com',                // 动植物科学，无关
+    'ark-invest.com',                  // 被 Cloudflare 拦截 + 信仰型投资
+    'propublica.org',                  // 长调查报道，不适合速览
+    'meduza.io',                       // 俄罗斯/乌克兰
+    'economist.com/finance-and-economics', // 与 The World This Week 重叠
+    'macromicro.me'                    // 宏观仪表盘，无解读价值
+];
+
+const FEED_CATEGORY_FIX = {
+    'blogs.nvidia.com':       'tech',
+    'theinformation.com':     'tech',
+    'stratechery.com':        'tech',
+    'sspai.com':              'tech',
+    'ruanyifeng.com':         'tech',
+    'coolshell.cn':           'tech',
+    'hnrss.org':              'tech',
+    'kottke.org':             'tech',
+    'densediscovery.com':     'tech',
+    'sentiers.media':         'tech',
+    'simonwillison.net':      'tech',
+    'swyx.io':                'tech',
+    'technologyreview.com':   'tech',
+    'economist.com':          'international',
+    'ftchinese.com':          'finance'
+};
+
+const FEEDS_TO_ADD = [
+    { name: '36氪', url: 'https://36kr.com/feed', category: 'domestic' }
+];
+
+function optimizeFeedList() {
+    let deleted = 0, fixed = 0, added = 0;
+
+    rssFeeds = rssFeeds.filter(f => {
+        const hit = FEEDS_TO_DELETE.some(k => (f.url || '').includes(k));
+        if (hit) deleted++;
+        return !hit;
+    });
+
+    rssFeeds.forEach(f => {
+        for (const [domain, cat] of Object.entries(FEED_CATEGORY_FIX)) {
+            if ((f.url || '').includes(domain) && f.category !== cat) {
+                f.category = cat;
+                fixed++;
+                break;
+            }
+        }
+    });
+
+    FEEDS_TO_ADD.forEach(nf => {
+        if (!rssFeeds.some(f => f.url === nf.url)) {
+            rssFeeds.push({
+                id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6),
+                ...nf, enabled: true
+            });
+            added++;
+        }
+    });
+
+    saveRssFeedsLocal();
+    pushRssFeedsToCloud();
+    renderRssSources();
+    return { deleted, fixed, added };
+}
+
 /* ================= OPML 导入 ================= */
 const OPML_CAT_KEYWORDS = {
     international: ['国际','world','global','全球','international','外交','地缘','geopolitics','foreign'],
+    domestic: ['国内','中国','政策','政务','基层','gov','china','domestic','party','团委','教育部'],
     finance: ['财经','finance','经济','economic','economy','market','markets','市场','business','金融','投资','商业'],
     tech: ['科技','tech','technology','it','互联网','软件','ai','人工智能','程序员','编程','startup','startups'],
     industry: ['行业','industry','sector','公司','企业','行业研究','industrial']
@@ -2419,7 +2544,7 @@ function renderOpmlPreview() {
 
     feeds.forEach((f, i) => {
         const cat = NEWS_CATEGORY[f.category] || NEWS_CATEGORY.other;
-        const catOptions = ['international','finance','tech','industry'].map(k =>
+        const catOptions = Object.keys(NEWS_CATEGORY).map(k =>
             `<option value="${k}" ${k === f.category ? 'selected' : ''}>${NEWS_CATEGORY[k].icon} ${NEWS_CATEGORY[k].label}</option>`
         ).join('');
         html += `<div class="opml-preview-row ${f._isExisting ? 'is-existing' : ''}">
@@ -2480,7 +2605,7 @@ function confirmOpmlImport() {
     const n = toImport.length;
     opmlPreviewData = null;
     document.getElementById('opml-preview').innerHTML = '';
-    document.getElementById('add-source-details').open = false; // 收起添加面板
+    document.getElementById('add-source-details').open = false;
     document.getElementById('rss-status').textContent = `✅ 已导入 ${n} 个源（本地 + 云端）`;
     setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
 }
@@ -2507,14 +2632,12 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
         let doc = parser.parseFromString(text, 'text/xml');
         let itemNodes = doc.querySelectorAll('item, entry');
 
-        // 如果严格 XML 解析失败，或者没找到 item，尝试用宽容的 HTML 模式解析
         if (doc.getElementsByTagName('parsererror').length > 0 || itemNodes.length === 0) {
             doc = parser.parseFromString(text, 'text/html');
             itemNodes = doc.querySelectorAll('item, entry');
         }
 
         if (itemNodes.length === 0) {
-            // 精准判断报错原因
             const lowerText = text.toLowerCase();
             if (lowerText.includes('<html') || lowerText.includes('cloudflare') || lowerText.includes('access denied') || lowerText.includes('captcha')) {
                 throw new Error('被源站反爬/付费墙拦截');
@@ -2523,12 +2646,12 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
         }
 
         const items = [];
-        for (let i = 0; i < Math.min(itemNodes.length, 30); i++) { // 提升上限到 30 条
+        for (let i = 0; i < Math.min(itemNodes.length, 30); i++) {
             const node = itemNodes[i];
-            
+
             const titleNode = node.querySelector('title');
             const title = titleNode ? stripHtml(titleNode.textContent) : '(无标题)';
-            
+
             let link = '';
             if (node.tagName.toLowerCase() === 'entry') {
                 const linkNode = node.querySelector('link[rel="alternate"]') || node.querySelector('link');
@@ -2537,14 +2660,14 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
                 const linkNode = node.querySelector('link');
                 link = linkNode ? linkNode.textContent : '';
             }
-            
+
             let ts = Date.now();
             const dateNode = node.querySelector('pubDate') || node.querySelector('published') || node.querySelector('updated');
             if (dateNode) {
                 const t = new Date(dateNode.textContent).getTime();
                 if (!isNaN(t)) ts = t;
             }
-            
+
             const descNode = node.querySelector('description') || node.querySelector('summary') || node.querySelector('content');
             const summary = descNode ? stripHtml(descNode.textContent).slice(0, 300) : '';
 
@@ -2553,7 +2676,7 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
                 source: srcName, category: feed.category || 'other'
             });
         }
-        
+
         return { feed, feedTitle: srcName, items };
     } catch (err) {
         clearTimeout(timer);
@@ -2563,30 +2686,26 @@ async function fetchOneFeed(feed, timeoutMs = 25000) {
 }
 
 async function fetchAllFeedsConcurrent(onProgress) {
-    const enabled = rssFeeds.filter(f => f.enabled !== false);
+    const enabled = rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
     if (!enabled.length) return { results: [], errors: [], total: 0 };
-    
-    // 严格限制：过去 24 小时
+
     const now = Date.now();
     const threshold = now - (24 * 60 * 60 * 1000);
 
     const CONCURRENCY = 3;
     const results = [], errors = [];
     const total = enabled.length;
-    
+
     for (let i = 0; i < total; i += CONCURRENCY) {
         const batch = enabled.slice(i, i + CONCURRENCY);
         const settled = await Promise.allSettled(batch.map(f => fetchOneFeed(f)));
-        
+
         settled.forEach((s, idx) => {
             const feed = batch[idx];
             if (s.status === 'fulfilled') {
                 const feedData = s.value;
                 const originalItems = feedData.items || [];
-                
-                // 严格过滤：只保留发布在 24 小时内的文章
                 const filteredItems = originalItems.filter(it => it.ts >= threshold);
-                
                 feedData.items = filteredItems;
                 results.push(feedData);
             } else {
@@ -2594,7 +2713,7 @@ async function fetchAllFeedsConcurrent(onProgress) {
                 errors.push({ feed, message: msg });
             }
         });
-        
+
         if (onProgress) onProgress(results, errors, total);
         if (i + CONCURRENCY < total) await new Promise(r => setTimeout(r, 300));
     }
@@ -2614,21 +2733,6 @@ function renderFetchProgress(done, total, okCount, errCount) {
     </div>`;
 }
 function clearFetchProgress() { document.getElementById('rss-progress-wrap').innerHTML = ''; }
-
-function compressFeedToPoints(feedResult) {
-    const items = (feedResult.items || []).slice(0, 8);
-    if (!items.length) return null;
-    // 提取前 3 条重点
-    const points = items.slice(0, 3).map(it => {
-        const sum = (it.summary || '').slice(0, 100);
-        return `  · ${it.title}${sum ? '——' + sum : ''}`;
-    });
-    return {
-        feed: feedResult.feedTitle,
-        category: feedResult.feed.category || 'other',
-        points
-    };
-}
 
 function renderFetchResult(articles, errors, results) {
     const el = document.getElementById('rss-fetch-result');
@@ -2667,13 +2771,13 @@ async function generateBriefing() {
     const resultEl = document.getElementById('rss-fetch-result');
     const detailsEl = document.getElementById('fetch-result-details');
 
-    const enabled = rssFeeds.filter(f => f.enabled !== false);
+    const enabled = rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
     if (!enabled.length) return alert('请先添加至少一个 RSS 源');
 
     btn.disabled = true;
     btn.textContent = '⏳ 抓取中…';
     resultEl.innerHTML = '';
-    detailsEl.open = true; // 抓取时暂时展开，让用户看到进度
+    detailsEl.open = true;
     renderFetchProgress(0, enabled.length, 0, 0);
     statusEl.textContent = `开始抓取 ${enabled.length} 个源…`;
 
@@ -2704,56 +2808,49 @@ async function generateBriefing() {
         return;
     }
 
-    statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成简报…`;
+    statusEl.textContent = `获取到 ${all.length} 篇新文章（来自 ${results.filter(r=>r.items.length>0).length} 个源），AI 正在生成速览…`;
     btn.textContent = '🧠 生成简报中…';
 
-    const feedPoints = results.map(r => compressFeedToPoints(r)).filter(Boolean);
-    
-    if (!feedPoints.length) {
-        statusEl.textContent = '⚠️ 没有提取到有效内容，无法生成简报。';
-        btn.disabled = false; btn.textContent = '🚀 抓取24小时内文章并生成简报';
-        return;
-    }
-
-    const byCategory = {};
-    feedPoints.forEach(fp => {
-        if (!byCategory[fp.category]) byCategory[fp.category] = [];
-        byCategory[fp.category].push(fp);
+    /* ===== 新版：按分类聚合，每类保留最近 8 条 ===== */
+    const allArticles = [];
+    results.forEach(r => {
+        r.items.forEach(it => {
+            allArticles.push({
+                source: r.feedTitle,
+                category: r.feed.category || 'other',
+                title: it.title,
+                summary: (it.summary || '').slice(0, 200),
+                ts: it.ts,
+                link: it.link
+            });
+        });
     });
 
+    const byCategory = {};
+    allArticles.forEach(a => {
+        const c = a.category || 'other';
+        if (!byCategory[c]) byCategory[c] = [];
+        byCategory[c].push(a);
+    });
+
+    const MAX_PER_CAT = 8;
     const categoryText = Object.keys(byCategory).map(cat => {
         const catInfo = NEWS_CATEGORY[cat] || NEWS_CATEGORY.other;
-        const lines = byCategory[cat].map(fp => `【${fp.feed}】\n${fp.points.join('\n')}`).join('\n\n');
+        const items = byCategory[cat]
+            .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+            .slice(0, MAX_PER_CAT);
+        const lines = items.map((it, i) =>
+            `${i + 1}. 【${it.source}】${it.title}\n   ${it.summary || '（无摘要）'}`
+        ).join('\n');
         return `==== ${catInfo.icon} ${catInfo.label} ====\n${lines}`;
     }).join('\n\n');
 
-    const prompt = `你是一位顶级宏观分析师，也是我的私人情报主编。下面是过去 24 小时内全球优质信息源的要闻（已按分类）。请帮我生成一份结构清晰、重点突出的每日简报。
+    const todayLabel = new Date().toISOString().slice(0, 10);
+    const systemPrompt = BRIEFING_SYSTEM.replace('{DATE}', todayLabel);
+    const userPrompt = `今天是 ${todayLabel}。以下是过去 24 小时抓取的材料，请据此生成今日速览。
 
-【核心要求】
-1. **合并同类项**：如果多个源报道了同一事件，请合并为一条，不要重复罗列。
-2. **拒绝流水账**：提炼核心事实，并简要说明为什么重要，不要单纯复制新闻标题。
-3. **按领域分类**：按国际、财经、科技、行业等领域分类输出。如果没有该领域新闻，直接省略该分类。
-
-【排版参考】
-### 📌 今日主线
-（用 2-3 句话概括今天最值得关注的宏观趋势）
-
-### 🌍 分类简报
-**国际与地缘**
-- **[事件标题]**：核心事实 + 影响（来源）
-
-**财经与市场**
-- **[事件标题]**：核心事实 + 影响（来源）
-
-**科技与行业**
-- **[事件标题]**：核心事实 + 影响（来源）
-
-### 💡 今日深挖
-- **推荐阅读**：选出今天最值得去 Feedly 看原文的 1 篇文章。
-- **推荐理由**：一句话说明为什么值得读。
-
-【待处理的资讯】
-${categoryText}`;
+${categoryText || '（今日未抓到有效材料，请直接输出「今日无有效增量」。）'}
+`;
 
     let briefingText = '';
     try {
@@ -2763,11 +2860,11 @@ ${categoryText}`;
             body: JSON.stringify({
                 model: aiConfig.model,
                 messages: [
-                    { role: 'system', content: '你是严谨、专业、不说空话的新闻主编。' },
-                    { role: 'user', content: prompt }
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt }
                 ],
-                temperature: 0.5,
-                max_tokens: 2000
+                temperature: 0.4,
+                max_tokens: 2500
             })
         });
         if (!aiRes.ok) {
@@ -2783,11 +2880,10 @@ ${categoryText}`;
     }
 
     if (briefingText) {
-        // 限制保存的文章数量，防止请求体过大
         const articlePayload = all.slice(0, 40).map(a => ({
             title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
         }));
-        
+
         const dataObj = {
             content: briefingText,
             articles: articlePayload,
@@ -2796,19 +2892,18 @@ ${categoryText}`;
             errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message),
             isRead: false
         };
-        
+
         const inserted = await pushHealthRecord('briefing', currentDay, dataObj);
         if (inserted) {
             if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
             newsData.briefings.unshift({ id: inserted.id, date: currentDay, ts: inserted.ts, ...dataObj });
             saveCache();
             renderBriefings();
-            statusEl.textContent = `✅ 简报生成成功！共汇总 ${all.length} 篇新文章。`;
+            statusEl.textContent = `✅ 速览生成成功！共汇总 ${all.length} 篇新文章。`;
         } else {
-            statusEl.textContent = `❌ 简报生成成功，但保存到云端失败（请查看弹窗提示）。`;
+            statusEl.textContent = `❌ 速览生成成功，但保存到云端失败（请查看弹窗提示）。`;
         }
-        
-        // 成功后自动收起抓取列表，让用户聚焦简报
+
         detailsEl.open = false;
         setTimeout(() => { const s = document.getElementById('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 4000);
     }
@@ -2822,13 +2917,12 @@ ${categoryText}`;
 function renderBriefings() {
     const el = document.getElementById('briefing-history');
     if (!el) return;
-    
-    // 排序：未读 (isRead !== true) 在前，已读在后；同状态下按时间倒序
+
     const list = [...(newsData.briefings || [])].sort((a, b) => {
         const aRead = a.isRead ? 1 : 0;
         const bRead = b.isRead ? 1 : 0;
-        if (aRead !== bRead) return aRead - bRead; // 未读 0 在前，已读 1 在后
-        return (b.ts || 0) - (a.ts || 0);          // 同状态按时间降序
+        if (aRead !== bRead) return aRead - bRead;
+        return (b.ts || 0) - (a.ts || 0);
     });
 
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有生成过简报</div>'; return; }
@@ -2863,7 +2957,7 @@ function renderBriefings() {
             <summary class="briefing-head">
                 <div style="min-width:0;">
                     <div class="briefing-title">
-                        ${esc(b.date)} 简报
+                        ${esc(b.date)} 速览
                         ${isToday ? '<span class="tag tag-good" style="font-size:10px;margin-left:6px;vertical-align:middle;">今天</span>' : ''}
                     </div>
                     <div class="briefing-meta">
@@ -2887,31 +2981,28 @@ function renderBriefings() {
     });
     el.innerHTML = html;
 
-    // 绑定删除事件
     el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async (e) => {
-        e.stopPropagation(); // 防止触发展开折叠
-        if (!confirm('删除这份简报？')) return;
+        e.stopPropagation();
+        if (!confirm('删除这份速览？')) return;
         await deleteHealthRecord(btn.dataset.delBriefing);
         newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing));
         saveCache(); renderBriefings();
     });
 
-    // 绑定已读/未读切换事件
     el.querySelectorAll('.mark-read-cb').forEach(cb => {
-        cb.onclick = (e) => e.stopPropagation(); // 防止触发展开折叠
+        cb.onclick = (e) => e.stopPropagation();
         cb.onchange = async () => {
             const id = cb.dataset.id;
             const isRead = cb.checked;
             const item = newsData.briefings.find(x => String(x.id) === String(id));
             if (!item) return;
-            
+
             item.isRead = isRead;
-            saveCache(); // 立刻更新本地缓存
-            renderBriefings(); // 重新排序并渲染
-            
-            // 静默更新到云端
+            saveCache();
+            renderBriefings();
+
             const dataObj = { ...item };
-            delete dataObj.id; delete dataObj.date; delete dataObj.ts; // 剔除不属于 JSON 数据的字段
+            delete dataObj.id; delete dataObj.date; delete dataObj.ts;
             await updateHealthRecord(id, dataObj);
         };
     });
@@ -3024,7 +3115,6 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     };
 });
 
-// 设置面板逻辑
 document.getElementById('open-settings-btn').onclick = () => {
     document.getElementById('settings-modal').classList.add('active');
 };
@@ -3035,15 +3125,14 @@ document.getElementById('ai-save-config').onclick = async () => {
     aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
     aiConfig.apiUrl = document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
     aiConfig.model = document.getElementById('ai-model').value.trim() || 'deepseek-chat';
-    
+
     saveAIConfigLocal(aiConfig);
     await saveAIConfigToCloud(aiConfig);
-    
+
     alert('配置已保存，并同步至云端 ✓');
     document.getElementById('settings-modal').classList.remove('active');
 };
 
-// 编辑习惯面板逻辑
 document.getElementById('edit-habit-up-btn').onclick = () => moveHabitInModal(-1);
 document.getElementById('edit-habit-down-btn').onclick = () => moveHabitInModal(1);
 document.getElementById('edit-habit-save-btn').onclick = () => saveHabitModal();
@@ -3108,7 +3197,6 @@ document.getElementById('transfer-amount').addEventListener('keydown', e => { if
     a.addEventListener('change', u); u();
 })();
 
-// 健康
 document.getElementById('sleep-save').onclick = addSleep;
 document.getElementById('energy-save').onclick = addEnergy;
 document.getElementById('charge-save').onclick = addCharge;
@@ -3117,18 +3205,30 @@ document.getElementById('micro-save').onclick = addMicro;
 document.getElementById('signal-save').onclick = addBody;
 document.getElementById('meal-save').onclick = addMeal;
 
-// 新增习惯打卡事件
 document.getElementById('add-habit-btn').onclick = addNewHabit;
 document.getElementById('import-morning-btn').onclick = importMorningRoutine;
 document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addNewHabit(); });
 
-// 每日世事
 document.getElementById('news-save').onclick = addNewsItem;
 document.getElementById('news-summary-save').onclick = addNewsSummary;
 
-// RSS
 document.getElementById('rss-add-btn').onclick = addRssFeed;
 document.getElementById('rss-fetch-btn').onclick = generateBriefing;
+
+document.getElementById('rss-optimize-btn').onclick = () => {
+    if (!confirm(
+        '将执行以下操作：\n\n' +
+        '· 删除 10 个冗余/违规源（币圈、俄罗斯、付费墙、动植物科学等）\n' +
+        '· 修正若干源的分类（Nvidia/The Information/少数派/阮一峰等归到「科技」，Economist 归国际，FTChinese 归财经）\n' +
+        '· 补充 36氪（归类为「国内政策与基层」）\n\n' +
+        '你手动添加的其他源会保留。继续？'
+    )) return;
+    const r = optimizeFeedList();
+    const statusEl = document.getElementById('rss-status');
+    statusEl.textContent = `✅ 优化完成：删除 ${r.deleted} 个，修正分类 ${r.fixed} 个，新增 ${r.added} 个`;
+    setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
+};
+
 document.getElementById('rss-clear-btn').onclick = () => {
     if (!rssFeeds.length) return;
     if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
@@ -3140,7 +3240,6 @@ document.getElementById('rss-clear-btn').onclick = () => {
 document.getElementById('rss-url').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 document.getElementById('rss-name').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 
-// OPML 导入
 document.getElementById('opml-import-btn').onclick = () => document.getElementById('opml-file-input').click();
 document.getElementById('opml-file-input').addEventListener('change', function() {
     const file = this.files && this.files[0];
@@ -3148,7 +3247,6 @@ document.getElementById('opml-file-input').addEventListener('change', function()
     this.value = '';
 });
 
-// 日期切换
 document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
 document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
 document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
