@@ -570,7 +570,37 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
                     <div class="chip-row" id="signal-chips"></div>
                     <input type="text" id="signal-other" class="other-input hidden" placeholder="其他身体信号…">
                 </div>
-                <button class="btn btn-primary btn-sm" id="signal-save">记录身体信号</button>
+                <div class="acne-card">
+                    <div class="title">🫥 痘痘记录（选填）</div>
+                    <div class="grid-2">
+                        <div class="field"><label>位置</label>
+                            <select id="acne-location">
+                                <option value="">无</option>
+                                <option value="forehead">额头</option>
+                                <option value="nose">鼻子</option>
+                                <option value="cheek">脸颊</option>
+                                <option value="chin">下巴</option>
+                                <option value="back">背部</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>类型</label>
+                            <select id="acne-type">
+                                <option value="">无</option>
+                                <option value="red">红肿</option>
+                                <option value="whitehead">白头</option>
+                                <option value="blackhead">黑头</option>
+                                <option value="closed">闭口</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" id="acne-location-other-field" style="display:none;">
+                        <label>位置（其他）</label>
+                        <input type="text" id="acne-location-other">
+                    </div>
+                    <div class="field" style="margin-bottom:0;"><label>痘痘备注</label><input type="text" id="acne-note"></div>
+                </div>
+                <button class="btn btn-primary btn-sm" id="signal-save" style="margin-top:10px;">记录身体信号</button>
                 <div id="body-history" style="margin-top:16px;"></div>
             </div>
         </details>
@@ -900,6 +930,7 @@ function stripHtml(s) { return String(s || '').replace(/<script[\s\S]*?<\/script
 function md2html(c) { return String(c || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^#### (.+)$/gm, '<div class="briefing-section-title">$1</div>').replace(/^### (.+)$/gm, '<div class="briefing-section-title" style="border-left:none;padding-left:0;border-bottom:1px solid #eef4f1;padding-bottom:4px;">$1</div>').replace(/^[-*] (.+)$/gm, '<div style="display:flex;align-items:flex-start;margin-bottom:6px;"><span style="color:#2d7d5a;font-weight:bold;margin-right:6px;">•</span><span>$1</span></div>').replace(/^> (.+)$/gm, '<div style="background:#f7fbf9;border-left:3px solid #d4e3dd;padding:10px 12px;border-radius:6px;margin:8px 0;font-size:13px;color:#4a5c4a;">$1</div>').replace(/\n/g, '<br>'); }
 function withTimeout(promise, ms = 8000, stepName = '操作') { return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`${stepName}超时`)), ms))]); }
 function bindEvent(selector, eventName, handler) { document.addEventListener(eventName, (e) => { const target = e.target.closest(selector); if (target) handler(target, e); }); }
+const on = (id, event, fn) => { const el = $(id); if (el) el[event] = fn; };
 
 /* ================= Supabase 与渲染总线 ================= */
 const sb = window.supabase.createClient('https://mtfqvszsqdijyzpwwhlg.supabase.co', 'sb_publishable_XNC8PA_JWqoNOp1D8n6I2w_qbqqbI3y');
@@ -924,7 +955,7 @@ const BLOCKED_ARTICLE_KEYWORDS = ['足球', '篮球', 'NBA', '世界杯', '奥�
 const isBlockedFeed = feed => BLOCKED_FEED_KEYWORDS.some(k => `${feed.url || ''} ${feed.name || feed.title || ''} ${feed.category || ''}`.toLowerCase().includes(k.toLowerCase()));
 const isBlockedArticle = a => BLOCKED_ARTICLE_KEYWORDS.some(k => `${a.title || ''} ${a.summary || ''}`.toLowerCase().includes(k.toLowerCase()));
 
-/* ================= 简报 Prompt (保持不变) ================= */
+/* ================= 简报 Prompt ================= */
 const BRIEFING_CONFIG = { WINDOW_HOURS: 24, KEEP_THRESHOLD: 3.2, MAX_WORDS: 2200, STAGE1_BATCH_SIZE: 15, STAGE2_MAX_CANDIDATES: 50, JSON_MODE: true };
 const BRIEFING_QUOTA = { MIN_PER_CAT: 3, MAX_PER_CAT: 5, TOTAL_MIN: 21, TOTAL_MAX: 35 };
 const BRIEFING_CATEGORIES = ['国际与地缘', '财经市场', '国内', '科技与产品', '工程与研究', '安全与风险', '政策与监管'];
@@ -1335,7 +1366,7 @@ function renderMicro() {
 }
 function renderBody() {
     const list = filterByDay(healthData.bodySignals), el = $('body-history'); if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
-    el.innerHTML = list.map(r => { const sigs = (r.signals||[]).map(s => s.key==='other'?(s.custom||'其他'):(BODY_SIGNALS.find(x=>x.key===s.key)?.label||s.key)).join(' · ')||'（无）'; return `<div class="list-item"><div class="main"><div><span class="tag tag-warn">身体</span> ${esc(sigs)}</div>${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-health="${r.id}" data-type="body">✕</button></div>`; }).join('');
+    el.innerHTML = list.map(r => { const sigs = (r.signals||[]).map(s => s.key==='other'?(s.custom||'其他'):(BODY_SIGNALS.find(x=>x.key===s.key)?.label||s.key)).join(' · ')||'（无）'; const a = r.acne || {}; let aText = ''; if (a.location || a.type || a.severity || a.note) { const parts = []; if (a.location === 'other' && a.locationCustom) parts.push('位置：其他（'+a.locationCustom+'）'); else if (a.location) parts.push('位置：'+(a.location)); if (a.type) parts.push('类型：'+(a.type)); if (a.severity) parts.push('严重：'+a.severity+'/5'); if (a.note) parts.push('备注：'+a.note); aText = parts.join(' · '); } return `<div class="list-item"><div class="main"><div><span class="tag tag-warn">身体</span> ${esc(sigs)}</div>${aText?`<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(aText)}</div>`:''}${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-health="${r.id}" data-type="body">✕</button></div>`; }).join('');
 }
 function renderMeal() {
     const list = filterByDay(healthData.meal), el = $('meal-history'); if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有饮食记录</div>'; return; }
@@ -1628,48 +1659,103 @@ function setupGlobalEvents() {
 }
 
 function setupPageEvents() {
-    $('open-settings-btn').onclick = () => $('settings-modal').classList.add('active');
-    $('close-settings-btn').onclick = () => $('settings-modal').classList.remove('active');
-    $('ai-save-config').onclick = async () => { aiConfig.apiKey = getVal('ai-api-key'); aiConfig.apiUrl = getVal('ai-api-url') || 'https://api.deepseek.com/chat/completions'; aiConfig.model = getVal('ai-model') || 'deepseek-chat'; localStorage.setItem(AI_KEY, JSON.stringify(aiConfig)); await syncRecord('ai_config', todayStr(), aiConfig, { _cloudId: cloudApiConfigId }); alert('配置已保存'); $('settings-modal').classList.remove('active'); };
-    $('login-btn').onclick = async () => { if (await signIn(getVal('auth-email'), getVal('auth-password'))) { await loadAllFromCloud(); setupRealtime(); } };
-    $('register-btn').onclick = async () => { const { error } = await sb.auth.signUp({ email: getVal('auth-email'), password: getVal('auth-password') }); if (error) alert('注册失败：' + error.message); else alert('注册成功！请去邮箱确认后登录。'); };
-    $('logout-btn').onclick = async () => { await sb.auth.signOut(); localStorage.removeItem(CACHE_KEY); location.reload(); };
+    on('open-settings-btn', 'click', () => $('settings-modal').classList.add('active'));
+    on('close-settings-btn', 'click', () => $('settings-modal').classList.remove('active'));
+    on('ai-save-config', 'click', async () => {
+        aiConfig.apiKey = getVal('ai-api-key');
+        aiConfig.apiUrl = getVal('ai-api-url') || 'https://api.deepseek.com/chat/completions';
+        aiConfig.model = getVal('ai-model') || 'deepseek-chat';
+        localStorage.setItem(AI_KEY, JSON.stringify(aiConfig));
+        await syncRecord('ai_config', todayStr(), aiConfig, { _cloudId: cloudApiConfigId });
+        alert('配置已保存');
+        $('settings-modal').classList.remove('active');
+    });
+    on('login-btn', 'click', async () => { if (await signIn(getVal('auth-email'), getVal('auth-password'))) { await loadAllFromCloud(); setupRealtime(); } });
+    on('register-btn', 'click', async () => { const { error } = await sb.auth.signUp({ email: getVal('auth-email'), password: getVal('auth-password') }); if (error) alert('注册失败：' + error.message); else alert('注册成功！请去邮箱确认后登录。'); });
+    on('logout-btn', 'click', async () => { await sb.auth.signOut(); localStorage.removeItem(CACHE_KEY); location.reload(); });
 
-    $('add-btn').onclick = async () => { if (await addExpense(getFloat('expense-amount'), getVal('expense-account'), getVal('expense-desc'), getVal('expense-date'), getVal('expense-account') === 'survival' ? getVal('expense-subcategory') : null)) { $('expense-amount').value = ''; $('expense-desc').value = ''; } };
-    $('income-btn').onclick = async () => { if (await addIncome(getFloat('income-amount'), getVal('income-date'))) $('income-amount').value = ''; };
-    $('transfer-btn').onclick = async () => { if (await addTransfer(getFloat('transfer-amount'), getVal('transfer-from'), getVal('transfer-to'), getVal('transfer-desc'), getVal('transfer-date'))) { $('transfer-amount').value = ''; $('transfer-desc').value = ''; } };
-    $('reset-accounts-btn').onclick = async () => { if (!confirm('确定清空三账户数据？')) return; await sb.from('records').delete().eq('user_id', currentUser.id); accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] }; saveCache(); RenderBus.emit('account'); };
+    // 三账户
+    on('add-btn', 'click', async () => { if (await addExpense(getFloat('expense-amount'), getVal('expense-account'), getVal('expense-desc'), getVal('expense-date'), getVal('expense-account') === 'survival' ? getVal('expense-subcategory') : null)) { $('expense-amount').value = ''; $('expense-desc').value = ''; } });
+    on('income-btn', 'click', async () => { if (await addIncome(getFloat('income-amount'), getVal('income-date'))) $('income-amount').value = ''; });
+    on('transfer-btn', 'click', async () => { if (await addTransfer(getFloat('transfer-amount'), getVal('transfer-from'), getVal('transfer-to'), getVal('transfer-desc'), getVal('transfer-date'))) { $('transfer-amount').value = ''; $('transfer-desc').value = ''; } });
+    on('reset-accounts-btn', 'click', async () => { if (!confirm('确定清空三账户数据？')) return; await sb.from('records').delete().eq('user_id', currentUser.id); accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] }; saveCache(); RenderBus.emit('account'); });
 
-    $('sleep-save').onclick = async () => { if (await addHealth('sleep', { start_time: getVal('sleep-start'), end_time: getVal('sleep-end'), feeling: getVal('sleep-feeling'), note: getVal('sleep-note') })) { $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; } };
-    $('energy-save').onclick = async () => { let am = 5, pm = 5; document.querySelectorAll('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); }); document.querySelectorAll('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); }); if (await addHealth('energy', { am_score: am, pm_score: pm, note: getVal('energy-note') })) $('energy-note').value=''; };
-    $('charge-save').onclick = async () => { if (await addHealth('charge', { type: getVal('charge-type'), delta: getNum('charge-delta'), note: getVal('charge-note') })) $('charge-note').value=''; };
-    $('exercise-save').onclick = async () => { if (await addHealth('exercise', { type: getVal('exercise-type'), duration: getNum('exercise-duration'), note: getVal('exercise-note') })) { $('exercise-duration').value=''; $('exercise-note').value=''; } };
-    $('micro-save').onclick = async () => { if (!selectedPosture.size && !selectedHabit.size) return alert('至少选一项'); const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: getVal('posture-other') } : { key: k }); const habits = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: getVal('habit-other') } : { key: k }); if (await addHealth('micro', { posture, habits, note: getVal('micro-note') })) { selectedPosture.clear(); selectedHabit.clear(); buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture); buildChipRow('habit-chips', MICRO_HABITS, selectedHabit); $('posture-other').value=''; $('habit-other').value=''; $('micro-note').value=''; } };
-    $('signal-save').onclick = async () => { const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: getVal('signal-other') } : { key: k }); const aLoc = getVal('acne-location'); const acne = { location: aLoc, locationCustom: aLoc === 'other' ? getVal('acne-location-other') : '', type: getVal('acne-type'), severity: getNum('acne-severity'), note: getVal('acne-note') }; const hasAcne = acne.location || acne.type || acne.severity || acne.note; if (!signals.length && !hasAcne) return alert('至少选一项或填痘痘'); if (await addHealth('body', { signals, acne: hasAcne ? acne : null, note: getVal('signal-note') })) { selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals); $('signal-other').value=''; $('acne-location').value=''; $('acne-location-other').value=''; $('acne-location-other-field').style.display='none'; $('acne-type').value=''; $('acne-severity').value=''; $('acne-note').value=''; $('signal-note').value=''; } };
-    $('meal-save').onclick = async () => { const meals = { breakfast: getVal('meal-breakfast'), lunch: getVal('meal-lunch'), dinner: getVal('meal-dinner') }; const water = getNum('water-cups'), snack = getVal('snack'); if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐'); if (await addHealth('meal', { ...meals, water, snack })) { ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value=''); } };
-    $('ai-analyze-btn').onclick = async () => { if (!aiConfig.apiKey) return alert('请先配置 API'); const btn = $('ai-analyze-btn'); btn.disabled = true; btn.textContent = '⏳...'; const d = { date: currentDay, sleep: filterByDay(healthData.sleep), energy: filterByDay(healthData.energy), charge: filterByDay(healthData.charge), exercise: filterByDay(healthData.exercise), micro: filterByDay(healthData.microExercise), body: filterByDay(healthData.bodySignals), meal: filterByDay(healthData.meal), innerPeace: filterByDay(healthData.innerPeace) }; let prompt = `请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。\n`; if (d.sleep.length) prompt += `【睡眠】${d.sleep[0].start_time}→${d.sleep[0].end_time}\n`; if (d.energy.length) prompt += `【能量】上午${d.energy[0].am_score} 下午${d.energy[0].pm_score}\n`; if (d.exercise.length) prompt += `【运动】${d.exercise.map(x=>x.duration+'分钟').join(',')}\n`; prompt += `请从四个角度输出（Markdown）：1.今日状态小结 2.亮点 3.需要温柔关注的地方 4.明天的一个小建议（10-30分钟可完成）。`; try { const text = await callDeepSeekRaw([{ role: 'system', content: '健康管理教练。' }, { role: 'user', content: prompt }], { temperature: 0.7, max_tokens: 800 }); $('ai-result').innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(text)}</div>`; healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay); const existing = healthData.aiAnalysis.filter(x => x.date === currentDay); for (const e of existing) await deleteHealthRecord(e.id); if (await addHealth('ai', { content: text })) RenderBus.emit('health'); } catch(e) { alert(e.message); } finally { btn.disabled = false; btn.textContent = '✨ 生成今日健康分析'; } };
+    // 健康
+    on('sleep-save', 'click', async () => { if (await addHealth('sleep', { start_time: getVal('sleep-start'), end_time: getVal('sleep-end'), feeling: getVal('sleep-feeling'), note: getVal('sleep-note') })) { $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; } });
+    on('energy-save', 'click', async () => { let am = 5, pm = 5; document.querySelectorAll('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); }); document.querySelectorAll('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); }); if (await addHealth('energy', { am_score: am, pm_score: pm, note: getVal('energy-note') })) $('energy-note').value=''; });
+    on('charge-save', 'click', async () => { if (await addHealth('charge', { type: getVal('charge-type'), delta: getNum('charge-delta'), note: getVal('charge-note') })) $('charge-note').value=''; });
+    on('exercise-save', 'click', async () => { if (await addHealth('exercise', { type: getVal('exercise-type'), duration: getNum('exercise-duration'), note: getVal('exercise-note') })) { $('exercise-duration').value=''; $('exercise-note').value=''; } });
+    on('micro-save', 'click', async () => {
+        if (!selectedPosture.size && !selectedHabit.size) return alert('至少选一项');
+        const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: getVal('posture-other') } : { key: k });
+        const habits = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: getVal('habit-other') } : { key: k });
+        if (await addHealth('micro', { posture, habits, note: getVal('micro-note') })) {
+            selectedPosture.clear(); selectedHabit.clear();
+            buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+            buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+            $('posture-other').value=''; $('habit-other').value=''; $('micro-note').value='';
+        }
+    });
+    on('signal-save', 'click', async () => {
+        const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: getVal('signal-other') } : { key: k });
+        const aLoc = getVal('acne-location');
+        const acne = { location: aLoc, locationCustom: aLoc === 'other' ? getVal('acne-location-other') : '', type: getVal('acne-type'), severity: getNum('acne-severity'), note: getVal('acne-note') };
+        const hasAcne = acne.location || acne.type || acne.severity || acne.note;
+        if (!signals.length && !hasAcne) return alert('至少选一项或填痘痘');
+        if (await addHealth('body', { signals, acne: hasAcne ? acne : null, note: getVal('signal-note') })) {
+            selectedSignals.clear();
+            buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+            $('signal-other').value=''; $('acne-location').value=''; $('acne-location-other').value='';
+            $('acne-location-other-field').style.display='none';
+            $('acne-type').value=''; $('acne-severity').value=''; $('acne-note').value=''; $('signal-note').value='';
+        }
+    });
+    on('meal-save', 'click', async () => { const meals = { breakfast: getVal('meal-breakfast'), lunch: getVal('meal-lunch'), dinner: getVal('meal-dinner') }; const water = getNum('water-cups'), snack = getVal('snack'); if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐'); if (await addHealth('meal', { ...meals, water, snack })) { ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value=''); } });
+    on('ai-analyze-btn', 'click', async () => {
+        if (!aiConfig.apiKey) return alert('请先配置 API');
+        const btn = $('ai-analyze-btn'); btn.disabled = true; btn.textContent = '⏳...';
+        const d = { date: currentDay, sleep: filterByDay(healthData.sleep), energy: filterByDay(healthData.energy), charge: filterByDay(healthData.charge), exercise: filterByDay(healthData.exercise), micro: filterByDay(healthData.microExercise), body: filterByDay(healthData.bodySignals), meal: filterByDay(healthData.meal), innerPeace: filterByDay(healthData.innerPeace) };
+        let prompt = `请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。\n`;
+        if (d.sleep.length) prompt += `【睡眠】${d.sleep[0].start_time}→${d.sleep[0].end_time}\n`;
+        if (d.energy.length) prompt += `【能量】上午${d.energy[0].am_score} 下午${d.energy[0].pm_score}\n`;
+        if (d.exercise.length) prompt += `【运动】${d.exercise.map(x=>x.duration+'分钟').join(',')}\n`;
+        prompt += `请从四个角度输出（Markdown）：1.今日状态小结 2.亮点 3.需要温柔关注的地方 4.明天的一个小建议（10-30分钟可完成）。`;
+        try {
+            const text = await callDeepSeekRaw([{ role: 'system', content: '健康管理教练。' }, { role: 'user', content: prompt }], { temperature: 0.7, max_tokens: 800 });
+            $('ai-result').innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:#3a5c50;line-height:1.8;">${md2html(text)}</div>`;
+            healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+            const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
+            for (const e of existing) await deleteHealthRecord(e.id);
+            if (await addHealth('ai', { content: text })) RenderBus.emit('health');
+        } catch(e) { alert(e.message); } finally { btn.disabled = false; btn.textContent = '✨ 生成今日健康分析'; }
+    });
 
-    $('add-habit-btn').onclick = () => { const name = getVal('new-habit-name'); if (!name) return; habits.push({ id: 'h' + Date.now(), name, category: getVal('new-habit-category'), icon: '🎯', dates: [] }); $('new-habit-name').value = ''; saveHabitsToCloud(); RenderBus.emit('habit'); };
-    $('import-morning-btn').onclick = () => { const m = [{ name: '伸懒腰 + 拉开窗帘见光', icon: '🌅', category: '早晨' }, { name: '喝温水 + 如厕排毒', icon: '💧', category: '早晨' }, { name: '刷牙洗脸 + 护肤防晒', icon: '🧴', category: '早晨' }, { name: '换衣 + 拿早餐 + 检查出门', icon: '🎒', category: '早晨' }]; let added = 0; m.forEach(x => { if (!habits.some(h => h.name === x.name)) { habits.push({ id: 'h' + Date.now() + Math.random(), ...x, dates: [] }); added++; } }); if (added) { saveHabitsToCloud(); RenderBus.emit('habit'); alert(`导入 ${added} 个`); } else alert('已在列表中'); };
-    $('edit-habit-save-btn').onclick = () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; h.name = getVal('edit-habit-name-input'); h.category = getVal('edit-habit-category'); saveHabitsToCloud(); RenderBus.emit('habit'); $('edit-habit-modal').classList.remove('active'); };
-    $('edit-habit-del-btn').onclick = () => { if (!confirm('确定删除？')) return; habits = habits.filter(x => x.id !== currentEditingHabitId); saveHabitsToCloud(); RenderBus.emit('habit'); $('edit-habit-modal').classList.remove('active'); };
-    $('edit-habit-cancel-btn').onclick = () => $('edit-habit-modal').classList.remove('active');
-    $('edit-habit-up-btn').onclick = () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; const cat = h.category || '其他'; const catHabits = habits.filter(x => (x.category || '其他') === cat); const idx = catHabits.findIndex(x => x.id === h.id); if (idx > 0) { const target = catHabits[idx - 1]; const i1 = habits.indexOf(h), i2 = habits.indexOf(target); [habits[i1], habits[i2]] = [habits[i2], habits[i1]]; saveHabitsToCloud(); RenderBus.emit('habit'); } };
-    $('edit-habit-down-btn').onclick = () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; const cat = h.category || '其他'; const catHabits = habits.filter(x => (x.category || '其他') === cat); const idx = catHabits.findIndex(x => x.id === h.id); if (idx < catHabits.length - 1) { const target = catHabits[idx + 1]; const i1 = habits.indexOf(h), i2 = habits.indexOf(target); [habits[i1], habits[i2]] = [habits[i2], habits[i1]]; saveHabitsToCloud(); RenderBus.emit('habit'); } };
+    // 习惯
+    on('add-habit-btn', 'click', () => { const name = getVal('new-habit-name'); if (!name) return; habits.push({ id: 'h' + Date.now(), name, category: getVal('new-habit-category'), icon: '🎯', dates: [] }); $('new-habit-name').value = ''; saveHabitsToCloud(); RenderBus.emit('habit'); });
+    on('import-morning-btn', 'click', () => { const m = [{ name: '伸懒腰 + 拉开窗帘见光', icon: '🌅', category: '早晨' }, { name: '喝温水 + 如厕排毒', icon: '💧', category: '早晨' }, { name: '刷牙洗脸 + 护肤防晒', icon: '🧴', category: '早晨' }, { name: '换衣 + 拿早餐 + 检查出门', icon: '🎒', category: '早晨' }]; let added = 0; m.forEach(x => { if (!habits.some(h => h.name === x.name)) { habits.push({ id: 'h' + Date.now() + Math.random(), ...x, dates: [] }); added++; } }); if (added) { saveHabitsToCloud(); RenderBus.emit('habit'); alert(`导入 ${added} 个`); } else alert('已在列表中'); });
+    on('edit-habit-save-btn', 'click', () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; h.name = getVal('edit-habit-name-input'); h.category = getVal('edit-habit-category'); saveHabitsToCloud(); RenderBus.emit('habit'); $('edit-habit-modal').classList.remove('active'); });
+    on('edit-habit-del-btn', 'click', () => { if (!confirm('确定删除？')) return; habits = habits.filter(x => x.id !== currentEditingHabitId); saveHabitsToCloud(); RenderBus.emit('habit'); $('edit-habit-modal').classList.remove('active'); });
+    on('edit-habit-cancel-btn', 'click', () => $('edit-habit-modal').classList.remove('active'));
+    on('edit-habit-up-btn', 'click', () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; const cat = h.category || '其他'; const catHabits = habits.filter(x => (x.category || '其他') === cat); const idx = catHabits.findIndex(x => x.id === h.id); if (idx > 0) { const target = catHabits[idx - 1]; const i1 = habits.indexOf(h), i2 = habits.indexOf(target); [habits[i1], habits[i2]] = [habits[i2], habits[i1]]; saveHabitsToCloud(); RenderBus.emit('habit'); } });
+    on('edit-habit-down-btn', 'click', () => { const h = habits.find(x => x.id === currentEditingHabitId); if (!h) return; const cat = h.category || '其他'; const catHabits = habits.filter(x => (x.category || '其他') === cat); const idx = catHabits.findIndex(x => x.id === h.id); if (idx < catHabits.length - 1) { const target = catHabits[idx + 1]; const i1 = habits.indexOf(h), i2 = habits.indexOf(target); [habits[i1], habits[i2]] = [habits[i2], habits[i1]]; saveHabitsToCloud(); RenderBus.emit('habit'); } });
 
-    $('news-save').onclick = async () => { if (!getVal('news-title')) return; const dataObj = { category: getVal('news-category'), title: getVal('news-title'), content: getVal('news-content') }; const id = await syncRecord('news_item', currentDay, dataObj, {}); if (id) { newsData.items.unshift({ ...dataObj, id, _cloudId: id, date: currentDay, ts: Date.now() }); saveCache(); RenderBus.emit('news'); $('news-title').value = ''; $('news-content').value = ''; } };
-    $('news-summary-save').onclick = async () => { if (!getVal('news-summary')) return; const dataObj = { content: getVal('news-summary') }; const existing = newsData.summaries.find(x => x.date === currentDay); if (existing && !confirm('覆盖？')) return; if (existing) await deleteHealthRecord(existing.id); const id = await syncRecord('news_summary', currentDay, dataObj, {}); if (id) { newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay); newsData.summaries.unshift({ ...dataObj, id, _cloudId: id, date: currentDay, ts: Date.now() }); saveCache(); RenderBus.emit('news'); $('news-summary').value = ''; } };
+    // 世事
+    on('news-save', 'click', async () => { if (!getVal('news-title')) return; const dataObj = { category: getVal('news-category'), title: getVal('news-title'), content: getVal('news-content') }; const id = await syncRecord('news_item', currentDay, dataObj, {}); if (id) { newsData.items.unshift({ ...dataObj, id, _cloudId: id, date: currentDay, ts: Date.now() }); saveCache(); RenderBus.emit('news'); $('news-title').value = ''; $('news-content').value = ''; } });
+    on('news-summary-save', 'click', async () => { if (!getVal('news-summary')) return; const dataObj = { content: getVal('news-summary') }; const existing = newsData.summaries.find(x => x.date === currentDay); if (existing && !confirm('覆盖？')) return; if (existing) await deleteHealthRecord(existing.id); const id = await syncRecord('news_summary', currentDay, dataObj, {}); if (id) { newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay); newsData.summaries.unshift({ ...dataObj, id, _cloudId: id, date: currentDay, ts: Date.now() }); saveCache(); RenderBus.emit('news'); $('news-summary').value = ''; } });
+    
+    // 学习
+    on('momo-save-btn', 'click', async () => { const record = { date: todayStr(), newWords: getNum('momo-new'), reviewWords: getNum('momo-review'), minutes: getNum('momo-min'), note: getVal('momo-note') }; const existing = momoDaily.find(x => x.date === record.date); if (existing) await syncRecord('momo_daily', record.date, record, existing); else { const id = await syncRecord('momo_daily', record.date, record, {}); if (id) record._cloudId = id; momoDaily.push(record); } saveCache(); RenderBus.emit('study'); $('en-momo-card').style.display = 'none'; });
+    on('momo-cancel-btn', 'click', () => $('en-momo-card').style.display = 'none');
+    on('goal-save-btn', 'click', async () => { studyGoal = { targetScore: getFloat('goal-setting-score') || 7.0, examDate: getVal('goal-setting-date') || '2027-06-01', targetVocab: getNum('goal-setting-vocab') || 7000 }; await syncRecord('study_goal', todayStr(), { goal: studyGoal }, { _cloudId: goalCloudId }); saveCache(); RenderBus.emit('study'); alert('保存成功'); });
+    on('vocab-add-btn', 'click', async () => { if (!getVal('vocab-word') || !getVal('vocab-meaning')) return alert('必填'); if (studyVocab.some(v => v.word === getVal('vocab-word'))) return alert('已在生词本'); studyVocab.push({ word: getVal('vocab-word'), phonetic: getVal('vocab-phonetic'), meaning: getVal('vocab-meaning'), source: getVal('vocab-source'), addedAt: todayStr() }); await syncRecord('study_vocab', todayStr(), { vocab: studyVocab.map(v => { const o = { ...v }; delete o._cloudId; return o; }) }, studyVocab); saveCache(); RenderBus.emit('study'); ['vocab-word','vocab-phonetic','vocab-meaning','vocab-source'].forEach(id => $(id).value=''); });
 
-    $('momo-save-btn').onclick = async () => { const record = { date: todayStr(), newWords: getNum('momo-new'), reviewWords: getNum('momo-review'), minutes: getNum('momo-min'), note: getVal('momo-note') }; const existing = momoDaily.find(x => x.date === record.date); if (existing) await syncRecord('momo_daily', record.date, record, existing); else { const id = await syncRecord('momo_daily', record.date, record, {}); if (id) record._cloudId = id; momoDaily.push(record); } saveCache(); RenderBus.emit('study'); $('en-momo-card').style.display = 'none'; };
-    $('momo-cancel-btn').onclick = () => $('en-momo-card').style.display = 'none';
-    $('goal-save-btn').onclick = async () => { studyGoal = { targetScore: getFloat('goal-setting-score') || 7.0, examDate: getVal('goal-setting-date') || '2027-06-01', targetVocab: getNum('goal-setting-vocab') || 7000 }; await syncRecord('study_goal', todayStr(), { goal: studyGoal }, { _cloudId: goalCloudId }); saveCache(); RenderBus.emit('study'); alert('保存成功'); };
-    $('vocab-add-btn').onclick = async () => { if (!getVal('vocab-word') || !getVal('vocab-meaning')) return alert('必填'); if (studyVocab.some(v => v.word === getVal('vocab-word'))) return alert('已在生词本'); studyVocab.push({ word: getVal('vocab-word'), phonetic: getVal('vocab-phonetic'), meaning: getVal('vocab-meaning'), source: getVal('vocab-source'), addedAt: todayStr() }); await syncRecord('study_vocab', todayStr(), { vocab: studyVocab.map(v => { const o = { ...v }; delete o._cloudId; return o; }) }, studyVocab); saveCache(); RenderBus.emit('study'); ['vocab-word','vocab-phonetic','vocab-meaning','vocab-source'].forEach(id => $(id).value=''); };
-
+    // RSS
     bindEvent('#rss-add-btn', 'click', () => { const url = getVal('rss-url'), name = getVal('rss-name'), cat = getVal('rss-category'); if (!url || !/^https?:\/\//i.test(url)) return alert('链接无效'); if (rssFeeds.some(f => f.url === url)) return alert('已存在'); rssFeeds.push({ id: 'f' + Date.now(), url, name, category: cat, enabled: true }); pushRssFeedsToCloud(); RenderBus.emit('rss'); $('rss-url').value=''; $('rss-name').value=''; $('add-source-details').open=false; });
     bindEvent('#rss-clear-btn', 'click', () => { if (!rssFeeds.length || !confirm('清空源？')) return; rssFeeds = []; pushRssFeedsToCloud(); RenderBus.emit('rss'); });
     bindEvent('#rss-optimize-btn', 'click', () => { if (!confirm('优化源？')) return; const del = ['feeds.bloomberg.com/crypto','ft.com/markets','ft.com/technology','seekingalpha.com','sciencedaily.com','ark-invest.com','propublica.org','meduza.io','economist.com/finance-and-economics','macromicro.me']; rssFeeds = rssFeeds.filter(f => !del.some(k => f.url.includes(k))); pushRssFeedsToCloud(); RenderBus.emit('rss'); });
-    $('rss-fetch-btn').onclick = generateBriefing;
+    on('rss-fetch-btn', 'click', generateBriefing);
 
+    // 节律
     bindEvent('#toggle-rhythm-mode-btn', 'click', () => { const r = getTodayRhythm(); r.mode = r.mode === 'low' ? 'normal' : 'low'; saveRhythmCloud(); RenderBus.emit('rhythm'); });
     bindEvent('#rhythm-save-note-btn', 'click', () => { const r = getTodayRhythm(); r.note = getVal('rhythm-note-input'); saveRhythmCloud(); alert('记录已保存'); });
     bindEvent('#edit-rhythm-btn', 'click', () => openRhythmEdit());
@@ -1685,11 +1771,26 @@ function setupPageEvents() {
         $('edit-rhythm-modal').classList.remove('active');
     });
 
-    $('day-picker').onchange = function() { if (this.value) setDay(this.value); }; $('day-prev').onclick = () => setDay(addDays(currentDay, -1)); $('day-next').onclick = () => setDay(addDays(currentDay, 1)); $('day-today').onclick = () => setDay(todayStr());
-    $('habit-day-picker').onchange = function() { if (this.value) setDay(this.value); }; $('habit-day-prev').onclick = () => setDay(addDays(currentDay, -1)); $('habit-day-next').onclick = () => setDay(addDays(currentDay, 1)); $('habit-day-today').onclick = () => setDay(todayStr());
-    $('news-day-picker').onchange = function() { if (this.value) setDay(this.value); }; $('news-day-prev').onclick = () => setDay(addDays(currentDay, -1)); $('news-day-next').onclick = () => setDay(addDays(currentDay, 1)); $('news-day-today').onclick = () => setDay(todayStr());
-    $('acne-location').onchange = function() { $('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none'; };
-    $('expense-account').onchange = function() { const s = $('expense-subcategory'); if (this.value === 'survival') { s.style.display = ''; s.disabled = false; } else { s.style.display = 'none'; s.disabled = true; } }; $('expense-account').onchange();
+    // 日期切换与下拉联动
+    ['day-picker', 'habit-day-picker', 'news-day-picker'].forEach(id => { on(id, 'change', function() { if (this.value) setDay(this.value); }); });
+    on('day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+    on('day-next', 'click', () => setDay(addDays(currentDay, 1)));
+    on('day-today', 'click', () => setDay(todayStr()));
+    on('habit-day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+    on('habit-day-next', 'click', () => setDay(addDays(currentDay, 1)));
+    on('habit-day-today', 'click', () => setDay(todayStr()));
+    on('news-day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+    on('news-day-next', 'click', () => setDay(addDays(currentDay, 1)));
+    on('news-day-today', 'click', () => setDay(todayStr()));
+
+    on('acne-location', 'change', function() { $('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none'; });
+    on('expense-account', 'change', function() {
+        const s = $('expense-subcategory'); 
+        if (!s) return;
+        if (this.value === 'survival') { s.style.display = ''; s.disabled = false; } 
+        else { s.style.display = 'none'; s.disabled = true; } 
+    });
+    if ($('expense-account')) $('expense-account').dispatchEvent(new Event('change'));
 }
 
 /* ================= 初始化 ================= */
