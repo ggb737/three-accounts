@@ -157,51 +157,6 @@ select{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http
 .ip-report-detail summary{color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:6px 0}
 .ip-conv-line{font-size:12px;color:var(--text);margin-bottom:6px;line-height:1.6;white-space:pre-wrap}
 .ip-conv-line .role{font-weight:600;color:var(--text2);margin-right:4px}
-.study-goal-card{background:linear-gradient(135deg,#2d7d5a,#1a5c47);color:#fff;border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:0 4px 16px rgba(45,125,90,.2)}
-.study-goal-top{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-.study-goal-top .g-item{text-align:center}
-.study-goal-top .g-lbl{font-size:11px;opacity:.8;margin-bottom:4px}
-.study-goal-top .g-val{font-size:22px;font-weight:700}
-.study-goal-top .g-val small{font-size:12px;font-weight:400;opacity:.8}
-.study-goal-vocab{margin-bottom:12px}
-.study-goal-vocab .g-vocab-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;opacity:.95}
-.study-goal-vocab .g-bar{height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden}
-.study-goal-vocab .g-fill{height:100%;background:linear-gradient(90deg,#b8e6cf,#fff);border-radius:4px;transition:width .6s ease}
-.study-goal-week{display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:.95}
-.study-goal-week .g-dots{display:flex;gap:5px}
-.study-goal-week .g-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
-.study-goal-week .g-dot.done{background:#fff;color:#1a5c47}
-.study-goal-week .g-dot.today{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
-.study-task{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:var(--rSm);margin-bottom:10px;transition:all .2s;box-shadow:var(--shadow)}
-.study-task.done{opacity:.6}
-.study-task .t-ico{font-size:22px;width:36px;text-align:center}
-.study-task .t-info{flex:1;min-width:0}
-.study-task .t-title{font-size:14px;font-weight:600;color:var(--text)}
-.study-task .t-sub{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.5}
-.study-task .t-btn{padding:8px 16px;font-size:13px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:inherit}
-.study-task.done .t-btn{background:#c0d3cb;cursor:default}
-.study-milestone{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:12px;color:var(--text2);border-bottom:1px dashed var(--border)}
-.study-milestone:last-child{border-bottom:none}
-.study-milestone .m-dot{width:10px;height:10px;border-radius:50%;background:#e0eae6;flex-shrink:0}
-.study-milestone.reached .m-dot{background:var(--accent)}
-.study-milestone.reached .m-lbl{color:var(--accent);font-weight:600}
-.study-milestone.near .m-dot{background:#e8a838;animation:pulse 1.5s infinite}
-.study-milestone .m-info{flex:1}
-.study-milestone .m-reading{color:var(--text3);font-size:11px}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.study-reading-box{background:#fff;border-radius:var(--rSm);padding:16px;border:1px solid var(--border);margin-bottom:12px}
-.study-reading-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px}
-.study-reading-body{font-size:14px;color:var(--text);line-height:1.8;font-family:Georgia,serif}
-.study-reading-q{margin-top:14px;font-size:13px;color:var(--accent)}
-.study-reading-opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.study-reading-opt{padding:10px 12px;background:#f5f5f7;border:none;border-radius:8px;cursor:pointer;font-size:13px;transition:all .15s;font-family:inherit;text-align:left;color:var(--text)}
-.study-reading-opt.correct{background:#e0f2e8;color:#1a7a4a;font-weight:600}
-.study-reading-opt.wrong{background:#fdeaea;color:#c0392b}
-.en-vocab-list{max-height:400px;overflow-y:auto;margin-top:12px}
-.en-vocab-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;gap:8px}
-.en-vocab-item:last-child{border-bottom:none}
-.en-vocab-item .w{font-weight:600;color:var(--accent);font-family:Georgia,serif}
-.en-vocab-item .m{color:var(--text2);font-size:12px;margin-left:8px}
 .news-item{background:#f5f5f7;border-radius:var(--rSm);padding:14px;margin-bottom:10px;border-left:3px solid var(--accent)}
 .news-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
 .news-title{font-size:14px;font-weight:600;color:var(--text);text-decoration:none;line-height:1.45}
@@ -272,7 +227,7 @@ th{color:var(--text2);font-weight:500;font-size:12px}
 .highlight-row td{animation:flash 2s ease-out}
 @keyframes flash{0%{background-color:#ffe0b2}100%{background-color:transparent}}
 tr{scroll-margin-top:20px}
-@media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.study-goal-top .g-val{font-size:18px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
+@media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
 <body>
@@ -304,7 +259,6 @@ tr{scroll-margin-top:20px}
         <button class="seg-item nav-btn" data-tab="health">🌿 健康</button>
         <button class="seg-item nav-btn" data-tab="habits">🎯 习惯</button>
         <button class="seg-item nav-btn" data-tab="news">📰 世事</button>
-        <button class="seg-item nav-btn" data-tab="study">📚 学习</button>
     </div>
 
     <!-- ========== 账户 ========== -->
@@ -663,102 +617,6 @@ tr{scroll-margin-top:20px}
                 <div id="news-summary-history" style="margin-top:14px;"></div>
             </div>
         </details>
-
-        <details class="fold" id="fetch-result-details" style="display:none;"><summary></summary><div></div></details>
-    </div>
-
-    <!-- ========== 学习 ========== -->
-    <div id="tab-study" class="tab-content">
-        <h1 class="page-title">学习</h1>
-
-        <div class="study-goal-card">
-            <div class="study-goal-top">
-                <div class="g-item"><div class="g-lbl">🎯 雅思目标</div><div class="g-val" id="goal-target-score">7.0</div></div>
-                <div class="g-item"><div class="g-lbl">📊 当前预估</div><div class="g-val" id="goal-current-score">—</div></div>
-                <div class="g-item"><div class="g-lbl">⏳ 距考试</div><div class="g-val" id="goal-days-left">—<small>天</small></div></div>
-            </div>
-            <div class="study-goal-vocab">
-                <div class="g-vocab-label"><span>词汇量：<b id="goal-vocab-cur">0</b> / <b id="goal-vocab-target">7000</b></span><span id="goal-vocab-gap">还差 7000 词</span></div>
-                <div class="g-bar"><div class="g-fill" id="goal-vocab-fill" style="width:0%"></div></div>
-            </div>
-            <div class="study-goal-week">
-                <span>本周完成 <b id="goal-week-done">0</b> / 5 天</span>
-                <div class="g-dots" id="goal-week-dots"></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <h2 style="font-size:16px;font-weight:600;">🎯 今日任务</h2>
-                <span id="en-module-badge" style="font-size:12px;color:var(--accent);font-weight:600;"></span>
-            </div>
-            <div id="study-today-tasks"></div>
-        </div>
-
-        <div id="en-momo-card" class="card" style="display:none;">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:14px;">📱 墨墨打卡</h2>
-            <div class="grid-3">
-                <div class="field"><label>新词</label><input type="number" id="momo-new" min="0" placeholder="0"></div>
-                <div class="field"><label>复习</label><input type="number" id="momo-review" min="0" placeholder="0"></div>
-                <div class="field"><label>分钟</label><input type="number" id="momo-min" min="0" placeholder="15"></div>
-            </div>
-            <div class="field"><label>备注</label><input type="text" id="momo-note" placeholder="可选"></div>
-            <div style="display:flex;gap:8px;">
-                <button class="btn btn-primary" style="flex:1;" id="momo-save-btn">✅ 完成打卡</button>
-                <button class="btn btn-secondary" id="momo-cancel-btn">取消</button>
-            </div>
-        </div>
-
-        <div id="en-ls-card" class="card" style="display:none;">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:14px;">🎧 赖世雄课程</h2>
-            <div class="field"><label>选择课程</label><select id="ls-course-select"></select></div>
-            <div id="ls-course-detail"></div>
-        </div>
-
-        <div id="en-reading-card" class="card" style="display:none;">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:14px;">📖 外刊精读</h2>
-            <div id="study-reading-area"></div>
-        </div>
-
-        <details class="fold">
-            <summary>🏁 里程碑</summary>
-            <div class="fold-body"><div id="study-milestones"></div></div>
-        </details>
-
-        <details class="fold">
-            <summary>📒 生词本</summary>
-            <div class="fold-body">
-                <div class="grid-2">
-                    <div class="field"><label>单词</label><input type="text" id="vocab-word" placeholder="word"></div>
-                    <div class="field"><label>音标</label><input type="text" id="vocab-phonetic" placeholder="/wɜːd/"></div>
-                </div>
-                <div class="field"><label>释义</label><input type="text" id="vocab-meaning" placeholder="释义"></div>
-                <div class="field"><label>出处</label><input type="text" id="vocab-source" placeholder="可选"></div>
-                <button class="btn btn-primary btn-full" id="vocab-add-btn">＋ 添加生词</button>
-                <div class="en-vocab-list" id="vocab-list"><div class="empty-hint">还没有记录生词</div></div>
-            </div>
-        </details>
-
-        <details class="fold">
-            <summary>⚙️ 目标设置</summary>
-            <div class="fold-body">
-                <div class="grid-2">
-                    <div class="field"><label>目标总分</label><input type="number" id="goal-setting-score" step="0.5" min="4" max="9" value="7.0"></div>
-                    <div class="field"><label>考试日期</label><input type="date" id="goal-setting-date"></div>
-                </div>
-                <div class="field"><label>目标词汇量</label><input type="number" id="goal-setting-vocab" min="1000" step="500" value="7000"></div>
-                <button class="btn btn-primary btn-full" id="goal-save-btn">保存目标</button>
-            </div>
-        </details>
-
-        <details class="fold">
-            <summary>📅 学习记录</summary>
-            <div class="fold-body"><div id="en-daily-history"><div class="empty-hint">还没有学习记录</div></div></div>
-        </details>
-
-        <details class="fold"><summary>📝 雅思模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary><div class="fold-body"><div class="empty-hint">暂未开放</div></div></details>
-        <details class="fold"><summary>🎓 考研模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary><div class="fold-body"><div class="empty-hint">暂未开放</div></div></details>
-        <details class="fold"><summary>🏅 硬凭证模块 <span class="tag tag-neutral" style="margin-left:8px;">规划中</span></summary><div class="fold-body"><div class="empty-hint">暂未开放</div></div></details>
     </div>
 
     <div class="footer-note">数据自动同步 · 云端存储</div>
@@ -905,38 +763,6 @@ const DEFAULT_HABITS = [
     { id: 'h3', name: '07:00 起床迎光', category: '早晨', icon: '⏰', dates: [] }
 ];
 
-/* ================= 学习系统常量 ================= */
-const LS_COURSES = {
-    phonetics: { name: '美语音标', total: 30, icon: '🔤' },
-    basic: { name: '美语从头学·入门篇', total: 30, icon: '📗' },
-    elementary: { name: '美语从头学·初级篇', total: 40, icon: '📘' },
-    intermediate: { name: '美语从头学·中级篇', total: 40, icon: '📙' },
-    advanced: { name: '美语从头学·高级篇', total: 30, icon: '📕' },
-    grammar: { name: '赖世雄经典语法', total: 50, icon: '📓' }
-};
-
-const IELTS_MILESTONES = [
-    { vocab: 1500, label: '雅思 4.5', reading: '能读简单英文新闻标题' },
-    { vocab: 3000, label: '雅思 5.5', reading: '能读 BBC / 简单外刊短讯' },
-    { vocab: 4500, label: '雅思 6.0', reading: '能读 FT 短文章、抓主旨' },
-    { vocab: 5500, label: '雅思 6.5', reading: '能读 The Economist 中等难度文章' },
-    { vocab: 7000, label: '雅思 7.0', reading: '能流畅读懂 Economist / FT 长文' },
-    { vocab: 8500, label: '雅思 7.5+', reading: '能读外刊社论、学术摘要' }
-];
-
-const READING_POOL = [
-    { level: 'A2', title: 'The Village Library', body: 'In a small village, there is a library in an old house. It has only 500 books, but people love it. Children come after school to read stories. Old people come to read newspapers. The librarian, Ms. Chen, says, "A book can open a window to the world. Even in a small village, we can travel through reading."', q: 'What does Ms. Chen think a book can do?', opts: ['Close a door', 'Open a window to the world', 'Make money', 'Build a house'], ans: 1 },
-    { level: 'A2', title: 'Morning in the Fields', body: 'At six in the morning, farmers in the village start working. The air is cool and fresh. They check the rice fields and water the vegetables. Some of them use small machines, but many still work by hand. "Technology helps," one farmer says, "but the land still needs our eyes every day."', q: 'Why do farmers still work by hand?', opts: ['They have no machines', 'They do not like technology', 'The land needs their daily attention', 'They are too old'], ans: 2 },
-    { level: 'B1', title: 'The Rise of Online Learning', body: 'Over the past five years, online learning has grown quickly in China. Students in small towns can now attend classes taught by teachers in big cities. This change has given many young people access to better education. However, some experts warn that online learning cannot replace face-to-face communication. "Knowledge can travel through screens," one teacher said, "but motivation often needs a human connection."', q: 'What do some experts worry about?', opts: ['Online learning is too expensive', 'Students cannot use computers', 'Online learning cannot replace human connection', 'Teachers do not like online classes'], ans: 2 },
-    { level: 'B1', title: 'AI Tools in Daily Work', body: 'Many companies now use AI tools to handle repetitive tasks, such as writing reports and organizing data. This allows employees to spend more time on creative work. But experts remind workers that AI is a tool, not a replacement. "The people who benefit most from AI," one researcher explained, "are those who learn to use it well, not those who fear it."', q: 'According to the researcher, who benefits most from AI?', opts: ['People who fear it', 'People who avoid it', 'People who learn to use it well', 'People who build it'], ans: 2 },
-    { level: 'B1', title: 'Saving Money in Small Steps', body: 'Many young people find it hard to save money. One simple method is the "50/30/20 rule": 50% for necessary costs, 30% for personal spending, and 20% for savings. Experts say this rule is not perfect, but it gives people a clear structure. "The most important thing," one financial adviser said, "is not how much you save in one month, but whether you can keep the habit for years."', q: 'What is the most important thing about saving, according to the adviser?', opts: ['Saving a large amount quickly', 'Keeping the habit for years', 'Following the rule strictly', 'Earning more money'], ans: 1 },
-    { level: 'B2', title: 'Why Reading Foreign Articles Matters', body: 'Reading articles from other countries is not only about learning English. It is about seeing how other people think. Different cultures organize ideas in different ways, and reading widely can help us notice these differences. For students preparing for exams like IELTS, reading foreign news is also practical: the exam often uses texts from magazines and newspapers. The more you read, the more familiar the language becomes.', q: 'What does reading foreign articles help us do, besides learning English?', opts: ['Earn more money', 'See how other people think', 'Write better Chinese', 'Travel abroad'], ans: 1 },
-    { level: 'B2', title: 'Technology and Rural Education', body: 'Technology has brought new possibilities to rural education. Online platforms allow students in remote areas to access courses from top universities. However, access alone is not enough. Studies show that without local support — teachers, parents, and community — technology often fails to improve learning outcomes. The real challenge is not building networks, but building habits of learning.', q: 'What is the real challenge in rural education?', opts: ['Building internet networks', 'Buying more computers', 'Building habits of learning', 'Sending students to cities'], ans: 2 },
-    { level: 'B2', title: 'The Value of Deliberate Practice', body: 'Many people believe that talent determines success, but research suggests otherwise. Studies on musicians, athletes, and language learners show that deliberate practice — focused, repetitive, and guided by feedback — is far more important than natural ability. The key is not how long you practice, but how you practice. Short, focused sessions often produce better results than long, distracted ones.', q: 'What makes deliberate practice effective?', opts: ['Long hours without breaks', 'Natural talent', 'Focus and feedback', 'Practicing many skills at once'], ans: 2 },
-    { level: 'B2', title: 'Reading Between the Lines', body: 'In international news, the same event is often reported in very different ways. A newspaper in one country may emphasize economic effects, while another focuses on political meaning. Careful readers learn to notice not only what is said, but also what is left out. "News is not a mirror," one media scholar noted. "It is a window, and every window has a frame."', q: 'What does the media scholar mean by "every window has a frame"?', opts: ['Windows are expensive', 'News always has a perspective', 'News is always true', 'Newspapers are old-fashioned'], ans: 1 },
-    { level: 'B2', title: 'From Input to Output', body: 'Language learners often spend most of their time on input — reading and listening. But output — speaking and writing — is equally important. When learners try to express ideas, they discover gaps in their knowledge and become more aware of grammar. The most effective learners switch regularly between input and output, allowing each to support the other.', q: 'Why is output (speaking and writing) important?', opts: ['It is easier than input', 'It reveals knowledge gaps', 'It replaces reading', 'It is required for exams only'], ans: 1 }
-];
-
 /* ================= 简报 4 层架构 ================= */
 const BRIEFING_CONFIG = { WINDOW_HOURS: 24, KEEP_THRESHOLD: 3.2, MAX_WORDS: 2200, STAGE1_BATCH_SIZE: 15, STAGE2_MAX_CANDIDATES: 50, JSON_MODE: true };
 const BRIEFING_QUOTA = { MIN_PER_CAT: 3, MAX_PER_CAT: 5, TOTAL_MIN: 21, TOTAL_MAX: 35 };
@@ -1056,13 +882,6 @@ let rssFeeds = [];
 let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
 let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 let currentEditingHabitId = null;
-
-let studyGoal = { targetScore: 7.0, examDate: '2027-06-01', targetVocab: 7000 };
-let momoDaily = [];
-let lsProgress = {};
-let studyVocab = [];
-let readingDaily = [];
-let goalCloudId = null;
 let rhythmDaily = [];
 
 /* ================= 缓存 ================= */
@@ -1078,10 +897,8 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 
 function saveCache() {
     if (!currentUser) return;
-    const sorted = [...newsData.briefings].sort((a, b) => (b.ts || 0) - (a.ts || 0));
-    sorted.forEach((b, i) => { if (i >= 3) b.articles = []; });
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, momo: momoDaily, ls: lsProgress, vocab: studyVocab, reading: readingDaily, goal: studyGoal, rhythm: rhythmDaily }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -1094,11 +911,6 @@ function loadCache() {
         healthData = d.health || healthData;
         newsData = d.news || newsData;
         if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
-        momoDaily = d.momo || momoDaily;
-        lsProgress = d.ls || lsProgress;
-        studyVocab = d.vocab || studyVocab;
-        readingDaily = d.reading || readingDaily;
-        if (d.goal) studyGoal = { ...studyGoal, ...d.goal };
         rhythmDaily = d.rhythm || rhythmDaily;
         return true;
     } catch (e) { return false; }
@@ -1162,7 +974,8 @@ async function loadAllFromCloud(silent = false) {
 
         healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
         newsData = { items: [], summaries: [], briefings: [] };
-        momoDaily = []; readingDaily = []; lsProgress = {}; studyVocab = []; goalCloudId = null; rhythmDaily = []; rhythmConfigCloudId = null;
+        rhythmDaily = [];
+        rhythmConfigCloudId = null;
         let cloudFeeds = null;
         cloudApiConfigId = null; cloudHabitsId = null;
         loadHabitsLocal();
@@ -1173,13 +986,8 @@ async function loadAllFromCloud(silent = false) {
 
             if (r.type === 'ai_config') { cloudApiConfigId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
             if (r.type === 'habits_config') { cloudHabitsId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
-            if (r.type === 'momo_daily') { momoDaily.push({ ...d, _cloudId: r.id }); return; }
-            if (r.type === 'reading_daily') { readingDaily.push({ ...d, _cloudId: r.id }); return; }
             if (r.type === 'rhythm_config') { rhythmConfigCloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
             if (r.type === 'rhythm_daily') { if (!rhythmDaily._cloudId) rhythmDaily._cloudId = {}; rhythmDaily._cloudId[r.date] = r.id; rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
-            if (r.type === 'ls_progress') { if (d.progress) { lsProgress = d.progress; lsProgress._cloudId = r.id; } return; }
-            if (r.type === 'study_vocab') { if (Array.isArray(d.vocab)) { studyVocab = d.vocab; studyVocab._cloudId = r.id; } return; }
-            if (r.type === 'study_goal') { if (d.goal) { studyGoal = { ...studyGoal, ...d.goal }; goalCloudId = r.id; } return; }
             if (r.type === 'news_item') { newsData.items.push(item); return; }
             if (r.type === 'news_summary') { newsData.summaries.push(item); return; }
             if (r.type === 'briefing') { newsData.briefings.push(item); return; }
@@ -1430,6 +1238,8 @@ function renderRhythm() {
     el.querySelectorAll('.rhythm-edit-btn').forEach(btn => {
         btn.onclick = (e) => { e.stopPropagation(); openRhythmEditModal(parseInt(btn.dataset.editIdx, 10)); };
     });
+
+    document.getElementById('rhythm-note-input').value = r.note || '';
 }
 
 document.getElementById('toggle-rhythm-mode-btn').onclick = () => {
@@ -2463,7 +2273,6 @@ async function fetchViaRss2Json(feed, timeoutMs) {
     } catch (err) { clearTimeout(timer); throw new Error(err.name === 'AbortError' ? 'rss2json 请求超时' : err.message); }
 }
 async function fetchOneFeed(feed, timeoutMs = 20000) {
-    const srcName = feed.name || hostOf(feed.url);
     let workerErr = null;
     try { return await fetchViaWorker(feed, timeoutMs); } catch (e) { workerErr = e.message; }
     try { return await fetchViaRss2Json(feed, timeoutMs); } catch (e) { throw new Error(`Worker: ${workerErr} / rss2json: ${e.message}`); }
@@ -2830,256 +2639,6 @@ function renderNews() {
     renderBriefings();
 }
 
-/* ================= 学习系统 ================= */
-function calcVocabEstimate() { return momoDaily.reduce((s, m) => s + (m.newWords || 0), 0); }
-function estimateIELTS(vocab) {
-    if (vocab < 1500) return '4.0';
-    if (vocab < 3000) return '4.5';
-    if (vocab < 4500) return '5.0';
-    if (vocab < 5500) return '5.5';
-    if (vocab < 7000) return '6.0';
-    if (vocab < 8500) return '6.5';
-    return '7.0+';
-}
-function calcDaysLeft() {
-    if (!studyGoal.examDate) return null;
-    const exam = new Date(studyGoal.examDate + 'T00:00:00');
-    const now = new Date(todayStr() + 'T00:00:00');
-    return Math.round((exam - now) / (1000 * 60 * 60 * 24));
-}
-function getTodayMomo() { return momoDaily.find(x => x.date === todayStr()) || null; }
-function getTodayReading() { return readingDaily.find(x => x.date === todayStr()) || null; }
-function lsDoneToday() {
-    return Object.keys(lsProgress).some(k => { if (k === '_cloudId') return false; const p = lsProgress[k]; return p && p.history && p.history.some(h => h.date === todayStr()); });
-}
-function getStudyWeekDays() {
-    const base = new Date(todayStr() + 'T00:00:00');
-    const day = base.getDay() || 7;
-    const mon = new Date(base); mon.setDate(base.getDate() - day + 1);
-    const days = [];
-    for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); days.push(fmtDay(d)); }
-    return days;
-}
-function isStudyDayCompleted(date) {
-    if (momoDaily.some(m => m.date === date)) return true;
-    if (readingDaily.some(r => r.date === date)) return true;
-    for (const k of Object.keys(lsProgress)) { if (k === '_cloudId') continue; const p = lsProgress[k]; if (p && p.history && p.history.some(h => h.date === date)) return true; }
-    return false;
-}
-function calcWeekProgress() {
-    const days = getStudyWeekDays();
-    const today = todayStr();
-    const done = days.filter(d => d <= today && isStudyDayCompleted(d)).length;
-    return { done, target: 5, days };
-}
-function getStudyStage(vocab) {
-    if (vocab < 3000) return 'basic';
-    if (vocab < 5500) return 'intermediate';
-    if (vocab < 7000) return 'advanced';
-    return 'maintain';
-}
-function generateTodayTasks() {
-    const vocab = calcVocabEstimate();
-    const stage = getStudyStage(vocab);
-    const tasks = [];
-    tasks.push({ key: 'momo', icon: '📱', title: '墨墨背单词', sub: stage === 'basic' ? '新词 20 + 复习（约 15 分钟）' : stage === 'intermediate' ? '新词 15 + 复习（约 15 分钟）' : stage === 'advanced' ? '新词 15 + 复习（约 15 分钟）' : '新词 10 + 复习（维持）', done: !!getTodayMomo() });
-    if (stage !== 'maintain') tasks.push({ key: 'ls', icon: '🎧', title: '赖世雄一课', sub: stage === 'basic' ? '入门 / 音标为主（约 20 分钟）' : stage === 'intermediate' ? '初级 / 中级推进（约 20 分钟）' : '中级 / 高级 + 语法（约 20 分钟）', done: lsDoneToday() });
-    if (stage === 'intermediate' || stage === 'advanced' || stage === 'maintain') tasks.push({ key: 'reading', icon: '📖', title: '外刊精读', sub: stage === 'intermediate' ? '读一段 B1 短文 + 答 1 题（约 10 分钟）' : stage === 'advanced' ? '读一段 B2 短文 + 答 1 题 + 记生词（约 15 分钟）' : '读一篇 B2 / 外刊长文 + 抓主旨', done: !!getTodayReading() });
-    return tasks;
-}
-function renderGoalCard() {
-    const vocab = calcVocabEstimate();
-    const target = studyGoal.targetVocab || 7000;
-    document.getElementById('goal-target-score').textContent = (studyGoal.targetScore || 7.0).toFixed(1);
-    document.getElementById('goal-current-score').textContent = estimateIELTS(vocab);
-    const days = calcDaysLeft();
-    document.getElementById('goal-days-left').innerHTML = days !== null ? `${days}<small>天</small>` : '—';
-    document.getElementById('goal-vocab-cur').textContent = vocab;
-    document.getElementById('goal-vocab-target').textContent = target;
-    const gap = Math.max(0, target - vocab);
-    document.getElementById('goal-vocab-gap').textContent = gap > 0 ? `还差 ${gap} 词` : '🎉 已达成';
-    document.getElementById('goal-vocab-fill').style.width = Math.min(100, (vocab / target * 100)) + '%';
-    const week = calcWeekProgress();
-    document.getElementById('goal-week-done').textContent = week.done;
-    const dotsEl = document.getElementById('goal-week-dots');
-    const today = todayStr();
-    dotsEl.innerHTML = week.days.map((d, i) => { const done = isStudyDayCompleted(d); const isToday = d === today; return `<div class="g-dot ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${['一','二','三','四','五','六','日'][i]}</div>`; }).join('');
-}
-function renderTodayTasks() {
-    const tasks = generateTodayTasks();
-    const el = document.getElementById('study-today-tasks');
-    if (!tasks.length) { el.innerHTML = '<div class="empty-hint">今日无任务</div>'; return; }
-    el.innerHTML = tasks.map(t => `<div class="study-task ${t.done ? 'done' : ''}"><div class="t-ico">${t.icon}</div><div class="t-info"><div class="t-title">${t.done ? '✅ ' : ''}${esc(t.title)}</div><div class="t-sub">${esc(t.sub)}</div></div><button class="t-btn" data-task-key="${t.key}" ${t.done ? 'disabled' : ''}>${t.done ? '完成' : '开始'}</button></div>`).join('');
-    el.querySelectorAll('[data-task-key]').forEach(btn => { btn.onclick = () => { const key = btn.dataset.taskKey; if (key === 'momo') window.openMomoCard(); else if (key === 'ls') window.openLSCard(); else if (key === 'reading') window.openReadingCard(); }; });
-}
-function renderMilestones() {
-    const vocab = calcVocabEstimate();
-    const el = document.getElementById('study-milestones');
-    el.innerHTML = IELTS_MILESTONES.map(m => { const reached = vocab >= m.vocab; const near = !reached && (m.vocab - vocab) <= 500; return `<div class="study-milestone ${reached ? 'reached' : ''} ${near ? 'near' : ''}"><div class="m-dot"></div><div class="m-info"><div class="m-lbl">${m.label}（${m.vocab} 词）</div><div class="m-reading">${m.reading}</div></div>${reached ? '<span style="color:var(--accent);font-size:12px;">✓</span>' : near ? '<span style="color:#e8a838;font-size:11px;">快到了</span>' : ''}</div>`; }).join('');
-}
-function renderENStats() {
-    const vocab = calcVocabEstimate();
-    const badge = document.getElementById('en-module-badge');
-    if (badge) { const gap = Math.max(0, (studyGoal.targetVocab || 7000) - vocab); badge.textContent = gap > 0 ? `词汇 ${vocab} / 还差 ${gap}` : '🎉 目标达成'; }
-}
-function renderENHistory() {
-    const el = document.getElementById('en-daily-history');
-    const allDates = new Set();
-    momoDaily.forEach(m => allDates.add(m.date));
-    readingDaily.forEach(r => allDates.add(r.date));
-    Object.keys(lsProgress).forEach(k => { if (k === '_cloudId') return; const p = lsProgress[k]; if (p && p.history) p.history.forEach(h => allDates.add(h.date)); });
-    const sorted = Array.from(allDates).filter(isValidDay).sort((a, b) => b.localeCompare(a));
-    if (!sorted.length) { el.innerHTML = '<div class="empty-hint">还没有学习记录</div>'; return; }
-    el.innerHTML = sorted.slice(0, 30).map(date => {
-        const m = momoDaily.find(x => x.date === date);
-        const r = readingDaily.find(x => x.date === date);
-        const lsList = [];
-        Object.keys(lsProgress).forEach(k => { if (k === '_cloudId') return; const p = lsProgress[k]; if (p && p.history) p.history.filter(h => h.date === date).forEach(h => { lsList.push(`${LS_COURSES[k].icon} ${LS_COURSES[k].name} 第 ${h.lesson} 讲`); }); });
-        return `<div class="list-item"><div class="main"><div style="font-weight:600;color:var(--accent);">${esc(date)}</div>${m ? `<div class="meta">📱 墨墨：新词 ${m.newWords || 0} · 复习 ${m.reviewWords || 0} · ${m.minutes || 0} 分钟</div>` : ''}${lsList.length ? `<div class="meta">${lsList.map(esc).join('；')}</div>` : ''}${r ? `<div class="meta">📖 外刊精读：${esc(READING_POOL[r.passageIdx]?.title || '')}</div>` : ''}</div></div>`;
-    }).join('');
-}
-function renderVocabList() {
-    const el = document.getElementById('vocab-list');
-    const list = [...studyVocab].filter(v => v && v.word).sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
-    if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有记录生词</div>'; return; }
-    el.innerHTML = list.map((v, i) => `<div class="en-vocab-item"><div><span class="w">${esc(v.word)}</span>${v.phonetic ? `<span style="font-size:11px;color:var(--text2);font-family:monospace;margin-left:4px;">${esc(v.phonetic)}</span>` : ''}<span class="m">${esc(v.meaning || '')}</span>${v.source ? `<div class="m" style="margin-left:0;font-size:11px;color:var(--text3);">${esc(v.source)}</div>` : ''}</div><button class="btn btn-danger btn-sm" onclick="deleteVocabItem(${i})">✕</button></div>`).join('');
-}
-function renderEnglishAll() { renderGoalCard(); renderTodayTasks(); renderMilestones(); renderENStats(); renderENHistory(); renderVocabList(); loadStudyGoalToUI(); }
-
-window.openMomoCard = function() {
-    document.getElementById('en-momo-card').style.display = '';
-    document.getElementById('en-ls-card').style.display = 'none';
-    document.getElementById('en-reading-card').style.display = 'none';
-    const m = getTodayMomo();
-    if (m) { document.getElementById('momo-new').value = m.newWords || ''; document.getElementById('momo-review').value = m.reviewWords || ''; document.getElementById('momo-min').value = m.minutes || ''; document.getElementById('momo-note').value = m.note || ''; }
-    else { document.getElementById('momo-new').value = ''; document.getElementById('momo-review').value = ''; document.getElementById('momo-min').value = 15; document.getElementById('momo-note').value = ''; }
-};
-async function saveMomo() {
-    const newWords = parseInt(document.getElementById('momo-new').value, 10) || 0;
-    const reviewWords = parseInt(document.getElementById('momo-review').value, 10) || 0;
-    const minutes = parseInt(document.getElementById('momo-min').value, 10) || 0;
-    const note = document.getElementById('momo-note').value.trim();
-    if (newWords === 0 && reviewWords === 0) { if (!confirm('新词和复习数都是 0，确定保存吗？')) return; }
-    const record = { date: todayStr(), newWords, reviewWords, minutes, note };
-    const idx = momoDaily.findIndex(x => x.date === record.date);
-    if (idx >= 0) { const existing = momoDaily[idx]; if (existing._cloudId) await updateHealthRecord(existing._cloudId, record); momoDaily[idx] = { ...existing, ...record }; }
-    else { const item = await pushHealthRecord('momo_daily', record.date, record); if (item) momoDaily.push({ ...record, _cloudId: item.id }); }
-    saveCache(); document.getElementById('en-momo-card').style.display = 'none'; renderEnglishAll();
-}
-window.openLSCard = function() { document.getElementById('en-momo-card').style.display = 'none'; document.getElementById('en-ls-card').style.display = ''; document.getElementById('en-reading-card').style.display = 'none'; renderLSCourseSelect(); };
-function renderLSCourseSelect() {
-    const sel = document.getElementById('ls-course-select');
-    const currentVal = sel.value;
-    sel.innerHTML = Object.keys(LS_COURSES).map(k => { const p = lsProgress[k] || { current: 0 }; const c = LS_COURSES[k]; return `<option value="${k}" ${currentVal === k ? 'selected' : ''}>${c.icon} ${c.name} (${p.current || 0}/${c.total})</option>`; }).join('');
-    if (!currentVal) sel.value = Object.keys(LS_COURSES)[0];
-    renderLSCourseDetail();
-}
-function renderLSCourseDetail() {
-    const key = document.getElementById('ls-course-select').value;
-    if (!key) return;
-    const course = LS_COURSES[key];
-    const p = lsProgress[key] || { current: 0, total: course.total, history: [], note: '' };
-    const pct = Math.min(100, Math.round((p.current || 0) / course.total * 100));
-    const nextLesson = Math.min((p.current || 0) + 1, course.total);
-    const finished = (p.current || 0) >= course.total;
-    const el = document.getElementById('ls-course-detail');
-    el.innerHTML = `<div style="background:#f5f5f7;border-radius:12px;padding:14px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:var(--accent);font-weight:600;">${esc(course.name)}</span><span style="font-size:12px;color:var(--text2);">${p.current || 0} / ${course.total} 讲</span></div><div style="height:6px;background:#e0eae6;border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px;"></div></div><div style="font-size:12px;color:var(--text2);margin-top:6px;">${finished ? '🎉 全部完成' : `下一讲：第 ${nextLesson} 讲`}</div></div>${finished ? '' : `<button class="btn btn-primary btn-full" style="margin-bottom:12px;" id="ls-finish-next-btn">✅ 完成第 ${nextLesson} 讲</button>`}<div class="field"><label>本课程笔记</label><textarea id="ls-note" style="min-height:60px;">${esc(p.note || '')}</textarea></div><button class="btn btn-secondary btn-sm" id="ls-save-note-btn">保存笔记</button><div style="margin-top:16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:6px;">最近记录：</div>${(p.history || []).slice(-5).reverse().map(h => `<div style="font-size:12px;color:var(--text);padding:4px 0;">· ${esc(h.date)} 完成第 ${h.lesson} 讲</div>`).join('') || '<div style="font-size:12px;color:var(--text3);">暂无</div>'}</div>`;
-    if (!finished) {
-        document.getElementById('ls-finish-next-btn').onclick = async () => {
-            if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
-            const p2 = lsProgress[key];
-            p2.current = Math.min((p2.current || 0) + 1, course.total);
-            if (!p2.history) p2.history = [];
-            p2.history.push({ date: todayStr(), lesson: p2.current });
-            await saveLSProgressCloud();
-            renderEnglishAll(); renderLSCourseSelect();
-        };
-    }
-    document.getElementById('ls-save-note-btn').onclick = async () => {
-        const note = document.getElementById('ls-note').value.trim();
-        if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
-        lsProgress[key].note = note;
-        await saveLSProgressCloud();
-        alert('笔记已保存');
-    };
-}
-async function saveLSProgressCloud() {
-    if (!currentUser) return;
-    const clean = { progress: {} };
-    Object.keys(lsProgress).forEach(k => { if (k !== '_cloudId') clean.progress[k] = lsProgress[k]; });
-    if (lsProgress._cloudId) { await updateHealthRecord(lsProgress._cloudId, clean); }
-    else { const item = await pushHealthRecord('ls_progress', todayStr(), clean); if (item) lsProgress._cloudId = item.id; }
-    saveCache();
-}
-window.openReadingCard = function() { document.getElementById('en-momo-card').style.display = 'none'; document.getElementById('en-ls-card').style.display = 'none'; document.getElementById('en-reading-card').style.display = ''; renderReadingPassage(); };
-function renderReadingPassage() {
-    const el = document.getElementById('study-reading-area');
-    const existing = getTodayReading();
-    const readCount = readingDaily.length;
-    const idx = existing ? existing.passageIdx : (readCount % READING_POOL.length);
-    const p = READING_POOL[idx];
-    if (existing && existing.done) { el.innerHTML = `<div class="study-reading-box"><div style="color:var(--accent);font-weight:600;margin-bottom:8px;">✅ 今天已完成精读</div><div class="study-reading-title">${esc(p.title)}</div><div class="study-reading-body">${esc(p.body)}</div><div style="margin-top:12px;font-size:12px;color:var(--text2);">答案：${esc(p.opts[p.ans])}</div></div>`; return; }
-    el.innerHTML = `<div class="study-reading-box"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Level ${p.level}</div><div class="study-reading-title">${esc(p.title)}</div><div class="study-reading-body">${esc(p.body)}</div><div class="study-reading-q">${esc(p.q)}</div><div class="study-reading-opts">${p.opts.map((opt, oi) => `<button class="study-reading-opt" data-oi="${oi}">${esc(opt)}</button>`).join('')}</div><div id="study-reading-result" style="margin-top:12px;font-size:13px;"></div><button class="btn btn-secondary btn-sm" style="margin-top:12px;" id="study-reading-finish-btn">标记完成精读</button></div>`;
-    el.querySelectorAll('.study-reading-opt').forEach(opt => {
-        opt.onclick = () => {
-            const oi = parseInt(opt.dataset.oi, 10);
-            el.querySelectorAll('.study-reading-opt').forEach(o => o.classList.remove('correct', 'wrong'));
-            el.querySelectorAll('.study-reading-opt').forEach((o, i) => { if (i === p.ans) o.classList.add('correct'); else if (i === oi && i !== p.ans) o.classList.add('wrong'); });
-            document.getElementById('study-reading-result').innerHTML = oi === p.ans ? '<span style="color:#1a7a4a;">✅ 正确！</span>' : `<span style="color:#c0392b;">❌ 正确答案：${esc(p.opts[p.ans])}</span>`;
-        };
-    });
-    document.getElementById('study-reading-finish-btn').onclick = () => finishReading(idx);
-}
-async function finishReading(passageIdx) {
-    const record = { date: todayStr(), passageIdx, done: true };
-    const idx = readingDaily.findIndex(x => x.date === record.date);
-    if (idx >= 0) { const existing = readingDaily[idx]; if (existing._cloudId) await updateHealthRecord(existing._cloudId, record); readingDaily[idx] = { ...existing, ...record }; }
-    else { const item = await pushHealthRecord('reading_daily', record.date, record); if (item) readingDaily.push({ ...record, _cloudId: item.id }); }
-    saveCache(); document.getElementById('en-reading-card').style.display = 'none'; renderEnglishAll();
-}
-async function addVocabItem() {
-    const word = document.getElementById('vocab-word').value.trim();
-    const phonetic = document.getElementById('vocab-phonetic').value.trim();
-    const meaning = document.getElementById('vocab-meaning').value.trim();
-    const source = document.getElementById('vocab-source').value.trim();
-    if (!word || !meaning) return alert('单词和释义必填');
-    if (studyVocab.some(v => v.word === word)) return alert('这个单词已经在生词本里了');
-    studyVocab.push({ word, phonetic, meaning, source, addedAt: todayStr() });
-    await saveStudyVocabCloud();
-    ['vocab-word', 'vocab-phonetic', 'vocab-meaning', 'vocab-source'].forEach(id => document.getElementById(id).value = '');
-    renderVocabList();
-}
-async function saveStudyVocabCloud() {
-    if (!currentUser) return;
-    const clean = { vocab: studyVocab.map(v => { const o = { ...v }; delete o._cloudId; return o; }) };
-    if (studyVocab._cloudId) { await updateHealthRecord(studyVocab._cloudId, clean); }
-    else { const item = await pushHealthRecord('study_vocab', todayStr(), clean); if (item) studyVocab._cloudId = item.id; }
-    saveCache();
-}
-window.deleteVocabItem = async function(idx) {
-    if (!confirm('删除这个生词？')) return;
-    studyVocab.splice(idx, 1);
-    await saveStudyVocabCloud();
-    renderVocabList();
-};
-async function saveStudyGoal() {
-    studyGoal.targetScore = parseFloat(document.getElementById('goal-setting-score').value) || 7.0;
-    studyGoal.examDate = document.getElementById('goal-setting-date').value || '2027-06-01';
-    studyGoal.targetVocab = parseInt(document.getElementById('goal-setting-vocab').value, 10) || 7000;
-    if (!currentUser) return;
-    if (goalCloudId) { await updateHealthRecord(goalCloudId, { goal: studyGoal }); }
-    else { const item = await pushHealthRecord('study_goal', todayStr(), { goal: studyGoal }); if (item) goalCloudId = item.id; }
-    saveCache(); renderEnglishAll(); alert('目标已保存');
-}
-function loadStudyGoalToUI() {
-    const el1 = document.getElementById('goal-setting-score');
-    const el2 = document.getElementById('goal-setting-date');
-    const el3 = document.getElementById('goal-setting-vocab');
-    if (el1) el1.value = studyGoal.targetScore || 7.0;
-    if (el2) el2.value = studyGoal.examDate || '2027-06-01';
-    if (el3) el3.value = studyGoal.targetVocab || 7000;
-}
-
 /* ================= 渲染全部 ================= */
 function renderHealthAll() {
     renderHabits();
@@ -3093,7 +2652,6 @@ function renderAll() {
     renderHealthAll();
     renderNews();
     renderRssSources();
-    renderEnglishAll();
 }
 
 /* ================= 事件绑定 ================= */
@@ -3230,14 +2788,6 @@ document.getElementById('ai-clear-btn').onclick = async () => {
     saveCache(); renderAIAnalysis();
 };
 
-document.getElementById('momo-save-btn').onclick = saveMomo;
-document.getElementById('momo-cancel-btn').onclick = () => { document.getElementById('en-momo-card').style.display = 'none'; };
-document.getElementById('ls-course-select').onchange = renderLSCourseDetail;
-document.getElementById('vocab-add-btn').onclick = addVocabItem;
-document.getElementById('vocab-word').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
-document.getElementById('vocab-meaning').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
-document.getElementById('goal-save-btn').onclick = saveStudyGoal;
-
 /* ================= 启动 ================= */
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('expense-date').value = todayStr();
@@ -3272,8 +2822,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     updateDayBar();
     resetIpSession();
-    loadStudyGoalToUI();
-    renderEnglishAll();
     renderRhythm();
 
     try {
