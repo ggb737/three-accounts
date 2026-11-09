@@ -328,7 +328,7 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .rhythm-node.low-mode .rhythm-dot { border-color: #4a5c8a; }
 .rhythm-node.low-mode.done .rhythm-dot { background: #4a5c8a; border-color: #4a5c8a; box-shadow: 0 0 0 3px rgba(74,92,138,0.2); }
 
-.rhythm-content { flex: 1; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; padding: 12px; transition: all 0.2s; }
+.rhythm-content { flex: 1; background: #fafcfb; border: 1px solid #e8f2ee; border-radius: 10px; padding: 12px; transition: all 0.2s; position: relative; }
 .rhythm-node:hover .rhythm-content { background: #f0f7f4; }
 .rhythm-node.done .rhythm-content { background: #e8f5ee; border-color: #a8cec0; }
 .rhythm-time { font-size: 12px; font-weight: 700; color: #6b8a7e; margin-bottom: 4px; }
@@ -336,6 +336,9 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
 .rhythm-node.done .rhythm-task { color: #1a7a4a; }
 .rhythm-desc { font-size: 12px; color: #6b8a7e; margin-top: 4px; }
 .rhythm-node.done .rhythm-desc { opacity: 0.6; }
+
+.rhythm-edit-btn { position: absolute; right: 8px; top: 8px; background: #fff; border: 1px solid #d4e3dd; border-radius: 6px; padding: 2px 8px; font-size: 12px; cursor: pointer; z-index: 2; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-family: inherit; color: #1a5c47; }
+.rhythm-edit-btn:hover { background: #e8f2ee; }
 
 .rhythm-notes-box { margin-top: 24px; background: #f7fbf9; border-radius: 12px; padding: 16px; border: 1px dashed #c0d3cb; }
 .rhythm-notes-box label { display: block; font-size: 13px; font-weight: 600; color: #1a5c47; margin-bottom: 8px; }
@@ -487,15 +490,19 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <h2 style="margin-bottom:0;">⏱️ 今日节律时间轴</h2>
-                <button class="btn btn-ghost btn-sm" id="edit-rhythm-btn">✏️ 编辑节点</button>
+                <button class="btn btn-ghost btn-sm" id="rhythm-edit-toggle-btn">✏️ 编辑节点</button>
             </div>
-            <div style="font-size:12px;color:#6b8a7e;margin-bottom:16px;line-height:1.5;">
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:16px;line-height:1.5;" id="rhythm-hint">
                 点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。
             </div>
             <div class="rhythm-timeline" id="rhythm-timeline">
                 <!-- 由 JS 动态渲染 -->
+            </div>
+            <div id="rhythm-edit-bar" style="display:none; text-align:center; margin-top:12px;">
+                <button class="btn btn-ghost btn-sm" id="rhythm-add-node-btn">➕ 添加节点</button>
+                <button class="btn btn-ghost btn-sm" id="rhythm-reset-nodes-btn" style="margin-left:8px;">↺ 恢复默认</button>
             </div>
 
             <div class="rhythm-notes-box">
@@ -1022,18 +1029,6 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
-<!-- 编辑节律 Modal -->
-<div class="modal-overlay" id="edit-rhythm-modal">
-    <div class="modal-box" style="max-width:500px; max-height:80vh; overflow-y:auto;">
-        <div class="modal-title">⚙️ 编辑节律节点</div>
-        <div id="rhythm-edit-list"></div>
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-            <button class="btn btn-ghost" id="rhythm-edit-cancel">取消</button>
-            <button class="btn btn-primary" id="rhythm-edit-save">保存</button>
-        </div>
-    </div>
-</div>
-
 <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
         <div class="modal-title">⚙️ API 配置（DeepSeek）</div>
@@ -1094,6 +1089,28 @@ details.briefing-card.read .mark-read-label { background: #eee; color: #999; }
     </div>
 </div>
 
+<div class="modal-overlay" id="rhythm-edit-modal">
+    <div class="modal-box">
+        <div class="modal-title" id="rhythm-edit-modal-title">✏️ 编辑节律节点</div>
+        <div class="field"><label>时间</label><input type="text" id="rhythm-edit-time" placeholder="例如：6:30-7:00"></div>
+        <div class="field"><label>任务</label><input type="text" id="rhythm-edit-task" placeholder="正常模式下显示的任务"></div>
+        <div class="field"><label>描述</label><input type="text" id="rhythm-edit-desc" placeholder="可选"></div>
+        <div class="field"><label>低电量任务</label><input type="text" id="rhythm-edit-low-task" placeholder="留空则最低电量模式下不显示此节点"></div>
+        <div class="field"><label>低电量描述</label><input type="text" id="rhythm-edit-low-desc" placeholder="可选"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-ghost" id="rhythm-edit-up" style="flex:1;">↑ 上移</button>
+            <button class="btn btn-ghost" id="rhythm-edit-down" style="flex:1;">↓ 下移</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px dashed #d4e3dd;">
+            <button class="btn btn-danger" id="rhythm-edit-del">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost" id="rhythm-edit-cancel">取消</button>
+                <button class="btn btn-primary" id="rhythm-edit-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ================= Supabase ================= */
@@ -1110,7 +1127,6 @@ let realtimeChannel = null;
 let lastLocalChange = 0;
 let cloudApiConfigId = null;
 let cloudHabitsId = null;
-let rhythmConfigId = null;
 
 /* ================= 工具 ================= */
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -1525,8 +1541,9 @@ ${quotaBlock}
 {如有删减或候选不足，在此加一行说明}
 `;
 
-/* ================= 每日节律常量 ================= */
-const RHYTHM_NODES = [
+/* ================= 每日节律（可编辑） ================= */
+const RHYTHM_NODES_KEY = 'rhythm_nodes_v1';
+const DEFAULT_RHYTHM_NODES = [
     { key: 'wake', time: '6:30-7:00', task: '起床拉窗帘看自然光', desc: '哪怕 6:50 才起，看一眼也算成功', lowTask: '没起来（没关系，允许自己累）', lowDesc: '' },
     { key: 'plan', time: '8:00-8:30', task: '写今天必须完成的 3 件事', desc: '专注最重要的事', lowTask: '写 1 件事', lowDesc: '只写 1 件，哪怕只是“好好吃饭”' },
     { key: 'words', time: '10:00-10:30', task: '背单词（墨墨）', desc: '完成今日份额', lowTask: '没背单词（改听一首喜欢的歌）', lowDesc: '让大脑休息一下' },
@@ -1536,6 +1553,27 @@ const RHYTHM_NODES = [
     { key: 'shower', time: '回宿舍第一件事', task: '洗澡', desc: '把外面的疲惫洗掉', lowTask: '洗澡（必须洗）', lowDesc: '这是底线，洗完就舒服了' },
     { key: 'review', time: '22:00-22:30', task: '床上整理现象调查集', desc: '碎片整理', lowTask: '写一句“今天我很累，但活下来了”', lowDesc: '甚至可以只写一个句号' }
 ];
+
+let rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
+let rhythmConfigCloudId = null;
+let rhythmEditMode = false;
+let rhythmEditingIndex = -1;
+
+function genRhythmKey() {
+    return 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+}
+function saveRhythmNodesLocal() {
+    try { localStorage.setItem(RHYTHM_NODES_KEY, JSON.stringify(rhythmNodes)); } catch (e) {}
+}
+function loadRhythmNodesLocal() {
+    try {
+        const raw = localStorage.getItem(RHYTHM_NODES_KEY);
+        if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length) rhythmNodes = arr;
+        }
+    } catch (e) {}
+}
 
 /* ================= 数据 ================= */
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
@@ -1553,7 +1591,6 @@ let studyVocab = [];
 let readingDaily = [];
 let goalCloudId = null;
 let rhythmDaily = [];
-let rhythmNodesConfig = JSON.parse(JSON.stringify(RHYTHM_NODES));
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
@@ -1585,8 +1622,7 @@ function saveCache() {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
             uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData,
             momo: momoDaily, ls: lsProgress, vocab: studyVocab,
-            reading: readingDaily, goal: studyGoal, rhythm: rhythmDaily,
-            rhythmNodes: rhythmNodesConfig
+            reading: readingDaily, goal: studyGoal, rhythm: rhythmDaily
         }));
     } catch (e) {
         sorted.forEach((b, i) => { if (i >= 1) b.articles = []; });
@@ -1594,8 +1630,7 @@ function saveCache() {
             localStorage.setItem(CACHE_KEY, JSON.stringify({
                 uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData,
                 momo: momoDaily, ls: lsProgress, vocab: studyVocab,
-                reading: readingDaily, goal: studyGoal, rhythm: rhythmDaily,
-                rhythmNodes: rhythmNodesConfig
+                reading: readingDaily, goal: studyGoal, rhythm: rhythmDaily
             }));
         } catch (e2) { console.warn('localStorage 已满，缓存失败'); }
     }
@@ -1616,7 +1651,6 @@ function loadCache() {
         readingDaily = d.reading || readingDaily;
         if (d.goal) studyGoal = { ...studyGoal, ...d.goal };
         rhythmDaily = d.rhythm || rhythmDaily;
-        if (d.rhythmNodes) rhythmNodesConfig = d.rhythmNodes;
         return true;
     } catch (e) { return false; }
 }
@@ -1711,12 +1745,11 @@ async function loadAllFromCloud(silent = false) {
         studyVocab = [];
         goalCloudId = null;
         rhythmDaily = [];
-        rhythmNodesConfig = JSON.parse(JSON.stringify(RHYTHM_NODES));
+        rhythmConfigCloudId = null;
         let cloudFeeds = null;
 
         cloudApiConfigId = null;
         cloudHabitsId = null;
-        rhythmConfigId = null;
         loadHabitsLocal();
 
         (hd || []).forEach(r => {
@@ -1737,14 +1770,22 @@ async function loadAllFromCloud(silent = false) {
                 }
                 return;
             }
-            if (r.type === 'rhythm_config') {
-                rhythmConfigId = r.id;
-                if (Array.isArray(d.nodes)) rhythmNodesConfig = d.nodes;
-                return;
-            }
             if (r.type === 'momo_daily') { momoDaily.push({ ...d, _cloudId: r.id }); return; }
             if (r.type === 'reading_daily') { readingDaily.push({ ...d, _cloudId: r.id }); return; }
-            if (r.type === 'rhythm_daily') { rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'rhythm_config') {
+                rhythmConfigCloudId = r.id;
+                if (Array.isArray(d.nodes) && d.nodes.length) {
+                    rhythmNodes = d.nodes;
+                    saveRhythmNodesLocal();
+                }
+                return;
+            }
+            if (r.type === 'rhythm_daily') {
+                if (!rhythmDaily._cloudId) rhythmDaily._cloudId = {};
+                rhythmDaily._cloudId[r.date] = r.id;
+                rhythmDaily.push({ ...d, _cloudId: r.id });
+                return;
+            }
             if (r.type === 'ls_progress') {
                 if (d.progress) { lsProgress = d.progress; lsProgress._cloudId = r.id; }
                 return;
@@ -1910,22 +1951,6 @@ async function saveHabitsToCloud() {
     } catch (e) { console.warn('打卡配置同步云端失败', e); }
 }
 
-async function saveRhythmConfigToCloud() {
-    if (!currentUser) return;
-    try {
-        if (rhythmConfigId) {
-            await sb.from('health_data').update({ data: { nodes: rhythmNodesConfig }, ts: Date.now() }).eq('id', rhythmConfigId);
-        } else {
-            const { data, error } = await sb.from('health_data').insert({
-                user_id: currentUser.id, type: 'rhythm_config', date: todayStr(),
-                data: { nodes: rhythmNodesConfig }, ts: Date.now()
-            }).select().single();
-            if (data) rhythmConfigId = data.id;
-        }
-        lastLocalChange = Date.now();
-    } catch (e) { console.warn('节律配置同步云端失败', e); }
-}
-
 /* ================= 实时监听 ================= */
 function setupRealtime() {
     if (realtimeChannel) sb.removeChannel(realtimeChannel);
@@ -1967,6 +1992,99 @@ async function saveRhythmCloud() {
     saveCache();
 }
 
+async function saveRhythmNodesCloud() {
+    saveRhythmNodesLocal();
+    if (!currentUser) return;
+    const data = { nodes: rhythmNodes };
+    try {
+        if (rhythmConfigCloudId) {
+            await updateHealthRecord(rhythmConfigCloudId, data);
+        } else {
+            const item = await pushHealthRecord('rhythm_config', todayStr(), data);
+            if (item) rhythmConfigCloudId = item.id;
+        }
+    } catch (e) { console.warn('节律配置同步失败', e); }
+}
+
+function openRhythmEditModal(idx) {
+    rhythmEditingIndex = idx;
+    const node = rhythmNodes[idx];
+    if (!node) return;
+    document.getElementById('rhythm-edit-modal-title').textContent = '✏️ 编辑节律节点';
+    document.getElementById('rhythm-edit-time').value = node.time || '';
+    document.getElementById('rhythm-edit-task').value = node.task || '';
+    document.getElementById('rhythm-edit-desc').value = node.desc || '';
+    document.getElementById('rhythm-edit-low-task').value = node.lowTask || '';
+    document.getElementById('rhythm-edit-low-desc').value = node.lowDesc || '';
+    document.getElementById('rhythm-edit-del').disabled = false;
+    updateRhythmMoveButtons();
+    document.getElementById('rhythm-edit-modal').classList.add('active');
+}
+
+function openRhythmAddModal() {
+    rhythmEditingIndex = -1;
+    document.getElementById('rhythm-edit-modal-title').textContent = '➕ 添加节律节点';
+    ['rhythm-edit-time','rhythm-edit-task','rhythm-edit-desc','rhythm-edit-low-task','rhythm-edit-low-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('rhythm-edit-up').disabled = true;
+    document.getElementById('rhythm-edit-down').disabled = true;
+    document.getElementById('rhythm-edit-del').disabled = true;
+    document.getElementById('rhythm-edit-modal').classList.add('active');
+}
+
+function updateRhythmMoveButtons() {
+    if (rhythmEditingIndex < 0) return;
+    document.getElementById('rhythm-edit-up').disabled = rhythmEditingIndex === 0;
+    document.getElementById('rhythm-edit-down').disabled = rhythmEditingIndex === rhythmNodes.length - 1;
+    document.getElementById('rhythm-edit-del').disabled = rhythmNodes.length <= 1;
+}
+
+function moveRhythmNode(dir) {
+    if (rhythmEditingIndex < 0) return;
+    const target = rhythmEditingIndex + dir;
+    if (target < 0 || target >= rhythmNodes.length) return;
+    [rhythmNodes[rhythmEditingIndex], rhythmNodes[target]] = [rhythmNodes[target], rhythmNodes[rhythmEditingIndex]];
+    rhythmEditingIndex = target;
+    updateRhythmMoveButtons();
+}
+
+function saveRhythmNodeEdit() {
+    const time = document.getElementById('rhythm-edit-time').value.trim();
+    const task = document.getElementById('rhythm-edit-task').value.trim();
+    const desc = document.getElementById('rhythm-edit-desc').value.trim();
+    const lowTask = document.getElementById('rhythm-edit-low-task').value.trim();
+    const lowDesc = document.getElementById('rhythm-edit-low-desc').value.trim();
+    if (!time || !task) return alert('时间和任务必填');
+
+    if (rhythmEditingIndex >= 0) {
+        const node = rhythmNodes[rhythmEditingIndex];
+        node.time = time; node.task = task; node.desc = desc;
+        node.lowTask = lowTask; node.lowDesc = lowDesc;
+    } else {
+        rhythmNodes.push({ key: genRhythmKey(), time, task, desc, lowTask, lowDesc });
+    }
+    saveRhythmNodesCloud();
+    document.getElementById('rhythm-edit-modal').classList.remove('active');
+    rhythmEditingIndex = -1;
+    renderRhythm();
+}
+
+function deleteRhythmNode() {
+    if (rhythmEditingIndex < 0) return;
+    if (!confirm('删除这个节律节点？已有打卡记录不会删除，但节点将不再显示。')) return;
+    rhythmNodes.splice(rhythmEditingIndex, 1);
+    saveRhythmNodesCloud();
+    document.getElementById('rhythm-edit-modal').classList.remove('active');
+    rhythmEditingIndex = -1;
+    renderRhythm();
+}
+
+function resetRhythmNodes() {
+    if (!confirm('恢复默认的 8 个节律节点？当前自定义的节点会被覆盖。')) return;
+    rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
+    saveRhythmNodesCloud();
+    renderRhythm();
+}
+
 function renderRhythm() {
     const r = getTodayRhythm();
     const isLow = r.mode === 'low';
@@ -1989,20 +2107,21 @@ function renderRhythm() {
     }
 
     let html = '';
-    rhythmNodesConfig.forEach(node => {
+    rhythmNodes.forEach((node, idx) => {
         const done = r.done.includes(node.key);
-        const taskText = isLow ? node.lowTask : node.task;
-        const descText = isLow ? node.lowDesc : node.desc;
-        
-        if (isLow && !node.lowTask) return;
+        const hideInLow = isLow && !node.lowTask;
+        if (hideInLow && !rhythmEditMode) return;
+        const taskText = (isLow && node.lowTask) ? node.lowTask : node.task;
+        const descText = (isLow && node.lowTask) ? node.lowDesc : node.desc;
 
         html += `
-            <div class="rhythm-node ${done ? 'done' : ''} ${isLow ? 'low-mode' : ''}" data-key="${node.key}">
+            <div class="rhythm-node ${done ? 'done' : ''} ${isLow ? 'low-mode' : ''}" data-key="${node.key}" data-idx="${idx}">
                 <div class="rhythm-dot"></div>
                 <div class="rhythm-content">
                     <div class="rhythm-time">${esc(node.time)}</div>
                     <div class="rhythm-task">${done ? '✅ ' : ''}${esc(taskText)}</div>
                     ${descText ? `<div class="rhythm-desc">${esc(descText)}</div>` : ''}
+                    ${rhythmEditMode ? `<button class="rhythm-edit-btn" data-edit-idx="${idx}" title="编辑">✏️ 编辑</button>` : ''}
                 </div>
             </div>
         `;
@@ -2010,16 +2129,23 @@ function renderRhythm() {
     el.innerHTML = html;
 
     el.querySelectorAll('.rhythm-node').forEach(nodeEl => {
-        nodeEl.onclick = () => {
+        nodeEl.onclick = (e) => {
+            if (e.target.classList.contains('rhythm-edit-btn')) return;
+            const idx = parseInt(nodeEl.dataset.idx, 10);
+            if (rhythmEditMode) { openRhythmEditModal(idx); return; }
             const key = nodeEl.dataset.key;
-            const idx = r.done.indexOf(key);
-            if (idx > -1) {
-                r.done.splice(idx, 1);
-            } else {
-                r.done.push(key);
-            }
+            const i = r.done.indexOf(key);
+            if (i > -1) r.done.splice(i, 1);
+            else r.done.push(key);
             saveRhythmCloud();
             renderRhythm();
+        };
+    });
+
+    el.querySelectorAll('.rhythm-edit-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            openRhythmEditModal(parseInt(btn.dataset.editIdx, 10));
         };
     });
 
@@ -2040,36 +2166,28 @@ document.getElementById('rhythm-save-note-btn').onclick = () => {
     alert('记录已保存');
 };
 
-document.getElementById('edit-rhythm-btn').onclick = () => {
-    let html = '';
-    rhythmNodesConfig.forEach((node, i) => {
-        html += `<div style="background:#f7fbf9; padding:12px; margin-bottom:10px; border-radius:8px;">
-            <div class="field"><label>时间</label><input type="text" class="rhythm-edit-input" data-idx="${i}" data-field="time" value="${esc(node.time)}"></div>
-            <div class="field"><label>正常任务</label><input type="text" class="rhythm-edit-input" data-idx="${i}" data-field="task" value="${esc(node.task)}"></div>
-            <div class="field"><label>正常任务备注</label><input type="text" class="rhythm-edit-input" data-idx="${i}" data-field="desc" value="${esc(node.desc || '')}"></div>
-            <div class="field"><label>低电量替代任务（留空则不展示此项）</label><input type="text" class="rhythm-edit-input" data-idx="${i}" data-field="lowTask" value="${esc(node.lowTask || '')}"></div>
-            <div class="field"><label>低电量备注</label><input type="text" class="rhythm-edit-input" data-idx="${i}" data-field="lowDesc" value="${esc(node.lowDesc || '')}"></div>
-        </div>`;
-    });
-    document.getElementById('rhythm-edit-list').innerHTML = html;
-    document.getElementById('edit-rhythm-modal').classList.add('active');
-};
-
-document.getElementById('rhythm-edit-cancel').onclick = () => {
-    document.getElementById('edit-rhythm-modal').classList.remove('active');
-};
-
-document.getElementById('rhythm-edit-save').onclick = async () => {
-    document.querySelectorAll('.rhythm-edit-input').forEach(inp => {
-        const idx = parseInt(inp.dataset.idx, 10);
-        const field = inp.dataset.field;
-        rhythmNodesConfig[idx][field] = inp.value.trim();
-    });
-    await saveRhythmConfigToCloud();
-    saveCache();
-    document.getElementById('edit-rhythm-modal').classList.remove('active');
+document.getElementById('rhythm-edit-toggle-btn').onclick = () => {
+    rhythmEditMode = !rhythmEditMode;
+    const btn = document.getElementById('rhythm-edit-toggle-btn');
+    btn.textContent = rhythmEditMode ? '✅ 完成编辑' : '✏️ 编辑节点';
+    btn.classList.toggle('btn-primary', rhythmEditMode);
+    btn.classList.toggle('btn-ghost', !rhythmEditMode);
+    document.getElementById('rhythm-edit-bar').style.display = rhythmEditMode ? 'block' : 'none';
+    document.getElementById('rhythm-hint').textContent = rhythmEditMode
+        ? '编辑模式：点击节点修改内容，或点击下方按钮添加/恢复节点。'
+        : '点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。';
     renderRhythm();
 };
+document.getElementById('rhythm-add-node-btn').onclick = openRhythmAddModal;
+document.getElementById('rhythm-reset-nodes-btn').onclick = resetRhythmNodes;
+document.getElementById('rhythm-edit-up').onclick = () => moveRhythmNode(-1);
+document.getElementById('rhythm-edit-down').onclick = () => moveRhythmNode(1);
+document.getElementById('rhythm-edit-save').onclick = saveRhythmNodeEdit;
+document.getElementById('rhythm-edit-cancel').onclick = () => {
+    document.getElementById('rhythm-edit-modal').classList.remove('active');
+    rhythmEditingIndex = -1;
+};
+document.getElementById('rhythm-edit-del').onclick = deleteRhythmNode;
 
 /* ================= 微习惯打卡 ================= */
 function calcStreak(habit) {
@@ -3868,4 +3986,1002 @@ async function generateBriefing() {
     const todayLabel = new Date().toISOString().slice(0, 10);
     let briefingText = '';
     try {
-        briefingText = await stage3
+        briefingText = await stage3WriteBriefing(quotaResult.selected, scored, todayLabel);
+    } catch (e) {
+        console.error(e);
+        statusEl.textContent = '⚠️ 阶段三失败：' + e.message;
+        setBriefingStageStatus(
+            `<div class="stage-line"><span class="stage-name">阶段一</span><span class="stage-val">${scored.length} → ${kept.length} 通过</span></div>` +
+            `<div class="stage-line"><span class="stage-name">阶段二</span><span class="stage-val">${groups.length} 组</span></div>` +
+            `<div class="stage-line"><span class="stage-name">配额</span><span class="stage-val">选中 ${quotaResult.selected.length} 条</span></div>` +
+            `<div class="stage-line warn"><span class="stage-name">阶段三</span><span class="stage-val">失败：${esc(e.message)}</span></div>`
+        );
+    }
+
+    if (briefingText) {
+        const articlePayload = dedup.slice(0, 40).map(a => ({
+            title: a.title, link: a.link, source: a.source, category: a.category, ts: a.ts
+        }));
+
+        const dataObj = {
+            content: briefingText,
+            articles: articlePayload,
+            feedCount: results.filter(r=>r.items.length>0).length,
+            articleCount: all.length,
+            errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message),
+            isRead: false
+        };
+
+        let inserted = null;
+        try {
+            inserted = await pushHealthRecord('briefing', currentDay, dataObj);
+        } catch (fetchError) {
+            console.warn('[简报] 云端保存失败，尝试压缩重试：', fetchError.message);
+            const lightDataObj = { ...dataObj };
+            delete lightDataObj.articles;
+            try {
+                inserted = await pushHealthRecord('briefing', currentDay, lightDataObj);
+                if (inserted) inserted.articles = articlePayload;
+            } catch (retryError) {
+                console.error('[简报] 压缩重试仍失败：', retryError.message);
+            }
+        }
+
+        if (!inserted) {
+            const localRecord = { id: 'local_' + Date.now(), date: currentDay, ts: Date.now(), ...dataObj };
+            if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
+            newsData.briefings.unshift(localRecord);
+            saveCache();
+            renderBriefings();
+            statusEl.textContent = `⚠️ 简报已保存在本地（云端同步失败）。`;
+        } else {
+            if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
+            if (!newsData.briefings.find(b => b.id === inserted.id)) {
+                newsData.briefings.unshift({ ...inserted, ...dataObj }); 
+            }
+            saveCache();
+            renderBriefings();
+            statusEl.textContent = `✅ 简报生成成功！${all.length} 篇原文 → 选中 ${quotaResult.selected.length} 条事件。`;
+        }
+
+        const catCounts = {};
+        BRIEFING_CATEGORIES.forEach(c => { catCounts[c] = 0; });
+        quotaResult.selected.forEach(g => { if (catCounts[g.category] !== undefined) catCounts[g.category]++; });
+        const catLine = BRIEFING_CATEGORIES
+            .map(c => `${c} ${catCounts[c]}`)
+            .filter(s => !s.endsWith(' 0'))
+            .join(' · ');
+
+        setBriefingStageStatus(
+            `<div class="stage-line"><span class="stage-name">阶段一 · 评分+分类</span><span class="stage-val">${scored.length} 篇 → ${kept.length} 通过</span></div>` +
+            `<div class="stage-line"><span class="stage-name">阶段二 · 类别内聚类</span><span class="stage-val">${groups.length} 组</span></div>` +
+            `<div class="stage-line"><span class="stage-name">代码层 · 配额</span><span class="stage-val">选中 ${quotaResult.selected.length} 条（${catLine}）</span></div>` +
+            `<div class="stage-line"><span class="stage-name">阶段三 · 撰写</span><span class="stage-val">${briefingText.length} 字</span></div>` +
+            (quotaResult.warning ? `<div class="stage-line warn"><span class="stage-name">提示</span><span class="stage-val">${esc(quotaResult.warning)}</span></div>` : '')
+        );
+
+        detailsEl.open = false;
+        setTimeout(() => { const s = document.getElementById('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 5000);
+    }
+
+    renderFetchResult(all.slice(0, 60), errors, results);
+    btn.disabled = false;
+    btn.textContent = '🚀 抓取并生成简报（四层）';
+}
+
+/* ================= 简报存档 ================= */
+function renderBriefings() {
+    const el = document.getElementById('briefing-history');
+    if (!el) return;
+    const list = [...(newsData.briefings || [])].sort((a, b) => {
+        const aRead = a.isRead ? 1 : 0;
+        const bRead = b.isRead ? 1 : 0;
+        if (aRead !== bRead) return aRead - bRead;
+        return (b.ts || 0) - (a.ts || 0);
+    });
+    if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有生成过简报</div>'; return; }
+
+    let html = '';
+    list.forEach(b => {
+        const arts = b.articles || [];
+        const isRead = b.isRead === true;
+        const isToday = b.date === currentDay;
+        const openAttr = isToday ? 'open' : '';
+
+        const artHtml = arts.length ? `<details class="briefing-arts">
+            <summary>📎 本次抓取的 ${arts.length} 篇文章（可直接点开原文）</summary>
+            <div style="margin-top:6px;">
+                ${arts.map(a => {
+                    const cat = NEWS_CATEGORY[a.category] || NEWS_CATEGORY.other;
+                    return `<div class="briefing-art">
+                        <span class="tag tag-neutral" style="font-size:10px;">${cat.icon}</span>
+                        ${a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a>` : esc(a.title)}
+                        <span style="color:#a0bdb0;">· ${esc(a.source || '')}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        </details>` : '';
+
+        let errHtml = '';
+        if (b.errors && b.errors.length) {
+            errHtml = `<div class="briefing-errors">抓取失败：${b.errors.map(esc).join('；')}</div>`;
+        }
+
+        html += `<details class="briefing-card ${isRead ? 'read' : ''}" ${openAttr}>
+            <summary class="briefing-head">
+                <div style="min-width:0;">
+                    <div class="briefing-title">
+                        ${esc(b.date)} 简报
+                        ${isToday ? '<span class="tag tag-good" style="font-size:10px;margin-left:6px;vertical-align:middle;">今天</span>' : ''}
+                    </div>
+                    <div class="briefing-meta">
+                        ${b.feedCount || 0} 个源 · ${b.articleCount || arts.length} 篇 · ${new Date(b.ts || Date.now()).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <label class="mark-read-label" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="mark-read-cb" data-id="${b.id}" ${isRead ? 'checked' : ''}>
+                        已读
+                    </label>
+                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}" onclick="event.stopPropagation()">✕</button>
+                </div>
+            </summary>
+            <div class="briefing-content-wrap">
+                <div class="briefing-body">${md2html(b.content || '')}</div>
+                ${errHtml}
+                ${artHtml}
+            </div>
+        </details>`;
+    });
+    el.innerHTML = html;
+
+    el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async (e) => {
+        e.stopPropagation();
+        if (!confirm('删除这份简报？')) return;
+        if (String(btn.dataset.delBriefing).startsWith('local_')) {
+            newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing));
+            saveCache(); renderBriefings();
+        } else {
+            await deleteHealthRecord(btn.dataset.delBriefing);
+            newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing));
+            saveCache(); renderBriefings();
+        }
+    });
+
+    el.querySelectorAll('.mark-read-cb').forEach(cb => {
+        cb.onclick = (e) => e.stopPropagation();
+        cb.onchange = async () => {
+            const id = cb.dataset.id;
+            const isRead = cb.checked;
+            const item = newsData.briefings.find(x => String(x.id) === String(id));
+            if (!item) return;
+            item.isRead = isRead;
+            saveCache();
+            renderBriefings();
+            if (String(id).startsWith('local_')) return;
+            const dataObj = { ...item };
+            delete dataObj.id; delete dataObj.date; delete dataObj.ts;
+            await updateHealthRecord(id, dataObj);
+        };
+    });
+}
+
+/* ================= 每日世事（手动） ================= */
+async function addNewsItem() {
+    const cat = document.getElementById('news-category').value;
+    const title = document.getElementById('news-title').value.trim();
+    const content = document.getElementById('news-content').value.trim();
+    if (!title) return alert('请填写新闻标题');
+    const dataObj = { category: cat, title, content };
+    const item = await pushHealthRecord('news_item', currentDay, dataObj);
+    if (item) {
+        newsData.items.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+        saveCache(); renderNews();
+        document.getElementById('news-title').value = '';
+        document.getElementById('news-content').value = '';
+    }
+}
+async function addNewsSummary() {
+    const summary = document.getElementById('news-summary').value.trim();
+    if (!summary) return alert('请填写总结内容');
+    const dataObj = { content: summary };
+    const existing = newsData.summaries.find(x => x.date === currentDay);
+    if (existing && !confirm('今天已经有总结了，是否覆盖？')) return;
+    const item = await pushHealthRecord('news_summary', currentDay, dataObj);
+    if (item) {
+        newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay);
+        newsData.summaries.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+        saveCache(); renderNews();
+        document.getElementById('news-summary').value = '';
+    }
+}
+
+function renderNews() {
+    const itemEl = document.getElementById('news-history');
+    const todayItems = newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
+    if (!todayItems.length) {
+        itemEl.innerHTML = '<div class="empty-hint">这一天还没有记录世事</div>';
+    } else {
+        let html = '';
+        todayItems.forEach(n => {
+            const catInfo = NEWS_CATEGORY[n.category] || NEWS_CATEGORY.other;
+            let displayContent = esc(n.content).replace(/\n/g, '<br>');
+            const urlRegex = /(https?:\/\/[^\s<]+)/g;
+            displayContent = displayContent.replace(urlRegex, '<a href="$1" target="_blank" style="color:#2d7d5a; word-break:break-all;">$1</a>');
+            html += `<div class="news-item">
+                <div class="news-header">
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span class="tag tag-neutral" style="white-space:nowrap; margin-top:2px;">${catInfo.icon} ${catInfo.label}</span>
+                        <span class="news-title">${esc(n.title)}</span>
+                    </div>
+                    <button class="btn btn-danger btn-sm" data-del-news="${n.id}">✕</button>
+                </div>
+                ${n.content ? `<div class="news-content">${displayContent}</div>` : ''}
+            </div>`;
+        });
+        itemEl.innerHTML = html;
+        itemEl.querySelectorAll('[data-del-news]').forEach(b => b.onclick = async () => {
+            await deleteHealthRecord(b.dataset.delNews);
+            newsData.items = newsData.items.filter(x => String(x.id) !== String(b.dataset.delNews));
+            saveCache(); renderNews();
+        });
+    }
+
+    const summaryEl = document.getElementById('news-summary-history');
+    const todaySummary = newsData.summaries.find(x => x.date === currentDay);
+    if (!todaySummary) {
+        summaryEl.innerHTML = '<div class="empty-hint">这一天还没有写总结</div>';
+        document.getElementById('news-summary').value = '';
+    } else {
+        summaryEl.innerHTML = `<div style="background:#fdf6f6; padding:12px; border-radius:8px; position:relative;">
+            <div style="font-size:13px; color:#3a5c50; line-height:1.6; padding-right:30px;">${esc(todaySummary.content).replace(/\n/g, '<br>')}</div>
+            <button class="btn btn-danger btn-sm" style="position:absolute; top:8px; right:8px;" data-del-summary="${todaySummary.id}">✕</button>
+        </div>`;
+        document.getElementById('news-summary').value = todaySummary.content;
+        summaryEl.querySelector('[data-del-summary]').onclick = async (e) => {
+            const id = e.target.dataset.delSummary;
+            await deleteHealthRecord(id);
+            newsData.summaries = newsData.summaries.filter(x => String(x.id) !== String(id));
+            saveCache(); renderNews();
+        };
+    }
+
+    renderBriefings();
+}
+
+/* ================= 学习系统 ================= */
+function calcVocabEstimate() { return momoDaily.reduce((s, m) => s + (m.newWords || 0), 0); }
+function estimateIELTS(vocab) {
+    if (vocab < 1500) return '4.0';
+    if (vocab < 3000) return '4.5';
+    if (vocab < 4500) return '5.0';
+    if (vocab < 5500) return '5.5';
+    if (vocab < 7000) return '6.0';
+    if (vocab < 8500) return '6.5';
+    return '7.0+';
+}
+function calcDaysLeft() {
+    if (!studyGoal.examDate) return null;
+    const exam = new Date(studyGoal.examDate + 'T00:00:00');
+    const now = new Date(todayStr() + 'T00:00:00');
+    return Math.round((exam - now) / (1000 * 60 * 60 * 24));
+}
+function getTodayMomo() { return momoDaily.find(x => x.date === todayStr()) || null; }
+function getTodayReading() { return readingDaily.find(x => x.date === todayStr()) || null; }
+function lsDoneToday() {
+    return Object.keys(lsProgress).some(k => {
+        if (k === '_cloudId') return false;
+        const p = lsProgress[k];
+        return p && p.history && p.history.some(h => h.date === todayStr());
+    });
+}
+function getStudyWeekDays() {
+    const base = new Date(todayStr() + 'T00:00:00');
+    const day = base.getDay() || 7;
+    const mon = new Date(base); mon.setDate(base.getDate() - day + 1);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(mon); d.setDate(mon.getDate() + i);
+        days.push(fmtDay(d));
+    }
+    return days;
+}
+function isStudyDayCompleted(date) {
+    if (momoDaily.some(m => m.date === date)) return true;
+    if (readingDaily.some(r => r.date === date)) return true;
+    for (const k of Object.keys(lsProgress)) {
+        if (k === '_cloudId') continue;
+        const p = lsProgress[k];
+        if (p && p.history && p.history.some(h => h.date === date)) return true;
+    }
+    return false;
+}
+function calcWeekProgress() {
+    const days = getStudyWeekDays();
+    const today = todayStr();
+    const done = days.filter(d => d <= today && isStudyDayCompleted(d)).length;
+    return { done, target: 5, days };
+}
+function getStudyStage(vocab) {
+    if (vocab < 3000) return 'basic';
+    if (vocab < 5500) return 'intermediate';
+    if (vocab < 7000) return 'advanced';
+    return 'maintain';
+}
+function generateTodayTasks() {
+    const vocab = calcVocabEstimate();
+    const stage = getStudyStage(vocab);
+    const tasks = [];
+    tasks.push({
+        key: 'momo', icon: '📱', title: '墨墨背单词',
+        sub: stage === 'basic' ? '新词 20 + 复习（约 15 分钟）'
+           : stage === 'intermediate' ? '新词 15 + 复习（约 15 分钟）'
+           : stage === 'advanced' ? '新词 15 + 复习（约 15 分钟）'
+           : '新词 10 + 复习（维持）',
+        done: !!getTodayMomo()
+    });
+    if (stage !== 'maintain') {
+        tasks.push({
+            key: 'ls', icon: '🎧', title: '赖世雄一课',
+            sub: stage === 'basic' ? '入门 / 音标为主（约 20 分钟）'
+               : stage === 'intermediate' ? '初级 / 中级推进（约 20 分钟）'
+               : '中级 / 高级 + 语法（约 20 分钟）',
+            done: lsDoneToday()
+        });
+    }
+    if (stage === 'intermediate' || stage === 'advanced' || stage === 'maintain') {
+        tasks.push({
+            key: 'reading', icon: '📖', title: '外刊精读',
+            sub: stage === 'intermediate' ? '读一段 B1 短文 + 答 1 题（约 10 分钟）'
+               : stage === 'advanced' ? '读一段 B2 短文 + 答 1 题 + 记生词（约 15 分钟）'
+               : '读一篇 B2 / 外刊长文 + 抓主旨',
+            done: !!getTodayReading()
+        });
+    }
+    return tasks;
+}
+function renderGoalCard() {
+    const vocab = calcVocabEstimate();
+    const target = studyGoal.targetVocab || 7000;
+    document.getElementById('goal-target-score').textContent = (studyGoal.targetScore || 7.0).toFixed(1);
+    document.getElementById('goal-current-score').textContent = estimateIELTS(vocab);
+    const days = calcDaysLeft();
+    document.getElementById('goal-days-left').innerHTML = days !== null ? `${days}<small>天</small>` : '—';
+    document.getElementById('goal-vocab-cur').textContent = vocab;
+    document.getElementById('goal-vocab-target').textContent = target;
+    const gap = Math.max(0, target - vocab);
+    document.getElementById('goal-vocab-gap').textContent = gap > 0 ? `还差 ${gap} 词` : '🎉 已达成';
+    document.getElementById('goal-vocab-fill').style.width = Math.min(100, (vocab / target * 100)) + '%';
+    const week = calcWeekProgress();
+    document.getElementById('goal-week-done').textContent = week.done;
+    const dotsEl = document.getElementById('goal-week-dots');
+    const today = todayStr();
+    dotsEl.innerHTML = week.days.map((d, i) => {
+        const done = isStudyDayCompleted(d);
+        const isToday = d === today;
+        return `<div class="g-dot ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${['一','二','三','四','五','六','日'][i]}</div>`;
+    }).join('');
+}
+function renderTodayTasks() {
+    const tasks = generateTodayTasks();
+    const el = document.getElementById('study-today-tasks');
+    if (!tasks.length) { el.innerHTML = '<div class="empty-hint">今日无任务</div>'; return; }
+    el.innerHTML = tasks.map(t => `
+        <div class="study-task ${t.done ? 'done' : ''}">
+            <div class="t-ico">${t.icon}</div>
+            <div class="t-info">
+                <div class="t-title">${t.done ? '✅ ' : ''}${esc(t.title)}</div>
+                <div class="t-sub">${esc(t.sub)}</div>
+            </div>
+            <button class="t-btn" data-task-key="${t.key}" ${t.done ? 'disabled' : ''}>${t.done ? '完成' : '开始'}</button>
+        </div>
+    `).join('');
+    el.querySelectorAll('[data-task-key]').forEach(btn => {
+        btn.onclick = () => {
+            const key = btn.dataset.taskKey;
+            if (key === 'momo') window.openMomoCard();
+            else if (key === 'ls') window.openLSCard();
+            else if (key === 'reading') window.openReadingCard();
+        };
+    });
+}
+function renderMilestones() {
+    const vocab = calcVocabEstimate();
+    const el = document.getElementById('study-milestones');
+    el.innerHTML = IELTS_MILESTONES.map(m => {
+        const reached = vocab >= m.vocab;
+        const near = !reached && (m.vocab - vocab) <= 500;
+        return `<div class="study-milestone ${reached ? 'reached' : ''} ${near ? 'near' : ''}">
+            <div class="m-dot"></div>
+            <div class="m-info">
+                <div class="m-lbl">${m.label}（${m.vocab} 词）</div>
+                <div class="m-reading">${m.reading}</div>
+            </div>
+            ${reached ? '<span style="color:#2d7d5a;font-size:12px;">✓</span>' : near ? '<span style="color:#e8a838;font-size:11px;">快到了</span>' : ''}
+        </div>`;
+    }).join('');
+}
+function renderENStats() {
+    const vocab = calcVocabEstimate();
+    const badge = document.getElementById('en-module-badge');
+    if (badge) {
+        const gap = Math.max(0, (studyGoal.targetVocab || 7000) - vocab);
+        badge.textContent = gap > 0 ? `词汇 ${vocab} / 还差 ${gap}` : '🎉 目标达成';
+    }
+}
+function renderENHistory() {
+    const el = document.getElementById('en-daily-history');
+    const allDates = new Set();
+    momoDaily.forEach(m => allDates.add(m.date));
+    readingDaily.forEach(r => allDates.add(r.date));
+    Object.keys(lsProgress).forEach(k => {
+        if (k === '_cloudId') return;
+        const p = lsProgress[k];
+        if (p && p.history) p.history.forEach(h => allDates.add(h.date));
+    });
+    const sorted = Array.from(allDates).filter(isValidDay).sort((a, b) => b.localeCompare(a));
+    if (!sorted.length) { el.innerHTML = '<div class="empty-hint">还没有学习记录</div>'; return; }
+    el.innerHTML = sorted.slice(0, 30).map(date => {
+        const m = momoDaily.find(x => x.date === date);
+        const r = readingDaily.find(x => x.date === date);
+        const lsList = [];
+        Object.keys(lsProgress).forEach(k => {
+            if (k === '_cloudId') return;
+            const p = lsProgress[k];
+            if (p && p.history) {
+                p.history.filter(h => h.date === date).forEach(h => {
+                    lsList.push(`${LS_COURSES[k].icon} ${LS_COURSES[k].name} 第 ${h.lesson} 讲`);
+                });
+            }
+        });
+        return `<div class="list-item">
+            <div class="main">
+                <div style="font-weight:600;color:#1a5c47;">${esc(date)}</div>
+                ${m ? `<div class="meta">📱 墨墨：新词 ${m.newWords || 0} · 复习 ${m.reviewWords || 0} · ${m.minutes || 0} 分钟</div>` : ''}
+                ${lsList.length ? `<div class="meta">${lsList.map(esc).join('；')}</div>` : ''}
+                ${r ? `<div class="meta">📖 外刊精读：${esc(READING_POOL[r.passageIdx]?.title || '')}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+function renderVocabList() {
+    const el = document.getElementById('vocab-list');
+    const list = [...studyVocab].filter(v => v && v.word).sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''));
+    if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有记录生词</div>'; return; }
+    el.innerHTML = list.map((v, i) => `
+        <div class="en-vocab-item">
+            <div>
+                <span class="w">${esc(v.word)}</span>
+                ${v.phonetic ? `<span style="font-size:11px;color:#6b8a7e;font-family:monospace;margin-left:4px;">${esc(v.phonetic)}</span>` : ''}
+                <span class="m">${esc(v.meaning || '')}</span>
+                ${v.source ? `<div class="m" style="margin-left:0;font-size:11px;color:#a0bdb0;">${esc(v.source)}</div>` : ''}
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteVocabItem(${i})">✕</button>
+        </div>
+    `).join('');
+}
+function renderEnglishAll() {
+    renderGoalCard();
+    renderTodayTasks();
+    renderMilestones();
+    renderENStats();
+    renderENHistory();
+    renderVocabList();
+    loadStudyGoalToUI();
+}
+
+window.openMomoCard = function() {
+    document.getElementById('en-momo-card').style.display = '';
+    document.getElementById('en-ls-card').style.display = 'none';
+    document.getElementById('en-reading-card').style.display = 'none';
+    const m = getTodayMomo();
+    if (m) {
+        document.getElementById('momo-new').value = m.newWords || '';
+        document.getElementById('momo-review').value = m.reviewWords || '';
+        document.getElementById('momo-min').value = m.minutes || '';
+        document.getElementById('momo-note').value = m.note || '';
+    } else {
+        document.getElementById('momo-new').value = '';
+        document.getElementById('momo-review').value = '';
+        document.getElementById('momo-min').value = 15;
+        document.getElementById('momo-note').value = '';
+    }
+};
+
+async function saveMomo() {
+    const newWords = parseInt(document.getElementById('momo-new').value, 10) || 0;
+    const reviewWords = parseInt(document.getElementById('momo-review').value, 10) || 0;
+    const minutes = parseInt(document.getElementById('momo-min').value, 10) || 0;
+    const note = document.getElementById('momo-note').value.trim();
+    if (newWords === 0 && reviewWords === 0) {
+        if (!confirm('新词和复习数都是 0，确定保存吗？')) return;
+    }
+    const record = { date: todayStr(), newWords, reviewWords, minutes, note };
+    const idx = momoDaily.findIndex(x => x.date === record.date);
+    if (idx >= 0) {
+        const existing = momoDaily[idx];
+        if (existing._cloudId) await updateHealthRecord(existing._cloudId, record);
+        momoDaily[idx] = { ...existing, ...record };
+    } else {
+        const item = await pushHealthRecord('momo_daily', record.date, record);
+        if (item) momoDaily.push({ ...record, _cloudId: item.id });
+    }
+    saveCache();
+    document.getElementById('en-momo-card').style.display = 'none';
+    renderEnglishAll();
+}
+
+window.openLSCard = function() {
+    document.getElementById('en-momo-card').style.display = 'none';
+    document.getElementById('en-ls-card').style.display = '';
+    document.getElementById('en-reading-card').style.display = 'none';
+    renderLSCourseSelect();
+};
+
+function renderLSCourseSelect() {
+    const sel = document.getElementById('ls-course-select');
+    const currentVal = sel.value;
+    sel.innerHTML = Object.keys(LS_COURSES).map(k => {
+        const p = lsProgress[k] || { current: 0 };
+        const c = LS_COURSES[k];
+        return `<option value="${k}" ${currentVal === k ? 'selected' : ''}>${c.icon} ${c.name} (${p.current || 0}/${c.total})</option>`;
+    }).join('');
+    if (!currentVal) sel.value = Object.keys(LS_COURSES)[0];
+    renderLSCourseDetail();
+}
+
+function renderLSCourseDetail() {
+    const key = document.getElementById('ls-course-select').value;
+    if (!key) return;
+    const course = LS_COURSES[key];
+    const p = lsProgress[key] || { current: 0, total: course.total, history: [], note: '' };
+    const pct = Math.min(100, Math.round((p.current || 0) / course.total * 100));
+    const nextLesson = Math.min((p.current || 0) + 1, course.total);
+    const finished = (p.current || 0) >= course.total;
+
+    const el = document.getElementById('ls-course-detail');
+    el.innerHTML = `
+        <div style="background:#f7fbf9;border-radius:10px;padding:14px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:13px;color:#1a5c47;font-weight:600;">${esc(course.name)}</span>
+                <span style="font-size:12px;color:#6b8a7e;">${p.current || 0} / ${course.total} 讲</span>
+            </div>
+            <div class="bar" style="height:6px;background:#e0eae6;border-radius:3px;overflow:hidden;"><div class="bar-fill" style="width:${pct}%;height:100%;background:#2d7d5a;border-radius:3px;"></div></div>
+            <div style="font-size:12px;color:#6b8a7e;margin-top:6px;">${finished ? '🎉 全部完成' : `下一讲：第 ${nextLesson} 讲`}</div>
+        </div>
+        ${finished ? '' : `<button class="btn btn-primary" id="ls-finish-next-btn" style="width:100%;margin-bottom:12px;">✅ 完成第 ${nextLesson} 讲</button>`}
+        <div class="field">
+            <label>本课程笔记（可选）</label>
+            <textarea id="ls-note" placeholder="例如：第 5 讲重点：/θ/ 和 /ð/ 的区别…" style="min-height:60px;">${esc(p.note || '')}</textarea>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="ls-save-note-btn">保存笔记</button>
+        <div style="margin-top:16px;">
+            <div style="font-size:12px;color:#6b8a7e;margin-bottom:6px;">最近记录：</div>
+            ${(p.history || []).slice(-5).reverse().map(h => `<div style="font-size:12px;color:#3a5c50;padding:4px 0;">· ${esc(h.date)} 完成第 ${h.lesson} 讲</div>`).join('') || '<div style="font-size:12px;color:#a0bdb0;">暂无</div>'}
+        </div>
+    `;
+
+    if (!finished) {
+        document.getElementById('ls-finish-next-btn').onclick = async () => {
+            if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
+            const p2 = lsProgress[key];
+            p2.current = Math.min((p2.current || 0) + 1, course.total);
+            if (!p2.history) p2.history = [];
+            p2.history.push({ date: todayStr(), lesson: p2.current });
+            await saveLSProgressCloud();
+            renderEnglishAll();
+            renderLSCourseSelect();
+        };
+    }
+    document.getElementById('ls-save-note-btn').onclick = async () => {
+        const note = document.getElementById('ls-note').value.trim();
+        if (!lsProgress[key]) lsProgress[key] = { current: 0, total: course.total, history: [], note: '' };
+        lsProgress[key].note = note;
+        await saveLSProgressCloud();
+        alert('笔记已保存');
+    };
+}
+
+async function saveLSProgressCloud() {
+    if (!currentUser) return;
+    const clean = { progress: {} };
+    Object.keys(lsProgress).forEach(k => {
+        if (k !== '_cloudId') clean.progress[k] = lsProgress[k];
+    });
+    if (lsProgress._cloudId) {
+        await updateHealthRecord(lsProgress._cloudId, clean);
+    } else {
+        const item = await pushHealthRecord('ls_progress', todayStr(), clean);
+        if (item) lsProgress._cloudId = item.id;
+    }
+    saveCache();
+}
+
+window.openReadingCard = function() {
+    document.getElementById('en-momo-card').style.display = 'none';
+    document.getElementById('en-ls-card').style.display = 'none';
+    document.getElementById('en-reading-card').style.display = '';
+    renderReadingPassage();
+};
+
+function renderReadingPassage() {
+    const el = document.getElementById('study-reading-area');
+    const existing = getTodayReading();
+    const readCount = readingDaily.length;
+    const idx = existing ? existing.passageIdx : (readCount % READING_POOL.length);
+    const p = READING_POOL[idx];
+
+    if (existing && existing.done) {
+        el.innerHTML = `<div class="study-reading-box">
+            <div style="color:#1a7a4a;font-weight:600;margin-bottom:8px;">✅ 今天已完成精读</div>
+            <div class="study-reading-title">${esc(p.title)}</div>
+            <div class="study-reading-body">${esc(p.body)}</div>
+            <div style="margin-top:12px;font-size:12px;color:#6b8a7e;">答案：${esc(p.opts[p.ans])}</div>
+        </div>`;
+        return;
+    }
+
+    el.innerHTML = `<div class="study-reading-box">
+        <div style="font-size:11px;color:#a0bdb0;margin-bottom:4px;">Level ${p.level}</div>
+        <div class="study-reading-title">${esc(p.title)}</div>
+        <div class="study-reading-body">${esc(p.body)}</div>
+        <div class="study-reading-q">${esc(p.q)}</div>
+        <div class="study-reading-opts">
+            ${p.opts.map((opt, oi) => `<div class="study-reading-opt" data-oi="${oi}">${esc(opt)}</div>`).join('')}
+        </div>
+        <div id="study-reading-result" style="margin-top:12px;font-size:13px;"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px;" id="study-reading-finish-btn">标记完成精读</button>
+    </div>`;
+
+    el.querySelectorAll('.study-reading-opt').forEach(opt => {
+        opt.onclick = () => {
+            const oi = parseInt(opt.dataset.oi, 10);
+            el.querySelectorAll('.study-reading-opt').forEach(o => o.classList.remove('correct', 'wrong'));
+            el.querySelectorAll('.study-reading-opt').forEach((o, i) => {
+                if (i === p.ans) o.classList.add('correct');
+                else if (i === oi && i !== p.ans) o.classList.add('wrong');
+            });
+            document.getElementById('study-reading-result').innerHTML = oi === p.ans
+                ? '<span style="color:#1a7a4a;">✅ 正确！</span>'
+                : `<span style="color:#c0392b;">❌ 正确答案：${esc(p.opts[p.ans])}</span>`;
+        };
+    });
+
+    document.getElementById('study-reading-finish-btn').onclick = () => finishReading(idx);
+}
+
+async function finishReading(passageIdx) {
+    const record = { date: todayStr(), passageIdx, done: true };
+    const idx = readingDaily.findIndex(x => x.date === record.date);
+    if (idx >= 0) {
+        const existing = readingDaily[idx];
+        if (existing._cloudId) await updateHealthRecord(existing._cloudId, record);
+        readingDaily[idx] = { ...existing, ...record };
+    } else {
+        const item = await pushHealthRecord('reading_daily', record.date, record);
+        if (item) readingDaily.push({ ...record, _cloudId: item.id });
+    }
+    saveCache();
+    document.getElementById('en-reading-card').style.display = 'none';
+    renderEnglishAll();
+}
+
+async function addVocabItem() {
+    const word = document.getElementById('vocab-word').value.trim();
+    const phonetic = document.getElementById('vocab-phonetic').value.trim();
+    const meaning = document.getElementById('vocab-meaning').value.trim();
+    const source = document.getElementById('vocab-source').value.trim();
+    if (!word || !meaning) return alert('单词和释义必填');
+    if (studyVocab.some(v => v.word === word)) return alert('这个单词已经在生词本里了');
+    studyVocab.push({ word, phonetic, meaning, source, addedAt: todayStr() });
+    await saveStudyVocabCloud();
+    ['vocab-word', 'vocab-phonetic', 'vocab-meaning', 'vocab-source'].forEach(id => document.getElementById(id).value = '');
+    renderVocabList();
+}
+
+async function saveStudyVocabCloud() {
+    if (!currentUser) return;
+    const clean = { vocab: studyVocab.map(v => { const o = { ...v }; delete o._cloudId; return o; }) };
+    if (studyVocab._cloudId) {
+        await updateHealthRecord(studyVocab._cloudId, clean);
+    } else {
+        const item = await pushHealthRecord('study_vocab', todayStr(), clean);
+        if (item) studyVocab._cloudId = item.id;
+    }
+    saveCache();
+}
+
+window.deleteVocabItem = async function(idx) {
+    if (!confirm('删除这个生词？')) return;
+    studyVocab.splice(idx, 1);
+    await saveStudyVocabCloud();
+    renderVocabList();
+};
+
+async function saveStudyGoal() {
+    studyGoal.targetScore = parseFloat(document.getElementById('goal-setting-score').value) || 7.0;
+    studyGoal.examDate = document.getElementById('goal-setting-date').value || '2027-06-01';
+    studyGoal.targetVocab = parseInt(document.getElementById('goal-setting-vocab').value, 10) || 7000;
+    if (!currentUser) return;
+    if (goalCloudId) {
+        await updateHealthRecord(goalCloudId, { goal: studyGoal });
+    } else {
+        const item = await pushHealthRecord('study_goal', todayStr(), { goal: studyGoal });
+        if (item) goalCloudId = item.id;
+    }
+    saveCache();
+    renderEnglishAll();
+    alert('目标已保存');
+}
+
+function loadStudyGoalToUI() {
+    const el1 = document.getElementById('goal-setting-score');
+    const el2 = document.getElementById('goal-setting-date');
+    const el3 = document.getElementById('goal-setting-vocab');
+    if (el1) el1.value = studyGoal.targetScore || 7.0;
+    if (el2) el2.value = studyGoal.examDate || '2027-06-01';
+    if (el3) el3.value = studyGoal.targetVocab || 7000;
+}
+
+/* ================= 渲染全部 ================= */
+function renderHealthAll() {
+    renderHabits();
+    renderSleep(); renderEnergy(); renderCharge();
+    renderExercise(); renderMicro(); renderBody(); renderMeal();
+    renderInnerPeaceHistory(); renderAIAnalysis();
+}
+function renderAll() {
+    renderAccounts();
+    renderRhythm();
+    renderHealthAll();
+    renderNews();
+    renderRssSources();
+    renderEnglishAll();
+}
+
+/* ================= 事件绑定 ================= */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    };
+});
+
+document.getElementById('open-settings-btn').onclick = () => {
+    document.getElementById('settings-modal').classList.add('active');
+};
+document.getElementById('close-settings-btn').onclick = () => {
+    document.getElementById('settings-modal').classList.remove('active');
+};
+document.getElementById('ai-save-config').onclick = async () => {
+    aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
+    aiConfig.apiUrl = document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+    aiConfig.model = document.getElementById('ai-model').value.trim() || 'deepseek-chat';
+
+    saveAIConfigLocal(aiConfig);
+    await saveAIConfigToCloud(aiConfig);
+
+    alert('配置已保存，并同步至云端 ✓');
+    document.getElementById('settings-modal').classList.remove('active');
+};
+
+document.getElementById('edit-habit-up-btn').onclick = () => moveHabitInModal(-1);
+document.getElementById('edit-habit-down-btn').onclick = () => moveHabitInModal(1);
+document.getElementById('edit-habit-save-btn').onclick = () => saveHabitModal();
+document.getElementById('edit-habit-del-btn').onclick = () => deleteHabitInModal();
+document.getElementById('edit-habit-cancel-btn').onclick = () => {
+    document.getElementById('edit-habit-modal').classList.remove('active');
+    currentEditingHabitId = null;
+};
+
+document.getElementById('login-btn').onclick = async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pwd = document.getElementById('auth-password').value;
+    if (!email || !pwd) return alert('请填写邮箱和密码');
+    if (await signIn(email, pwd)) { await loadAllFromCloud(); setupRealtime(); }
+};
+document.getElementById('register-btn').onclick = async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pwd = document.getElementById('auth-password').value;
+    if (!email || pwd.length < 6) return alert('密码至少6位');
+    await signUp(email, pwd);
+};
+document.getElementById('logout-btn').onclick = signOut;
+
+document.getElementById('add-btn').onclick = async () => {
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const account = document.getElementById('expense-account').value;
+    const desc = document.getElementById('expense-desc').value.trim() || undefined;
+    const day = document.getElementById('expense-date').value || todayStr();
+    const sub = (account === 'survival') ? document.getElementById('expense-subcategory').value : null;
+    if (await addExpense(amount, account, desc, day, sub)) {
+        document.getElementById('expense-amount').value = '';
+        document.getElementById('expense-desc').value = '';
+    }
+};
+document.getElementById('income-btn').onclick = async () => {
+    const amount = parseFloat(document.getElementById('income-amount').value);
+    const day = document.getElementById('income-date').value || todayStr();
+    if (await addIncome(amount, day)) document.getElementById('income-amount').value = '';
+};
+document.getElementById('transfer-btn').onclick = async () => {
+    const amount = parseFloat(document.getElementById('transfer-amount').value);
+    const from = document.getElementById('transfer-from').value;
+    const to = document.getElementById('transfer-to').value;
+    const desc = document.getElementById('transfer-desc').value.trim();
+    const day = document.getElementById('transfer-date').value || todayStr();
+    if (await addTransfer(amount, from, to, desc, day)) {
+        document.getElementById('transfer-amount').value = '';
+        document.getElementById('transfer-desc').value = '';
+    }
+};
+document.getElementById('reset-accounts-btn').onclick = async () => {
+    if (!confirm('确定清空三账户数据？')) return;
+    await sb.from('records').delete().eq('user_id', currentUser.id);
+    accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
+    saveCache(); renderAccounts();
+};
+document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
+document.getElementById('transfer-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('transfer-btn').click(); });
+(function () {
+    const a = document.getElementById('expense-account'), s = document.getElementById('expense-subcategory');
+    function u() { if (a.value === 'survival') { s.style.display = ''; s.disabled = false; } else { s.style.display = 'none'; s.disabled = true; } }
+    a.addEventListener('change', u); u();
+})();
+
+document.getElementById('sleep-save').onclick = addSleep;
+document.getElementById('energy-save').onclick = addEnergy;
+document.getElementById('charge-save').onclick = addCharge;
+document.getElementById('exercise-save').onclick = addExercise;
+document.getElementById('micro-save').onclick = addMicro;
+document.getElementById('signal-save').onclick = addBody;
+document.getElementById('meal-save').onclick = addMeal;
+
+document.getElementById('add-habit-btn').onclick = addNewHabit;
+document.getElementById('import-morning-btn').onclick = importMorningRoutine;
+document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addNewHabit(); });
+
+document.getElementById('news-save').onclick = addNewsItem;
+document.getElementById('news-summary-save').onclick = addNewsSummary;
+
+document.getElementById('rss-add-btn').onclick = addRssFeed;
+document.getElementById('rss-fetch-btn').onclick = generateBriefing;
+
+document.getElementById('rss-optimize-btn').onclick = () => {
+    if (!confirm(
+        '将执行以下操作：\n\n' +
+        '· 删除 10 个冗余/违规源（币圈、俄罗斯、付费墙、动植物科学等）\n' +
+        '· 修正若干源的分类\n' +
+        '· 补充 36氪（归类为「国内政策与基层」）\n\n' +
+        '你手动添加的其他源会保留。继续？'
+    )) return;
+    const r = optimizeFeedList();
+    const statusEl = document.getElementById('rss-status');
+    statusEl.textContent = `✅ 优化完成：删除 ${r.deleted} 个，修正分类 ${r.fixed} 个，新增 ${r.added} 个`;
+    setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
+};
+
+document.getElementById('rss-clear-btn').onclick = () => {
+    if (!rssFeeds.length) return;
+    if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
+    rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
+    document.getElementById('rss-fetch-result').innerHTML = '';
+    document.getElementById('rss-status').textContent = '';
+    clearFetchProgress();
+    setBriefingStageStatus('');
+};
+document.getElementById('rss-url').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
+document.getElementById('rss-name').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
+
+document.getElementById('opml-import-btn').onclick = () => document.getElementById('opml-file-input').click();
+document.getElementById('opml-file-input').addEventListener('change', function() {
+    const file = this.files && this.files[0];
+    if (file) handleOpmlFile(file);
+    this.value = '';
+});
+
+document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
+document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
+document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
+document.getElementById('day-today').onclick = () => setDay(todayStr());
+
+document.getElementById('habit-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
+document.getElementById('habit-day-prev').onclick = () => setDay(addDays(currentDay, -1));
+document.getElementById('habit-day-next').onclick = () => setDay(addDays(currentDay, 1));
+document.getElementById('habit-day-today').onclick = () => setDay(todayStr());
+
+document.getElementById('news-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
+document.getElementById('news-day-prev').onclick = () => setDay(addDays(currentDay, -1));
+document.getElementById('news-day-next').onclick = () => setDay(addDays(currentDay, 1));
+document.getElementById('news-day-today').onclick = () => setDay(todayStr());
+
+document.getElementById('acne-location').addEventListener('change', function () {
+    document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none';
+});
+
+document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
+document.getElementById('ai-clear-btn').onclick = async () => {
+    if (!confirm('清除今天的 AI 分析？')) return;
+    const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+    for (const e of list) { await deleteHealthRecord(e.id); }
+    healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+    saveCache(); renderAIAnalysis();
+};
+
+document.getElementById('momo-save-btn').onclick = saveMomo;
+document.getElementById('momo-cancel-btn').onclick = () => { document.getElementById('en-momo-card').style.display = 'none'; };
+document.getElementById('ls-course-select').onchange = renderLSCourseDetail;
+document.getElementById('vocab-add-btn').onclick = addVocabItem;
+document.getElementById('vocab-word').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
+document.getElementById('vocab-meaning').addEventListener('keydown', e => { if (e.key === 'Enter') addVocabItem(); });
+document.getElementById('goal-save-btn').onclick = saveStudyGoal;
+
+/* ================= 启动 ================= */
+document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('expense-date').value = todayStr();
+    document.getElementById('income-date').value = todayStr();
+    document.getElementById('transfer-date').value = todayStr();
+    document.getElementById('sleep-start').value = '23:00';
+    document.getElementById('sleep-end').value = '07:00';
+
+    function buildScoreRow(el) {
+        let html = '';
+        for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
+        el.innerHTML = html;
+        el.querySelectorAll('.score-btn').forEach(btn => {
+            btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
+        });
+    }
+    buildScoreRow(document.getElementById('energy-am'));
+    buildScoreRow(document.getElementById('energy-pm'));
+    document.querySelectorAll('#energy-am .score-btn')[4].click();
+    document.querySelectorAll('#energy-pm .score-btn')[4].click();
+
+    buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+    buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+    buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+
+    aiConfig = loadAIConfigLocal();
+    document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
+    document.getElementById('ai-api-url').value = aiConfig.apiUrl;
+    document.getElementById('ai-model').value = aiConfig.model;
+
+    loadRhythmNodesLocal();
+    loadRssFeedsLocal();
+    renderRssSources();
+
+    updateDayBar();
+    resetIpSession();
+    loadStudyGoalToUI();
+    renderEnglishAll();
+    renderRhythm();
+
+    try {
+        console.log('⏳ 正在检查登录状态...');
+        const res = await withTimeout(sb.auth.getSession(), 8000, '获取登录状态');
+        if (res.error) throw res.error;
+        if (res.data.session) {
+            currentUser = res.data.session.user;
+            if (loadCache()) {
+                console.log('🚀 使用本地缓存渲染');
+                showMainUI();
+                renderAll();
+            } else {
+                showLoadingUI();
+            }
+            await loadAllFromCloud(true);
+            setupRealtime();
+        } else {
+            showLoginUI();
+        }
+    } catch (err) {
+        console.error('❌ 检查登录状态失败:', err);
+        alert('获取登录状态失败：' + err.message + '\n请检查网络或尝试刷新页面。');
+        showLoginUI();
+    }
+});
+</script>
+</body>
+</html>
