@@ -227,6 +227,23 @@ th{color:var(--text2);font-weight:500;font-size:12px}
 .highlight-row td{animation:flash 2s ease-out}
 @keyframes flash{0%{background-color:#ffe0b2}100%{background-color:transparent}}
 tr{scroll-margin-top:20px}
+
+/* Execution System Styles */
+.exec-hero{background:#1c1c1e;color:#fff;border-radius:var(--r);padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,0.2);position:relative;overflow:hidden}
+.exec-hero::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#2d7d5a,#1a5c47,#2d7d5a)}
+.exec-hero h1{font-size:28px;font-weight:700;margin-bottom:12px;letter-spacing:-0.5px}
+.exec-hero .quote{font-size:13px;color:#aeaeb2;line-height:1.6;margin-bottom:8px;padding-left:10px;border-left:2px solid #2d7d5a}
+.exec-hero .quote-highlight{color:#fff;font-weight:600}
+.exec-card{background:#fff;border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border-left:4px solid #1c1c1e;transition:all .2s}
+.exec-card.closed{border-left-color:var(--accent);opacity:0.85;background:#fafcfb}
+.exec-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.exec-title-text{font-size:16px;font-weight:700;color:var(--text)}
+.exec-step{font-size:13px;color:var(--text);margin-bottom:8px;background:#f5f5f7;padding:12px;border-radius:10px;line-height:1.5}
+.exec-step.closed-step{background:#fff;border:1px solid var(--border)}
+.exec-step-label{font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.exec-step-content{white-space:pre-wrap}
+.exec-arrow{text-align:center;color:var(--text3);font-size:12px;margin:-4px 0 4px 0}
+
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
@@ -254,15 +271,33 @@ tr{scroll-margin-top:20px}
     </div>
 
     <div class="seg">
-        <button class="seg-item nav-btn active" data-tab="accounts">💰 账户</button>
+        <button class="seg-item nav-btn active" data-tab="execution">🚀 执行</button>
+        <button class="seg-item nav-btn" data-tab="accounts">💰 账户</button>
         <button class="seg-item nav-btn" data-tab="rhythm">⏱️ 节律</button>
         <button class="seg-item nav-btn" data-tab="health">🌿 健康</button>
         <button class="seg-item nav-btn" data-tab="habits">🎯 习惯</button>
         <button class="seg-item nav-btn" data-tab="news">📰 世事</button>
     </div>
 
+    <!-- ========== 执行系统 ========== -->
+    <div id="tab-execution" class="tab-content active">
+        <div class="exec-hero">
+            <h1>执行系统</h1>
+            <div class="quote">直觉选方向（<span class="quote-highlight">战略上的绝对信任</span>）<br>理性自律去执行（<span class="quote-highlight">战术上的绝对冷酷</span>）<br>达到目标取得成果（<span class="quote-highlight">结果的绝对闭环</span>）</div>
+            <div class="quote" style="border-left-color:transparent;padding-left:0;margin-top:12px;font-style:italic;">"我足够敏锐，足够有韧性，必将抵达我的旷野。"</div>
+        </div>
+
+        <div class="card" style="padding:16px;">
+            <button class="btn btn-primary btn-full" id="add-exec-btn" style="background:#1c1c1e;color:#fff;border-radius:var(--rSm);">＋ 开启新闭环</button>
+        </div>
+
+        <div id="execution-list">
+            <!-- 由 JS 渲染 -->
+        </div>
+    </div>
+
     <!-- ========== 账户 ========== -->
-    <div id="tab-accounts" class="tab-content active">
+    <div id="tab-accounts" class="tab-content">
         <h1 class="page-title">账户</h1>
 
         <div class="card">
@@ -622,6 +657,35 @@ tr{scroll-margin-top:20px}
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
+<!-- 执行系统弹窗 -->
+<div class="modal-overlay" id="exec-modal">
+    <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
+        <div class="modal-title" id="exec-modal-title">🚀 开启执行闭环</div>
+        
+        <div class="field"><label>目标/事件标题</label><input type="text" id="exec-title-input" placeholder="例如：北航VR导师套磁"></div>
+        
+        <div class="field"><label>1. 直觉假设（绝对信任）</label><textarea id="exec-hypothesis" style="min-height:60px;" placeholder="直觉锁定的最优解是什么？只写方向，不写理由。"></textarea></div>
+        
+        <div class="field"><label>2. 观察与记录（客观事实）</label><textarea id="exec-observe" style="min-height:60px;" placeholder="不带情绪地记录现状、现象、数据。"></textarea></div>
+        
+        <div class="field"><label>3. 验证行动（战术冷酷）</label><textarea id="exec-verify" style="min-height:60px;" placeholder="像机器一样精准执行什么动作去测试？"></textarea></div>
+        
+        <div class="field"><label>4. 结论（结果闭环）</label><textarea id="exec-conclusion" style="min-height:60px;" placeholder="冰冷的结果是什么？成或败？"></textarea></div>
+        
+        <div class="field"><label>5. 反馈（系统更新）</label><textarea id="exec-feedback" style="min-height:60px;" placeholder="如何修正？沉淀了什么经验？"></textarea></div>
+        
+        <div class="field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 16px; background: #f5f5f7; padding: 12px; border-radius: 8px;">
+            <input type="checkbox" id="exec-status-closed" style="width:20px; height:20px;">
+            <label for="exec-status-closed" style="margin-bottom:0; cursor:pointer;">标记为已闭环（结案）</label>
+        </div>
+        
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+            <button class="btn btn-secondary" id="exec-cancel-btn">取消</button>
+            <button class="btn btn-primary" id="exec-save-btn" style="background:#1c1c1e;">保存并执行</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
         <div class="modal-title">⚙️ API 配置</div>
@@ -850,7 +914,7 @@ const STAGE3_PROMPT = (clusteredJson, quotaBlock, dateStr) => `
 ---
 共 N 条：国际 a，财经 b，国内 c，科技 d，工程 e，安全 f，政策 g。`;
 
-/* ================= 每日节律（可编辑） ================= */
+/* ================= 每日节律 ================= */
 const RHYTHM_NODES_KEY = 'rhythm_nodes_v1';
 const DEFAULT_RHYTHM_NODES = [
     { key: 'wake', time: '6:30-7:00', task: '起床拉窗帘看自然光', desc: '哪怕 6:50 才起，看一眼也算成功', lowTask: '没起来（没关系，允许自己累）', lowDesc: '' },
@@ -875,6 +939,7 @@ function loadRhythmNodesLocal() {
 }
 
 /* ================= 数据 ================= */
+let executionData = [];
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 let newsData = { items: [], summaries: [], briefings: [] };
@@ -898,7 +963,7 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: executionData }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -912,6 +977,7 @@ function loadCache() {
         newsData = d.news || newsData;
         if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
         rhythmDaily = d.rhythm || rhythmDaily;
+        executionData = d.exec || executionData;
         return true;
     } catch (e) { return false; }
 }
@@ -969,11 +1035,12 @@ async function loadAllFromCloud(silent = false) {
             }
         });
 
-        const { data: hd, error: err2 } = await withTimeout(sb.from('health_data').select('*').order('ts', { ascending: true }), 10000, '拉取健康与新闻数据');
+        const { data: hd, error: err2 } = await withTimeout(sb.from('health_data').select('*').order('ts', { ascending: true }), 10000, '拉取健康与执行数据');
         if (err2) throw err2;
 
         healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
         newsData = { items: [], summaries: [], briefings: [] };
+        executionData = [];
         rhythmDaily = [];
         rhythmConfigCloudId = null;
         let cloudFeeds = null;
@@ -984,6 +1051,7 @@ async function loadAllFromCloud(silent = false) {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
 
+            if (r.type === 'execution') { executionData.push(d); return; }
             if (r.type === 'ai_config') { cloudApiConfigId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
             if (r.type === 'habits_config') { cloudHabitsId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
             if (r.type === 'rhythm_config') { rhythmConfigCloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
@@ -1091,7 +1159,128 @@ function setupRealtime() {
         .subscribe();
 }
 
-/* ================= 每日节律系统 ================= */
+/* ================= 执行系统 ================= */
+let currentEditingExecId = null;
+
+function renderExecution() {
+    const el = document.getElementById('execution-list');
+    if (!executionData.length) { el.innerHTML = '<div class="empty-hint">还没有执行闭环，点击上方开启</div>'; return; }
+    
+    // 排序：未闭环的在前，然后按更新时间倒序
+    const sorted = [...executionData].sort((a, b) => {
+        if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+        return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    });
+
+    let html = '';
+    sorted.forEach(item => {
+        const isClosed = item.status === 'closed';
+        html += `
+            <div class="exec-card ${isClosed ? 'closed' : ''}">
+                <div class="exec-header">
+                    <div class="exec-title-text">${isClosed ? '✅ ' : '⏳ '}${esc(item.title || '未命名闭环')}</div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-secondary btn-sm" onclick="openExecModal('${item.id}')">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteExec('${item.id}')">✕</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">💡 直觉假设</span><div class="exec-step-content">${esc(item.hypothesis || '未填写')}</div></div>
+                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">👁 观察记录</span><div class="exec-step-content">${esc(item.observe || '未填写')}</div></div>
+                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">⚙️ 验证行动</span><div class="exec-step-content">${esc(item.verify || '未填写')}</div></div>
+                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">🎯 冷酷结论</span><div class="exec-step-content">${esc(item.conclusion || '未填写')}</div></div>
+                    ${item.feedback ? `<div class="exec-step" style="background:#e8f2ee;border:1px solid #a8cec0;"><span class="exec-step-label" style="color:var(--accent);">🔄 反馈沉淀</span><div class="exec-step-content">${esc(item.feedback)}</div></div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    el.innerHTML = html;
+}
+
+function openExecModal(id) {
+    currentEditingExecId = id || null;
+    const titleEl = document.getElementById('exec-modal-title');
+    const titleInput = document.getElementById('exec-title-input');
+    const hyp = document.getElementById('exec-hypothesis');
+    const obs = document.getElementById('exec-observe');
+    const ver = document.getElementById('exec-verify');
+    const con = document.getElementById('exec-conclusion');
+    const fb = document.getElementById('exec-feedback');
+    const statusCb = document.getElementById('exec-status-closed');
+
+    if (id) {
+        titleEl.textContent = '✏️ 编辑执行闭环';
+        const item = executionData.find(x => x.id === id);
+        if (item) {
+            titleInput.value = item.title || '';
+            hyp.value = item.hypothesis || '';
+            obs.value = item.observe || '';
+            ver.value = item.verify || '';
+            con.value = item.conclusion || '';
+            fb.value = item.feedback || '';
+            statusCb.checked = item.status === 'closed';
+        }
+    } else {
+        titleEl.textContent = '🚀 开启执行闭环';
+        titleInput.value = '';
+        hyp.value = '';
+        obs.value = '';
+        ver.value = '';
+        con.value = '';
+        fb.value = '';
+        statusCb.checked = false;
+    }
+    document.getElementById('exec-modal').classList.add('active');
+}
+
+async function saveExec() {
+    const title = document.getElementById('exec-title-input').value.trim();
+    if (!title) return alert('请填写目标/事件标题');
+
+    const dataObj = {
+        id: currentEditingExecId || 'ex_' + Date.now() + Math.random().toString(36).slice(2,6),
+        title,
+        hypothesis: document.getElementById('exec-hypothesis').value.trim(),
+        observe: document.getElementById('exec-observe').value.trim(),
+        verify: document.getElementById('exec-verify').value.trim(),
+        conclusion: document.getElementById('exec-conclusion').value.trim(),
+        feedback: document.getElementById('exec-feedback').value.trim(),
+        status: document.getElementById('exec-status-closed').checked ? 'closed' : 'open',
+        updatedAt: Date.now()
+    };
+
+    if (currentEditingExecId) {
+        const idx = executionData.findIndex(x => x.id === currentEditingExecId);
+        if (idx > -1) {
+            dataObj.createdAt = executionData[idx].createdAt || Date.now();
+            executionData[idx] = dataObj;
+            const record = health_data.find ? null : null; // dummy
+            await updateHealthRecord(dataObj._cloudId || executionData[idx]._cloudId, dataObj);
+        }
+    } else {
+        dataObj.createdAt = Date.now();
+        executionData.push(dataObj);
+        const item = await pushHealthRecord('execution', todayStr(), dataObj);
+        if (item) dataObj._cloudId = item.id;
+    }
+
+    saveCache();
+    renderExecution();
+    document.getElementById('exec-modal').classList.remove('active');
+    currentEditingExecId = null;
+}
+
+async function deleteExec(id) {
+    if (!confirm('确定删除这个执行闭环吗？')) return;
+    const item = executionData.find(x => x.id === id);
+    if (item && item._cloudId) {
+        await deleteHealthRecord(item._cloudId);
+    }
+    executionData = executionData.filter(x => x.id !== id);
+    saveCache(); renderExecution();
+}
+
+/* ================= 节律 ================= */
 function getTodayRhythm() {
     let r = rhythmDaily.find(x => x.date === todayStr());
     if (!r) { r = { date: todayStr(), mode: 'normal', done: [], note: '' }; rhythmDaily.push(r); }
@@ -2647,6 +2836,7 @@ function renderHealthAll() {
     renderInnerPeaceHistory(); renderAIAnalysis();
 }
 function renderAll() {
+    renderExecution();
     renderAccounts();
     renderRhythm();
     renderHealthAll();
@@ -2674,6 +2864,12 @@ document.getElementById('ai-save-config').onclick = async () => {
     alert('配置已保存，并同步至云端 ✓');
     document.getElementById('settings-modal').classList.remove('active');
 };
+
+// 执行系统事件
+document.getElementById('add-exec-btn').onclick = () => openExecModal(null);
+document.getElementById('exec-cancel-btn').onclick = () => { document.getElementById('exec-modal').classList.remove('active'); currentEditingExecId = null; };
+document.getElementById('exec-save-btn').onclick = saveExec;
+
 document.getElementById('edit-habit-up-btn').onclick = () => moveHabitInModal(-1);
 document.getElementById('edit-habit-down-btn').onclick = () => moveHabitInModal(1);
 document.getElementById('edit-habit-save-btn').onclick = () => saveHabitModal();
@@ -2823,6 +3019,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateDayBar();
     resetIpSession();
     renderRhythm();
+    renderExecution();
 
     try {
         console.log('⏳ 正在检查登录状态...');
