@@ -1489,18 +1489,18 @@ function openExecModal(id) {
 }
 
 async function saveExec() {
-    const title = $('#exec-title-input').value.trim();
+    const title = $('exec-title-input').value.trim();
     if (!title) return alert('请填写目标/事件标题');
 
     const dataObj = {
         id: currentEditingExecId || 'ex_' + Date.now() + Math.random().toString(36).slice(2,6),
         title,
-        hypothesis: $('#exec-hypothesis').value.trim(),
-        observe: $('#exec-observe').value.trim(),
-        verify: $('#exec-verify').value.trim(),
-        conclusion: $('#exec-conclusion').value.trim(),
-        feedback: $('#exec-feedback').value.trim(),
-        status: $('#exec-status-closed').checked ? 'closed' : 'open',
+        hypothesis: $('exec-hypothesis').value.trim(),
+        observe: $('exec-observe').value.trim(),
+        verify: $('exec-verify').value.trim(),
+        conclusion: $('exec-conclusion').value.trim(),
+        feedback: $('exec-feedback').value.trim(),
+        status: $('exec-status-closed').checked ? 'closed' : 'open',
         updatedAt: Date.now()
     };
 
@@ -1521,7 +1521,7 @@ async function saveExec() {
 
     saveCache();
     RenderBus.emit('execution');
-    $('#exec-modal').classList.remove('active');
+    $('exec-modal').classList.remove('active');
     currentEditingExecId = null;
 }
 
@@ -1674,18 +1674,18 @@ bindEvent('#toggle-rhythm-mode-btn', 'click', () => {
 });
 bindEvent('#rhythm-save-note-btn', 'click', () => {
     const r = getTodayRhythm();
-    r.note = $('#rhythm-note-input').value.trim();
+    r.note = $('rhythm-note-input').value.trim();
     saveRhythmCloud();
     alert('记录已保存');
 });
 bindEvent('#rhythm-edit-toggle-btn', 'click', () => {
     rhythmEditMode = !rhythmEditMode;
-    const btn = $('#rhythm-edit-toggle-btn');
+    const btn = $('rhythm-edit-toggle-btn');
     btn.textContent = rhythmEditMode ? '✅ 完成编辑' : '进入编辑模式';
     btn.classList.toggle('btn-secondary', !rhythmEditMode);
     btn.classList.toggle('btn-primary', rhythmEditMode);
-    $('#rhythm-edit-bar').style.display = rhythmEditMode ? 'block' : 'none';
-    $('#rhythm-hint').textContent = rhythmEditMode ? '编辑模式：点击节点修改内容。' : '点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。';
+    $('rhythm-edit-bar').style.display = rhythmEditMode ? 'block' : 'none';
+    $('rhythm-hint').textContent = rhythmEditMode ? '编辑模式：点击节点修改内容。' : '点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。';
     RenderBus.emit('rhythm');
 });
 bindEvent('#rhythm-add-node-btn', 'click', openRhythmAddModal);
@@ -1693,7 +1693,7 @@ bindEvent('#rhythm-reset-nodes-btn', 'click', resetRhythmNodes);
 bindEvent('#rhythm-edit-up', 'click', () => moveRhythmNode(-1));
 bindEvent('#rhythm-edit-down', 'click', () => moveRhythmNode(1));
 bindEvent('#rhythm-edit-save', 'click', saveRhythmNodeEdit);
-bindEvent('#rhythm-edit-cancel', 'click', () => { $('#rhythm-edit-modal').classList.remove('active'); rhythmEditingIndex = -1; });
+bindEvent('#rhythm-edit-cancel', 'click', () => { $('rhythm-edit-modal').classList.remove('active'); rhythmEditingIndex = -1; });
 bindEvent('#rhythm-edit-del', 'click', deleteRhythmNode);
 bindEvent('.rhythm-node', 'click', (e, el) => {
     if (e.target.closest('.rhythm-edit-btn')) return;
@@ -2088,46 +2088,46 @@ function updateOtherInputs() {
 }
 
 async function addSleep() {
-    const start = $('#sleep-start').value;
-    const end = $('#sleep-end').value;
-    const feeling = $('#sleep-feeling').value;
-    const note = $('#sleep-note').value.trim();
+    const start = $('sleep-start').value;
+    const end = $('sleep-end').value;
+    const feeling = $('sleep-feeling').value;
+    const note = $('sleep-note').value.trim();
     if (!start || !end) return alert('请填写入睡和醒来时间');
     const rec = { date: currentDay, ts: Date.now(), start_time: start, end_time: end, feeling, note };
     const item = await syncRecord('sleep', currentDay, rec, rec);
-    if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#sleep-start').value=''; $('#sleep-end').value=''; $('#sleep-note').value=''; }
+    if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; }
 }
 async function addEnergy() {
     let am = 5, pm = 5;
     $$('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); });
     $$('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
-    const note = $('#energy-note').value.trim();
+    const note = $('energy-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), am_score: am, pm_score: pm, note };
     const item = await syncRecord('energy', currentDay, rec, rec);
-    if (item) { healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#energy-note').value=''; }
+    if (item) { healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('energy-note').value=''; }
 }
 async function addCharge() {
-    const type = $('#charge-type').value;
-    const delta = parseInt($('#charge-delta').value, 10) || 0;
-    const note = $('#charge-note').value.trim();
+    const type = $('charge-type').value;
+    const delta = parseInt($('charge-delta').value, 10) || 0;
+    const note = $('charge-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), type, delta, note };
     const item = await syncRecord('charge', currentDay, rec, rec);
-    if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#charge-note').value=''; }
+    if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('charge-note').value=''; }
 }
 async function addExercise() {
-    const dur = parseInt($('#exercise-duration').value, 10);
+    const dur = parseInt($('exercise-duration').value, 10);
     if (!dur || dur <= 0) return alert('请填写时长');
-    const type = $('#exercise-type').value;
-    const note = $('#exercise-note').value.trim();
+    const type = $('exercise-type').value;
+    const note = $('exercise-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), type, duration: dur, note };
     const item = await syncRecord('exercise', currentDay, rec, rec);
-    if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#exercise-duration').value=''; $('#exercise-note').value=''; }
+    if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('exercise-duration').value=''; $('exercise-note').value=''; }
 }
 async function addMicro() {
     if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
-    const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: $('#posture-other').value.trim() } : { key: k });
-    const habitsArr = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: $('#habit-other').value.trim() } : { key: k });
-    const note = $('#micro-note').value.trim();
+    const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: $('posture-other').value.trim() } : { key: k });
+    const habitsArr = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: $('habit-other').value.trim() } : { key: k });
+    const note = $('micro-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), posture, habits: habitsArr, note };
     const item = await syncRecord('micro', currentDay, rec, rec);
     if (item) {
@@ -2136,29 +2136,29 @@ async function addMicro() {
         selectedPosture.clear(); selectedHabit.clear();
         buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
         buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-        $('#posture-other').value = ''; $('#habit-other').value = ''; $('#micro-note').value = '';
+        $('posture-other').value = ''; $('habit-other').value = ''; $('micro-note').value = '';
     }
 }
 async function addBody() {
-    const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: $('#signal-other').value.trim() } : { key: k });
-    const acneLocation = $('#acne-location').value;
-    const acne = { location: acneLocation, locationCustom: acneLocation === 'other' ? $('#acne-location-other').value.trim() : '', type: $('#acne-type').value, severity: parseInt($('#acne-severity').value, 10) || null, note: $('#acne-note').value.trim() };
+    const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: $('signal-other').value.trim() } : { key: k });
+    const acneLocation = $('acne-location').value;
+    const acne = { location: acneLocation, locationCustom: acneLocation === 'other' ? $('acne-location-other').value.trim() : '', type: $('acne-type').value, severity: parseInt($('acne-severity').value, 10) || null, note: $('acne-note').value.trim() };
     const hasAcne = acne.location || acne.type || acne.severity || acne.note;
     if (signals.length === 0 && !hasAcne) return alert('请至少选择一项或填写痘痘记录');
-    const note = $('#signal-note').value.trim();
+    const note = $('signal-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), signals, acne: hasAcne ? acne : null, note };
     const item = await syncRecord('body', currentDay, rec, rec);
     if (item) {
         healthData.bodySignals.unshift({ id: item.id, ...rec });
         saveCache(); RenderBus.emit('health');
         selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-        $('#signal-other').value = ''; $('#acne-location').value = ''; $('#acne-location-other').value = ''; $('#acne-location-other-field').style.display = 'none'; $('#acne-type').value = ''; $('#acne-severity').value = ''; $('#acne-note').value = ''; $('#signal-note').value = '';
+        $('signal-other').value = ''; $('acne-location').value = ''; $('acne-location-other').value = ''; $('acne-location-other-field').style.display = 'none'; $('acne-type').value = ''; $('acne-severity').value = ''; $('acne-note').value = ''; $('signal-note').value = '';
     }
 }
 async function addMeal() {
-    const meals = { breakfast: $('#meal-breakfast').value.trim(), lunch: $('#meal-lunch').value.trim(), dinner: $('#meal-dinner').value.trim() };
-    const water = parseInt($('#water-cups').value, 10) || 0;
-    const snack = $('#snack').value.trim();
+    const meals = { breakfast: $('meal-breakfast').value.trim(), lunch: $('meal-lunch').value.trim(), dinner: $('meal-dinner').value.trim() };
+    const water = parseInt($('water-cups').value, 10) || 0;
+    const snack = $('snack').value.trim();
     if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐');
     const rec = { date: currentDay, ts: Date.now(), ...meals, water, snack };
     const item = await syncRecord('meal', currentDay, rec, rec);
@@ -2952,16 +2952,16 @@ function renderBriefings() {
 
 /* ================= 每日世事（手动） ================= */
 async function addNewsItem() {
-    const cat = $('#news-category').value;
-    const title = $('#news-title').value.trim();
-    const content = $('#news-content').value.trim();
+    const cat = $('news-category').value;
+    const title = $('news-title').value.trim();
+    const content = $('news-content').value.trim();
     if (!title) return alert('请填写新闻标题');
     const rec = { date: currentDay, ts: Date.now(), category: cat, title, content };
     const item = await syncRecord('news_item', currentDay, rec, rec);
-    if (item) { newsData.items.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('#news-title').value = ''; $('#news-content').value = ''; }
+    if (item) { newsData.items.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-title').value = ''; $('news-content').value = ''; }
 }
 async function addNewsSummary() {
-    const summary = $('#news-summary').value.trim();
+    const summary = $('news-summary').value.trim();
     if (!summary) return alert('请填写总结内容');
     const existing = newsData.summaries.filter(x => x.date === currentDay);
     if (existing.length && !confirm('今天已经有总结了，是否覆盖？')) return;
@@ -2969,7 +2969,7 @@ async function addNewsSummary() {
     newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay);
     const rec = { date: currentDay, ts: Date.now(), content: summary };
     const item = await syncRecord('news_summary', currentDay, rec, rec);
-    if (item) { newsData.summaries.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('#news-summary').value = ''; }
+    if (item) { newsData.summaries.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-summary').value = ''; }
 }
 function renderNews() {
     const itemEl = $('news-history');
@@ -3799,7 +3799,7 @@ function selectScore(containerId, btn) {
     btn.classList.add('active');
 }
 function updateExpenseSubcatVisibility(v) {
-    const s = $('#expense-subcategory');
+    const s = $('expense-subcategory');
     if (!s) return;
     const show = v === 'survival';
     s.style.display = show ? '' : 'none';
@@ -3808,28 +3808,28 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
-bindEvent('#open-settings-btn', 'click', () => { const m = $('#settings-modal'); if (m) m.classList.add('active'); });
-bindEvent('#close-settings-btn', 'click', () => { const m = $('#settings-modal'); if (m) m.classList.remove('active'); });
+bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.add('active'); });
+bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
-    aiConfig.apiKey = $('#ai-api-key').value.trim();
-    aiConfig.apiUrl = $('#ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
-    aiConfig.model = $('#ai-model').value.trim() || 'deepseek-chat';
+    aiConfig.apiKey = $('ai-api-key').value.trim();
+    aiConfig.apiUrl = $('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+    aiConfig.model = $('ai-model').value.trim() || 'deepseek-chat';
     saveAIConfigLocal(aiConfig);
     await saveAIConfigToCloud(aiConfig);
     alert('配置已保存，并同步至云端 ✓');
-    const m = $('#settings-modal'); if (m) m.classList.remove('active');
+    const m = $('settings-modal'); if (m) m.classList.remove('active');
 });
 
 // 认证
 bindEvent('#login-btn', 'click', async () => {
-    const email = $('#auth-email').value.trim();
-    const pwd = $('#auth-password').value;
+    const email = $('auth-email').value.trim();
+    const pwd = $('auth-password').value;
     if (!email || !pwd) return alert('请填写邮箱和密码');
     if (await signIn(email, pwd)) { await loadAllFromCloud(); setupRealtime(); }
 });
 bindEvent('#register-btn', 'click', async () => {
-    const email = $('#auth-email').value.trim();
-    const pwd = $('#auth-password').value;
+    const email = $('auth-email').value.trim();
+    const pwd = $('auth-password').value;
     if (!email || pwd.length < 6) return alert('密码至少6位');
     await signUp(email, pwd);
 });
@@ -3837,7 +3837,7 @@ bindEvent('#logout-btn', 'click', signOut);
 
 // 执行系统（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-exec-btn', 'click', () => openExecModal(null));
-bindEvent('#exec-cancel-btn', 'click', () => { const m = $('#exec-modal'); if (m) m.classList.remove('active'); currentEditingExecId = null; });
+bindEvent('#exec-cancel-btn', 'click', () => { const m = $('exec-modal'); if (m) m.classList.remove('active'); currentEditingExecId = null; });
 bindEvent('#exec-save-btn', 'click', saveExec);
 bindEvent('[data-action="exec-edit"]', 'click', (e, el) => openExecModal(el.dataset.id));
 bindEvent('[data-action="exec-delete"]', 'click', (e, el) => deleteExec(el.dataset.id));
@@ -3852,29 +3852,29 @@ bindEvent('#edit-habit-up-btn', 'click', () => moveHabitInModal(-1));
 bindEvent('#edit-habit-down-btn', 'click', () => moveHabitInModal(1));
 bindEvent('#edit-habit-save-btn', 'click', () => saveHabitModal());
 bindEvent('#edit-habit-del-btn', 'click', () => deleteHabitInModal());
-bindEvent('#edit-habit-cancel-btn', 'click', () => { const m = $('#edit-habit-modal'); if (m) m.classList.remove('active'); currentEditingHabitId = null; });
+bindEvent('#edit-habit-cancel-btn', 'click', () => { const m = $('edit-habit-modal'); if (m) m.classList.remove('active'); currentEditingHabitId = null; });
 
 // 账户
 bindEvent('#add-btn', 'click', async () => {
-    const amount = parseFloat($('#expense-amount').value);
-    const account = $('#expense-account').value;
-    const desc = $('#expense-desc').value.trim() || undefined;
-    const day = $('#expense-date').value || todayStr();
-    const sub = (account === 'survival') ? $('#expense-subcategory').value : null;
-    if (await addExpense(amount, account, desc, day, sub)) { $('#expense-amount').value = ''; $('#expense-desc').value = ''; }
+    const amount = parseFloat($('expense-amount').value);
+    const account = $('expense-account').value;
+    const desc = $('expense-desc').value.trim() || undefined;
+    const day = $('expense-date').value || todayStr();
+    const sub = (account === 'survival') ? $('expense-subcategory').value : null;
+    if (await addExpense(amount, account, desc, day, sub)) { $('expense-amount').value = ''; $('expense-desc').value = ''; }
 });
 bindEvent('#income-btn', 'click', async () => {
-    const amount = parseFloat($('#income-amount').value);
-    const day = $('#income-date').value || todayStr();
-    if (await addIncome(amount, day)) $('#income-amount').value = '';
+    const amount = parseFloat($('income-amount').value);
+    const day = $('income-date').value || todayStr();
+    if (await addIncome(amount, day)) $('income-amount').value = '';
 });
 bindEvent('#transfer-btn', 'click', async () => {
-    const amount = parseFloat($('#transfer-amount').value);
-    const from = $('#transfer-from').value;
-    const to = $('#transfer-to').value;
-    const desc = $('#transfer-desc').value.trim();
-    const day = $('#transfer-date').value || todayStr();
-    if (await addTransfer(amount, from, to, desc, day)) { $('#transfer-amount').value = ''; $('#transfer-desc').value = ''; }
+    const amount = parseFloat($('transfer-amount').value);
+    const from = $('transfer-from').value;
+    const to = $('transfer-to').value;
+    const desc = $('transfer-desc').value.trim();
+    const day = $('transfer-date').value || todayStr();
+    if (await addTransfer(amount, from, to, desc, day)) { $('transfer-amount').value = ''; $('transfer-desc').value = ''; }
 });
 bindEvent('#reset-accounts-btn', 'click', async () => {
     if (!confirm('确定清空三账户数据？')) return;
@@ -3882,8 +3882,8 @@ bindEvent('#reset-accounts-btn', 'click', async () => {
     accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
     saveCache(); RenderBus.emit('accounts');
 });
-bindEvent('#expense-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('#add-btn'); if (b) b.click(); } });
-bindEvent('#transfer-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('#transfer-btn'); if (b) b.click(); } });
+bindEvent('#expense-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('add-btn'); if (b) b.click(); } });
+bindEvent('#transfer-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('transfer-btn'); if (b) b.click(); } });
 bindEvent('#expense-account', 'change', (e, el) => updateExpenseSubcatVisibility(el.value));
 bindEvent('.edit-expense-date', 'change', (e, el) => updateExpenseDate(el.dataset.id, el.value));
 bindEvent('.edit-subcategory', 'change', (e, el) => updateExpenseSubcategory(el.dataset.id, el.value));
@@ -3910,7 +3910,7 @@ bindEvent('#exercise-save', 'click', addExercise);
 bindEvent('#micro-save', 'click', addMicro);
 bindEvent('#signal-save', 'click', addBody);
 bindEvent('#meal-save', 'click', addMeal);
-bindEvent('#acne-location', 'change', (e, el) => { const f = $('#acne-location-other-field'); if (f) f.style.display = el.value === 'other' ? '' : 'none'; });
+bindEvent('#acne-location', 'change', (e, el) => { const f = $('acne-location-other-field'); if (f) f.style.display = el.value === 'other' ? '' : 'none'; });
 bindEvent('#ai-analyze-btn', 'click', runAIAnalysis);
 bindEvent('#ai-clear-btn', 'click', async () => {
     if (!confirm('清除今天的 AI 分析？')) return;
@@ -3931,7 +3931,7 @@ bindEvent('[data-del-charge]', 'click', async (e, el) => { await deleteHealthRec
 bindEvent('[data-del-exercise]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(el.dataset.delExercise)); saveCache(); RenderBus.emit('health'); });
 bindEvent('[data-del-micro]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(el.dataset.delMicro)); saveCache(); RenderBus.emit('health'); });
 bindEvent('[data-del-body]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(el.dataset.delBody)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-meal]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(el.dataset.delMeal)); saveCache(); RenderBus.emit('health'); const fa = $('#food-analysis'); if (fa) fa.classList.add('hidden'); });
+bindEvent('[data-del-meal]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(el.dataset.delMeal)); saveCache(); RenderBus.emit('health'); const fa = $('food-analysis'); if (fa) fa.classList.add('hidden'); });
 bindEvent('[data-view-ip]', 'click', (e, el) => { const r = healthData.innerPeace.find(x => String(x.id) === String(el.dataset.viewIp)); if (r) renderIpReport(r); });
 bindEvent('[data-del-ip]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(el.dataset.delIp)); saveCache(); RenderBus.emit('health'); });
 bindEvent('#ip-start-btn', 'click', startIpSession);
@@ -3940,21 +3940,21 @@ bindEvent('[data-opt-idx]', 'click', (e, el) => {
     ipSelectedOption = parseInt(el.dataset.optIdx, 10);
     $$('#ip-chat-container [data-opt-idx]').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
-    const cb = $('#ip-confirm-cb');
-    const next = $('#ip-confirm-next');
+    const cb = $('ip-confirm-cb');
+    const next = $('ip-confirm-next');
     if (next) next.disabled = !(cb && cb.checked);
 });
 bindEvent('#ip-confirm-cb', 'change', (e, el) => {
     const step = ipFlow[ipCurrentKey];
     if (!step) return;
     if (step.type === 'choice' && ipSelectedOption === null && el.checked) { alert('请先选择'); el.checked = false; return; }
-    const next = $('#ip-confirm-next');
+    const next = $('ip-confirm-next');
     if (next) next.disabled = !el.checked;
 });
 bindEvent('#ip-confirm-next', 'click', async () => {
     const step = ipFlow[ipCurrentKey];
     if (!step) return;
-    const container = $('#ip-chat-container');
+    const container = $('ip-chat-container');
     if (!container) return;
     if (step.type === 'form') container.querySelectorAll('[data-field-key]').forEach(f => { ipAnswers[f.dataset.fieldKey] = f.value.trim(); });
     let userMsg = '';
@@ -4009,7 +4009,7 @@ bindEvent('#rss-fetch-btn', 'click', generateBriefing);
 bindEvent('#rss-optimize-btn', 'click', () => {
     if (!confirm('将执行以下操作：\n\n· 删除 10 个冗余/违规源\n· 修正若干源的分类\n· 补充 36氪\n\n你手动添加的其他源会保留。继续？')) return;
     const r = optimizeFeedList();
-    const statusEl = $('#rss-status');
+    const statusEl = $('rss-status');
     statusEl.textContent = `✅ 优化完成：删除 ${r.deleted} 个，修正分类 ${r.fixed} 个，新增 ${r.added} 个`;
     setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
 });
@@ -4017,12 +4017,12 @@ bindEvent('#rss-clear-btn', 'click', () => {
     if (!rssFeeds.length) return;
     if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
     rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
-    $('#rss-fetch-result').innerHTML = ''; $('#rss-status').textContent = '';
+    $('rss-fetch-result').innerHTML = ''; $('rss-status').textContent = '';
     clearFetchProgress(); setBriefingStageStatus('');
 });
 bindEvent('#rss-url', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 bindEvent('#rss-name', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
-bindEvent('#opml-import-btn', 'click', () => { const f = $('#opml-file-input'); if (f) f.click(); });
+bindEvent('#opml-import-btn', 'click', () => { const f = $('opml-file-input'); if (f) f.click(); });
 bindEvent('#opml-file-input', 'change', (e, el) => { const file = el.files && el.files[0]; if (file) handleOpmlFile(file); el.value = ''; });
 bindEvent('[data-del-feed]', 'click', (e, el) => { rssFeeds = rssFeeds.filter(x => x.id !== el.dataset.delFeed); saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); });
 bindEvent('[data-toggle-feed]', 'change', (e, el) => { const f = rssFeeds.find(x => x.id === el.dataset.toggleFeed); if (f) { f.enabled = el.checked; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); } });
@@ -4035,7 +4035,7 @@ bindEvent('[data-opml-idx]', 'change', (e, el) => {
     const cat = NEWS_CATEGORY[el.value];
     if (badge && cat) badge.textContent = cat.icon + ' ' + cat.label;
 });
-bindEvent('#opml-cancel-btn', 'click', () => { opmlPreviewData = null; const p = $('#opml-preview'); if (p) p.innerHTML = ''; });
+bindEvent('#opml-cancel-btn', 'click', () => { opmlPreviewData = null; const p = $('opml-preview'); if (p) p.innerHTML = ''; });
 bindEvent('#opml-confirm-btn', 'click', confirmOpmlImport);
 
 // 衣橱
@@ -4062,24 +4062,24 @@ bindEvent('[data-action="wd-idle-item"]', 'click', (e, el) => wdMarkIdle(el.data
 bindEvent('#wd-item-seasons .chip', 'click', (e, el) => toggleChip(wdItemSeasons, el));
 bindEvent('#wd-item-scenes .chip', 'click', (e, el) => toggleChip(wdItemScenes, el));
 bindEvent('#wd-item-save', 'click', saveWdItem);
-bindEvent('#wd-item-cancel', 'click', () => { const m = $('#wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; });
-bindEvent('#wd-item-del', 'click', () => { const id = wdEditingItemId; const m = $('#wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; if (id) deleteWdItem(id); });
+bindEvent('#wd-item-cancel', 'click', () => { const m = $('wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; });
+bindEvent('#wd-item-del', 'click', () => { const id = wdEditingItemId; const m = $('wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; if (id) deleteWdItem(id); });
 bindEvent('[data-action="wd-add-outfit"]', 'click', () => openWdOutfitModal(null));
 bindEvent('[data-action="wd-edit-outfit"]', 'click', (e, el) => openWdOutfitModal(el.dataset.id));
 bindEvent('[data-action="wd-del-outfit"]', 'click', (e, el) => deleteWdOutfit(el.dataset.id));
 bindEvent('#wd-outfit-save', 'click', saveWdOutfit);
-bindEvent('#wd-outfit-cancel', 'click', () => { const m = $('#wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; });
-bindEvent('#wd-outfit-del', 'click', () => { const id = wdEditingOutfitId; const m = $('#wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; if (id) deleteWdOutfit(id); });
+bindEvent('#wd-outfit-cancel', 'click', () => { const m = $('wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; });
+bindEvent('#wd-outfit-del', 'click', () => { const id = wdEditingOutfitId; const m = $('wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; if (id) deleteWdOutfit(id); });
 bindEvent('[data-action="wd-add-wish"]', 'click', () => openWdWishModal(null, null));
 bindEvent('[data-action="wd-gap-add"]', 'click', (e, el) => openWdWishModal(null, { category: el.dataset.cat, reason: el.dataset.text, gap: true }));
 bindEvent('[data-action="wd-edit-wish"]', 'click', (e, el) => openWdWishModal(el.dataset.id, null));
 bindEvent('[data-action="wd-del-wish"]', 'click', (e, el) => deleteWdWish(el.dataset.id));
 bindEvent('#wd-wish-save', 'click', saveWdWish);
-bindEvent('#wd-wish-cancel', 'click', () => { const m = $('#wd-wish-modal'); if (m) m.classList.remove('active'); wdEditingWishId = null; wdWishFromGap = false; });
+bindEvent('#wd-wish-cancel', 'click', () => { const m = $('wd-wish-modal'); if (m) m.classList.remove('active'); wdEditingWishId = null; wdWishFromGap = false; });
 bindEvent('[data-action="wd-buy-wish"]', 'click', (e, el) => openWdBuyModal(el.dataset.id));
 bindEvent('#wd-buy-account', 'change', (e, el) => wdUpdateBuySubcat());
 bindEvent('#wd-buy-save', 'click', saveWdBuy);
-bindEvent('#wd-buy-cancel', 'click', () => { const m = $('#wd-buy-modal'); if (m) m.classList.remove('active'); wdBuyingWishId = null; });
+bindEvent('#wd-buy-cancel', 'click', () => { const m = $('wd-buy-modal'); if (m) m.classList.remove('active'); wdBuyingWishId = null; });
 bindEvent('[data-action="wd-budget"]', 'click', toggleWdBudget);
 bindEvent('[data-action="wd-ai-buy"]', 'click', runWardrobeBuyAI);
 bindEvent('[data-action="wd-del-log"]', 'click', (e, el) => wdDeleteLog(el.dataset.date));
@@ -4088,11 +4088,11 @@ bindEvent('[data-action="wd-del-log"]', 'click', (e, el) => wdDeleteLog(el.datas
 document.addEventListener('DOMContentLoaded', async () => {
     buildNav();
 
-    $('#expense-date').value = todayStr();
-    $('#income-date').value = todayStr();
-    $('#transfer-date').value = todayStr();
-    $('#sleep-start').value = '23:00';
-    $('#sleep-end').value = '07:00';
+    $('expense-date').value = todayStr();
+    $('income-date').value = todayStr();
+    $('transfer-date').value = todayStr();
+    $('sleep-start').value = '23:00';
+    $('sleep-end').value = '07:00';
 
     function buildScoreRow(el) {
         let html = '';
@@ -4100,20 +4100,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         el.innerHTML = html;
         /* 点击选择由事件委托区统一绑定（selectScore） */
     }
-    buildScoreRow($('#energy-am'));
-    buildScoreRow($('#energy-pm'));
+    buildScoreRow($('energy-am'));
+    buildScoreRow($('energy-pm'));
     $$('#energy-am .score-btn')[4].click();
     $$('#energy-pm .score-btn')[4].click();
-    updateExpenseSubcatVisibility($('#expense-account').value);
+    updateExpenseSubcatVisibility($('expense-account').value);
 
     buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
     buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
     buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
 
     aiConfig = loadAIConfigLocal();
-    $('#ai-api-key').value = aiConfig.apiKey || '';
-    $('#ai-api-url').value = aiConfig.apiUrl;
-    $('#ai-model').value = aiConfig.model;
+    $('ai-api-key').value = aiConfig.apiKey || '';
+    $('ai-api-url').value = aiConfig.apiUrl;
+    $('ai-model').value = aiConfig.model;
 
     loadRhythmNodesLocal();
     loadRssFeedsLocal();
