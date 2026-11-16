@@ -270,14 +270,7 @@ tr{scroll-margin-top:20px}
         <button class="icon-btn" id="open-settings-btn">⚙️</button>
     </div>
 
-    <div class="seg">
-        <button class="seg-item nav-btn active" data-tab="execution">🚀 执行</button>
-        <button class="seg-item nav-btn" data-tab="accounts">💰 账户</button>
-        <button class="seg-item nav-btn" data-tab="rhythm">⏱️ 节律</button>
-        <button class="seg-item nav-btn" data-tab="health">🌿 健康</button>
-        <button class="seg-item nav-btn" data-tab="habits">🎯 习惯</button>
-        <button class="seg-item nav-btn" data-tab="news">📰 世事</button>
-    </div>
+    <div class="seg" id="nav-seg"><!-- 导航按钮由 JS 的 MODULES 注册表自动生成，新增模块无需改这里 --></div>
 
     <!-- ========== 执行系统 ========== -->
     <div id="tab-execution" class="tab-content active">
@@ -755,8 +748,109 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let realtimeChannel = null;
 let lastLocalChange = 0;
-let cloudApiConfigId = null;
-let cloudHabitsId = null;
+
+/* ================= 基础架构 =================
+   新增模块（如衣橱系统）只需三步：
+   1. HTML 添加 <div id="tab-wardrobe" class="tab-content">…</div>
+   2. MODULES 注册表加一条 { id:'wardrobe', icon:'👔', label:'衣橱', renders:['wardrobe'] }
+   3. 写 renderWardrobe() 并 RenderBus.on('wardrobe', renderWardrobe) 注册；
+      数据用 syncRecord('wardrobe', date, obj, obj) 持久化，按钮用 bindEvent 绑定
+   详见文件末尾「如何添加新模块」完整清单。
+============================================== */
+const $ = id => document.getElementById(id);
+const qs = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+const RenderBus = (() => {
+    const handlers = new Map();
+    return {
+        on(name, fn) { if (!handlers.has(name)) handlers.set(name, new Set()); handlers.get(name).add(fn); },
+        emit(name) { (handlers.get(name) || []).forEach(fn => { try { fn(); } catch (e) { console.error('[RenderBus:' + name + ']', e); } }); },
+        emitAll(names) { (names || []).forEach(n => this.emit(n)); }
+    };
+})();
+
+/* 事件委托：动态渲染的内容无需重复绑定 */
+function bindEvent(selector, eventName, handler) {
+    document.addEventListener(eventName, (e) => {
+        const el = e.target instanceof Element ? e.target.closest(selector) : null;
+        if (el && document.body.contains(el)) handler(e, el);
+    });
+}
+
+/* 写入云端前剔除 _cloudId 这类本地字段 */
+function cleanForCloud(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const copy = Array.isArray(obj) ? [...obj] : { ...obj };
+    delete copy._cloudId;
+    return copy;
+}
+
+/* 统一云同步：memoryRef 带 _cloudId 则更新，否则插入并回写 _cloudId */
+async function syncRecord(type, date, dataObj, memoryRef, opts) {
+    opts = opts || {};
+    if (!currentUser) return null;
+    let clean;
+    try {
+        const jsonStr = JSON.stringify(cleanForCloud(dataObj)).replace(/\\u0000/g, '').replace(/[\u0001-\u001F\u007F-\u009F]/g, '');
+        clean = JSON.parse(jsonStr);
+    } catch (e) {
+        console.error('[syncRecord] 序列化失败:', e);
+        if (!opts.silent) alert('保存失败：数据结构包含无法解析的内容');
+        return null;
+    }
+    try {
+        if (memoryRef && memoryRef._cloudId) {
+            const { error } = await sb.from('health_data').update({ data: clean, ts: Date.now() }).eq('id', memoryRef._cloudId);
+            if (error) throw error;
+            lastLocalChange = Date.now();
+            return { id: memoryRef._cloudId, ts: Date.now(), data: clean };
+        }
+        const { data, error } = await sb.from('health_data').insert({ user_id: currentUser.id, type, date, data: clean, ts: Date.now() }).select().single();
+        if (error) throw error;
+        lastLocalChange = Date.now();
+        if (memoryRef) memoryRef._cloudId = data.id;
+        return data;
+    } catch (err) {
+        console.error('[syncRecord] ' + type + ' 失败:', err);
+        if (!opts.silent) alert('保存失败：' + (err.message || err));
+        return null;
+    }
+}
+async function deleteHealthRecord(id) {
+    if (!currentUser || !id) return;
+    await sb.from('health_data').delete().eq('id', id);
+    lastLocalChange = Date.now();
+}
+
+/* 配置类记录的云端 id 引用 */
+const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null } };
+
+/* 模块注册表：导航按钮与渲染调度都从这里生成 */
+const MODULES = [
+    { id: 'execution', icon: '🚀', label: '执行', renders: ['execution'] },
+    { id: 'accounts', icon: '💰', label: '账户', renders: ['accounts'] },
+    { id: 'rhythm', icon: '⏱️', label: '节律', renders: ['rhythm'] },
+    { id: 'health', icon: '🌿', label: '健康', renders: ['health'] },
+    { id: 'habits', icon: '🎯', label: '习惯', renders: ['habits'] },
+    { id: 'news', icon: '📰', label: '世事', renders: ['news', 'rss'] }
+];
+function buildNav() {
+    const seg = qs('.seg');
+    if (!seg) return;
+    seg.innerHTML = '';
+    MODULES.forEach((m, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'seg-item nav-btn' + (i === 0 ? ' active' : '');
+        btn.dataset.tab = m.id;
+        btn.textContent = m.icon + ' ' + m.label;
+        seg.appendChild(btn);
+    });
+}
+function switchTab(id) {
+    $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    $$('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + id));
+}
 
 /* ================= 工具 ================= */
 function pad2(n) { return String(n).padStart(2, '0'); }
@@ -928,7 +1022,6 @@ const DEFAULT_RHYTHM_NODES = [
 ];
 
 let rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
-let rhythmConfigCloudId = null;
 let rhythmEditMode = false;
 let rhythmEditingIndex = -1;
 
@@ -954,6 +1047,9 @@ const CACHE_KEY = 'sys_data_cache';
 const RSS_KEY = 'rss_feeds_v1';
 const AI_KEY = 'ai_analyze_config';
 const HABITS_KEY = 'habits_config_v2';
+
+/* health_data 类型 → 内存数组名（新增类型只需在此登记 + 数据区加数组） */
+const HEALTH_LIST_MAP = { sleep: 'sleep', energy: 'energy', charge: 'charge', exercise: 'exercise', meal: 'meal', innerPeace: 'innerPeace', micro: 'microExercise', body: 'bodySignals', ai: 'aiAnalysis' };
 
 function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 function loadAIConfigLocal() { try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {} return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }; }
@@ -985,9 +1081,9 @@ function saveRssFeedsLocal() { try { localStorage.setItem(RSS_KEY, JSON.stringif
 function loadRssFeedsLocal() { try { const raw = localStorage.getItem(RSS_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) { rssFeeds = arr; return; } } } catch (e) {} }
 
 /* ================= UI ================= */
-function showLoginUI() { document.getElementById('auth-card').style.display = 'block'; document.getElementById('loading-overlay').style.display = 'none'; document.getElementById('main-content').style.display = 'none'; }
-function showLoadingUI() { document.getElementById('auth-card').style.display = 'none'; document.getElementById('loading-overlay').style.display = 'block'; document.getElementById('main-content').style.display = 'none'; }
-function showMainUI() { document.getElementById('auth-card').style.display = 'none'; document.getElementById('loading-overlay').style.display = 'none'; document.getElementById('main-content').style.display = 'block'; }
+function showLoginUI() { $('auth-card').style.display = 'block'; $('loading-overlay').style.display = 'none'; $('main-content').style.display = 'none'; }
+function showLoadingUI() { $('auth-card').style.display = 'none'; $('loading-overlay').style.display = 'block'; $('main-content').style.display = 'none'; }
+function showMainUI() { $('auth-card').style.display = 'none'; $('loading-overlay').style.display = 'none'; $('main-content').style.display = 'block'; }
 
 /* ================= 认证 ================= */
 async function signIn(email, password) {
@@ -1042,44 +1138,34 @@ async function loadAllFromCloud(silent = false) {
         newsData = { items: [], summaries: [], briefings: [] };
         executionData = [];
         rhythmDaily = [];
-        rhythmConfigCloudId = null;
         let cloudFeeds = null;
-        cloudApiConfigId = null; cloudHabitsId = null;
+        Object.values(cloudConfigRefs).forEach(ref => ref._cloudId = null);
         loadHabitsLocal();
 
         (hd || []).forEach(r => {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
 
-            if (r.type === 'execution') { executionData.push(d); return; }
-            if (r.type === 'ai_config') { cloudApiConfigId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
-            if (r.type === 'habits_config') { cloudHabitsId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
-            if (r.type === 'rhythm_config') { rhythmConfigCloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
-            if (r.type === 'rhythm_daily') { if (!rhythmDaily._cloudId) rhythmDaily._cloudId = {}; rhythmDaily._cloudId[r.date] = r.id; rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'execution') { executionData.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'ai_config') { cloudConfigRefs.ai._cloudId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
+            if (r.type === 'habits_config') { cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
+            if (r.type === 'rhythm_config') { cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
+            if (r.type === 'rhythm_daily') { rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
             if (r.type === 'news_item') { newsData.items.push(item); return; }
             if (r.type === 'news_summary') { newsData.summaries.push(item); return; }
-            if (r.type === 'briefing') { newsData.briefings.push(item); return; }
+            if (r.type === 'briefing') { newsData.briefings.push({ ...item, _cloudId: r.id }); return; }
             if (r.type === 'rss_feeds') { cloudFeeds = d.feeds || null; return; }
-            switch (r.type) {
-                case 'sleep': healthData.sleep.push(item); break;
-                case 'energy': healthData.energy.push(item); break;
-                case 'charge': healthData.charge.push(item); break;
-                case 'exercise': healthData.exercise.push(item); break;
-                case 'meal': healthData.meal.push(item); break;
-                case 'innerPeace': healthData.innerPeace.push(item); break;
-                case 'micro': healthData.microExercise.push(item); break;
-                case 'body': healthData.bodySignals.push(item); break;
-                case 'ai': healthData.aiAnalysis.push(item); break;
-            }
+            const listKey = HEALTH_LIST_MAP[r.type];
+            if (listKey) healthData[listKey].push(item);
         });
 
         loadRssFeedsLocal();
         if (Array.isArray(cloudFeeds)) { rssFeeds = cloudFeeds; saveRssFeedsLocal(); }
         else if (rssFeeds.length) { await pushRssFeedsToCloud(); }
 
-        document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
-        document.getElementById('ai-api-url').value = aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
-        document.getElementById('ai-model').value = aiConfig.model || 'deepseek-chat';
+        $('ai-api-key').value = aiConfig.apiKey || '';
+        $('ai-api-url').value = aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
+        $('ai-model').value = aiConfig.model || 'deepseek-chat';
 
         saveCache();
         showMainUI();
@@ -1104,27 +1190,8 @@ async function pushAccountRecord(record) {
 }
 async function updateAccountRecord(id, updates) { if (!currentUser) return; await sb.from('records').update(updates).eq('id', id); lastLocalChange = Date.now(); }
 async function deleteAccountRecord(id) { if (!currentUser) return; await sb.from('records').delete().eq('id', id); lastLocalChange = Date.now(); }
-async function pushHealthRecord(type, date, dataObj) {
-    if (!currentUser) return null;
-    const ts = Date.now();
-    let sanitizedData;
-    try { const jsonStr = JSON.stringify(dataObj).replace(/\\u0000/g, '').replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); sanitizedData = JSON.parse(jsonStr); }
-    catch (e) { console.error('数据序列化失败:', e); alert('保存失败：数据结构包含无法解析的内容'); return null; }
-    try {
-        const { data, error } = await sb.from('health_data').insert({ user_id: currentUser.id, type, date, data: sanitizedData, ts }).select().single();
-        if (error) { console.error('写入失败', error); alert('保存失败：' + error.message); return null; }
-        lastLocalChange = Date.now();
-        return data;
-    } catch (err) { console.error('网络或请求异常:', err); alert('保存失败：请求被服务器断开。'); return null; }
-}
-async function deleteHealthRecord(id) { if (!currentUser) return; await sb.from('health_data').delete().eq('id', id); lastLocalChange = Date.now(); }
-async function updateHealthRecord(id, dataObj) {
-    if (!currentUser) return;
-    let sanitizedData;
-    try { const jsonStr = JSON.stringify(dataObj).replace(/\\u0000/g, '').replace(/[\u0001-\u001F\u007F-\u009F]/g, ''); sanitizedData = JSON.parse(jsonStr); } catch (e) { return; }
-    await sb.from('health_data').update({ data: sanitizedData }).eq('id', id);
-    lastLocalChange = Date.now();
-}
+/* health_data 的写入/更新已统一为 syncRecord（见基础架构区）；删除统一为 deleteHealthRecord。 */
+
 async function pushRssFeedsToCloud() {
     if (!currentUser) return;
     try {
@@ -1135,19 +1202,13 @@ async function pushRssFeedsToCloud() {
 }
 async function saveAIConfigToCloud(config) {
     if (!currentUser) return;
-    try {
-        if (cloudApiConfigId) { await sb.from('health_data').update({ data: config, ts: Date.now() }).eq('id', cloudApiConfigId); }
-        else { const { data } = await sb.from('health_data').insert({ user_id: currentUser.id, type: 'ai_config', date: todayStr(), data: config, ts: Date.now() }).select().single(); if (data) cloudApiConfigId = data.id; }
-        lastLocalChange = Date.now();
-    } catch (e) { console.warn('API 配置同步云端失败', e); }
+    try { await syncRecord('ai_config', todayStr(), config, cloudConfigRefs.ai, { silent: true }); }
+    catch (e) { console.warn('API 配置同步云端失败', e); }
 }
 async function saveHabitsToCloud() {
     if (!currentUser) return;
-    try {
-        if (cloudHabitsId) { await sb.from('health_data').update({ data: { habits }, ts: Date.now() }).eq('id', cloudHabitsId); }
-        else { const { data } = await sb.from('health_data').insert({ user_id: currentUser.id, type: 'habits_config', date: todayStr(), data: { habits }, ts: Date.now() }).select().single(); if (data) cloudHabitsId = data.id; }
-        lastLocalChange = Date.now();
-    } catch (e) { console.warn('打卡配置同步云端失败', e); }
+    try { await syncRecord('habits_config', todayStr(), { habits }, cloudConfigRefs.habits, { silent: true }); }
+    catch (e) { console.warn('打卡配置同步云端失败', e); }
 }
 
 /* ================= 实时监听 ================= */
@@ -1163,7 +1224,7 @@ function setupRealtime() {
 let currentEditingExecId = null;
 
 function renderExecution() {
-    const el = document.getElementById('execution-list');
+    const el = $('execution-list');
     if (!executionData.length) { el.innerHTML = '<div class="empty-hint">还没有执行闭环，点击上方开启</div>'; return; }
     
     // 排序：未闭环的在前，然后按更新时间倒序
@@ -1180,8 +1241,8 @@ function renderExecution() {
                 <div class="exec-header">
                     <div class="exec-title-text">${isClosed ? '✅ ' : '⏳ '}${esc(item.title || '未命名闭环')}</div>
                     <div style="display:flex;gap:6px;">
-                        <button class="btn btn-secondary btn-sm" onclick="openExecModal('${item.id}')">编辑</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteExec('${item.id}')">✕</button>
+                        <button class="btn btn-secondary btn-sm" data-action="exec-edit" data-id="${item.id}">编辑</button>
+                        <button class="btn btn-danger btn-sm" data-action="exec-delete" data-id="${item.id}">✕</button>
                     </div>
                 </div>
                 <div>
@@ -1199,14 +1260,14 @@ function renderExecution() {
 
 function openExecModal(id) {
     currentEditingExecId = id || null;
-    const titleEl = document.getElementById('exec-modal-title');
-    const titleInput = document.getElementById('exec-title-input');
-    const hyp = document.getElementById('exec-hypothesis');
-    const obs = document.getElementById('exec-observe');
-    const ver = document.getElementById('exec-verify');
-    const con = document.getElementById('exec-conclusion');
-    const fb = document.getElementById('exec-feedback');
-    const statusCb = document.getElementById('exec-status-closed');
+    const titleEl = $('exec-modal-title');
+    const titleInput = $('exec-title-input');
+    const hyp = $('exec-hypothesis');
+    const obs = $('exec-observe');
+    const ver = $('exec-verify');
+    const con = $('exec-conclusion');
+    const fb = $('exec-feedback');
+    const statusCb = $('exec-status-closed');
 
     if (id) {
         titleEl.textContent = '✏️ 编辑执行闭环';
@@ -1230,43 +1291,43 @@ function openExecModal(id) {
         fb.value = '';
         statusCb.checked = false;
     }
-    document.getElementById('exec-modal').classList.add('active');
+    $('exec-modal').classList.add('active');
 }
 
 async function saveExec() {
-    const title = document.getElementById('exec-title-input').value.trim();
+    const title = $('#exec-title-input').value.trim();
     if (!title) return alert('请填写目标/事件标题');
 
     const dataObj = {
         id: currentEditingExecId || 'ex_' + Date.now() + Math.random().toString(36).slice(2,6),
         title,
-        hypothesis: document.getElementById('exec-hypothesis').value.trim(),
-        observe: document.getElementById('exec-observe').value.trim(),
-        verify: document.getElementById('exec-verify').value.trim(),
-        conclusion: document.getElementById('exec-conclusion').value.trim(),
-        feedback: document.getElementById('exec-feedback').value.trim(),
-        status: document.getElementById('exec-status-closed').checked ? 'closed' : 'open',
+        hypothesis: $('#exec-hypothesis').value.trim(),
+        observe: $('#exec-observe').value.trim(),
+        verify: $('#exec-verify').value.trim(),
+        conclusion: $('#exec-conclusion').value.trim(),
+        feedback: $('#exec-feedback').value.trim(),
+        status: $('#exec-status-closed').checked ? 'closed' : 'open',
         updatedAt: Date.now()
     };
 
     if (currentEditingExecId) {
         const idx = executionData.findIndex(x => x.id === currentEditingExecId);
         if (idx > -1) {
-            dataObj.createdAt = executionData[idx].createdAt || Date.now();
+            const old = executionData[idx];
+            dataObj.createdAt = old.createdAt || Date.now();
+            dataObj._cloudId = old._cloudId || null;
             executionData[idx] = dataObj;
-            const record = health_data.find ? null : null; // dummy
-            await updateHealthRecord(dataObj._cloudId || executionData[idx]._cloudId, dataObj);
+            await syncRecord('execution', todayStr(), dataObj, dataObj);
         }
     } else {
         dataObj.createdAt = Date.now();
         executionData.push(dataObj);
-        const item = await pushHealthRecord('execution', todayStr(), dataObj);
-        if (item) dataObj._cloudId = item.id;
+        await syncRecord('execution', todayStr(), dataObj, dataObj);
     }
 
     saveCache();
-    renderExecution();
-    document.getElementById('exec-modal').classList.remove('active');
+    RenderBus.emit('execution');
+    $('#exec-modal').classList.remove('active');
     currentEditingExecId = null;
 }
 
@@ -1277,7 +1338,7 @@ async function deleteExec(id) {
         await deleteHealthRecord(item._cloudId);
     }
     executionData = executionData.filter(x => x.id !== id);
-    saveCache(); renderExecution();
+    saveCache(); RenderBus.emit('execution');
 }
 
 /* ================= 节律 ================= */
@@ -1289,48 +1350,43 @@ function getTodayRhythm() {
 async function saveRhythmCloud() {
     if (!currentUser) return;
     const r = getTodayRhythm();
-    const existing = rhythmDaily._cloudId && rhythmDaily._cloudId[r.date];
-    if (existing) { await updateHealthRecord(existing, r); }
-    else { const item = await pushHealthRecord('rhythm_daily', r.date, r); if (item) { if (!rhythmDaily._cloudId) rhythmDaily._cloudId = {}; rhythmDaily._cloudId[r.date] = item.id; } }
+    await syncRecord('rhythm_daily', r.date, r, r);
     saveCache();
 }
 async function saveRhythmNodesCloud() {
     saveRhythmNodesLocal();
     if (!currentUser) return;
-    const data = { nodes: rhythmNodes };
-    try {
-        if (rhythmConfigCloudId) { await updateHealthRecord(rhythmConfigCloudId, data); }
-        else { const item = await pushHealthRecord('rhythm_config', todayStr(), data); if (item) rhythmConfigCloudId = item.id; }
-    } catch (e) { console.warn('节律配置同步失败', e); }
+    try { await syncRecord('rhythm_config', todayStr(), { nodes: rhythmNodes }, cloudConfigRefs.rhythm); }
+    catch (e) { console.warn('节律配置同步失败', e); }
 }
 function openRhythmEditModal(idx) {
     rhythmEditingIndex = idx;
     const node = rhythmNodes[idx];
     if (!node) return;
-    document.getElementById('rhythm-edit-modal-title').textContent = '✏️ 编辑节点';
-    document.getElementById('rhythm-edit-time').value = node.time || '';
-    document.getElementById('rhythm-edit-task').value = node.task || '';
-    document.getElementById('rhythm-edit-desc').value = node.desc || '';
-    document.getElementById('rhythm-edit-low-task').value = node.lowTask || '';
-    document.getElementById('rhythm-edit-low-desc').value = node.lowDesc || '';
-    document.getElementById('rhythm-edit-del').disabled = false;
+    $('rhythm-edit-modal-title').textContent = '✏️ 编辑节点';
+    $('rhythm-edit-time').value = node.time || '';
+    $('rhythm-edit-task').value = node.task || '';
+    $('rhythm-edit-desc').value = node.desc || '';
+    $('rhythm-edit-low-task').value = node.lowTask || '';
+    $('rhythm-edit-low-desc').value = node.lowDesc || '';
+    $('rhythm-edit-del').disabled = false;
     updateRhythmMoveButtons();
-    document.getElementById('rhythm-edit-modal').classList.add('active');
+    $('rhythm-edit-modal').classList.add('active');
 }
 function openRhythmAddModal() {
     rhythmEditingIndex = -1;
-    document.getElementById('rhythm-edit-modal-title').textContent = '➕ 添加节点';
-    ['rhythm-edit-time','rhythm-edit-task','rhythm-edit-desc','rhythm-edit-low-task','rhythm-edit-low-desc'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('rhythm-edit-up').disabled = true;
-    document.getElementById('rhythm-edit-down').disabled = true;
-    document.getElementById('rhythm-edit-del').disabled = true;
-    document.getElementById('rhythm-edit-modal').classList.add('active');
+    $('rhythm-edit-modal-title').textContent = '➕ 添加节点';
+    ['rhythm-edit-time','rhythm-edit-task','rhythm-edit-desc','rhythm-edit-low-task','rhythm-edit-low-desc'].forEach(id => $(id).value = '');
+    $('rhythm-edit-up').disabled = true;
+    $('rhythm-edit-down').disabled = true;
+    $('rhythm-edit-del').disabled = true;
+    $('rhythm-edit-modal').classList.add('active');
 }
 function updateRhythmMoveButtons() {
     if (rhythmEditingIndex < 0) return;
-    document.getElementById('rhythm-edit-up').disabled = rhythmEditingIndex === 0;
-    document.getElementById('rhythm-edit-down').disabled = rhythmEditingIndex === rhythmNodes.length - 1;
-    document.getElementById('rhythm-edit-del').disabled = rhythmNodes.length <= 1;
+    $('rhythm-edit-up').disabled = rhythmEditingIndex === 0;
+    $('rhythm-edit-down').disabled = rhythmEditingIndex === rhythmNodes.length - 1;
+    $('rhythm-edit-del').disabled = rhythmNodes.length <= 1;
 }
 function moveRhythmNode(dir) {
     if (rhythmEditingIndex < 0) return;
@@ -1341,44 +1397,44 @@ function moveRhythmNode(dir) {
     updateRhythmMoveButtons();
 }
 function saveRhythmNodeEdit() {
-    const time = document.getElementById('rhythm-edit-time').value.trim();
-    const task = document.getElementById('rhythm-edit-task').value.trim();
-    const desc = document.getElementById('rhythm-edit-desc').value.trim();
-    const lowTask = document.getElementById('rhythm-edit-low-task').value.trim();
-    const lowDesc = document.getElementById('rhythm-edit-low-desc').value.trim();
+    const time = $('rhythm-edit-time').value.trim();
+    const task = $('rhythm-edit-task').value.trim();
+    const desc = $('rhythm-edit-desc').value.trim();
+    const lowTask = $('rhythm-edit-low-task').value.trim();
+    const lowDesc = $('rhythm-edit-low-desc').value.trim();
     if (!time || !task) return alert('时间和任务必填');
     if (rhythmEditingIndex >= 0) {
         const node = rhythmNodes[rhythmEditingIndex];
         node.time = time; node.task = task; node.desc = desc; node.lowTask = lowTask; node.lowDesc = lowDesc;
     } else { rhythmNodes.push({ key: genRhythmKey(), time, task, desc, lowTask, lowDesc }); }
     saveRhythmNodesCloud();
-    document.getElementById('rhythm-edit-modal').classList.remove('active');
+    $('rhythm-edit-modal').classList.remove('active');
     rhythmEditingIndex = -1;
-    renderRhythm();
+    RenderBus.emit('rhythm');
 }
 function deleteRhythmNode() {
     if (rhythmEditingIndex < 0) return;
     if (!confirm('删除这个节律节点？已有打卡记录不会删除。')) return;
     rhythmNodes.splice(rhythmEditingIndex, 1);
     saveRhythmNodesCloud();
-    document.getElementById('rhythm-edit-modal').classList.remove('active');
+    $('rhythm-edit-modal').classList.remove('active');
     rhythmEditingIndex = -1;
-    renderRhythm();
+    RenderBus.emit('rhythm');
 }
 function resetRhythmNodes() {
     if (!confirm('恢复默认的 8 个节律节点？当前自定义的节点会被覆盖。')) return;
     rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
     saveRhythmNodesCloud();
-    renderRhythm();
+    RenderBus.emit('rhythm');
 }
 function renderRhythm() {
     const r = getTodayRhythm();
     const isLow = r.mode === 'low';
-    const header = document.getElementById('rhythm-header');
-    const title = document.getElementById('rhythm-mode-title');
-    const sub = document.getElementById('rhythm-mode-sub');
-    const toggleBtn = document.getElementById('toggle-rhythm-mode-btn');
-    const el = document.getElementById('rhythm-timeline');
+    const header = $('rhythm-header');
+    const title = $('rhythm-mode-title');
+    const sub = $('rhythm-mode-sub');
+    const toggleBtn = $('toggle-rhythm-mode-btn');
+    const el = $('rhythm-timeline');
 
     if (isLow) {
         header.classList.add('low-mode');
@@ -1411,55 +1467,52 @@ function renderRhythm() {
     });
     el.innerHTML = html;
 
-    el.querySelectorAll('.rhythm-node').forEach(nodeEl => {
-        nodeEl.onclick = (e) => {
-            if (e.target.classList.contains('rhythm-edit-btn')) return;
-            const idx = parseInt(nodeEl.dataset.idx, 10);
-            if (rhythmEditMode) { openRhythmEditModal(idx); return; }
-            const key = nodeEl.dataset.key;
-            const i = r.done.indexOf(key);
-            if (i > -1) r.done.splice(i, 1); else r.done.push(key);
-            saveRhythmCloud();
-            renderRhythm();
-        };
-    });
-
-    el.querySelectorAll('.rhythm-edit-btn').forEach(btn => {
-        btn.onclick = (e) => { e.stopPropagation(); openRhythmEditModal(parseInt(btn.dataset.editIdx, 10)); };
-    });
-
-    document.getElementById('rhythm-note-input').value = r.note || '';
+    $('rhythm-note-input').value = r.note || '';
 }
 
-document.getElementById('toggle-rhythm-mode-btn').onclick = () => {
+/* 节律节点打卡与编辑按钮：委托绑定（见事件绑定区 .rhythm-node / .rhythm-edit-btn） */
+
+bindEvent('#toggle-rhythm-mode-btn', 'click', () => {
     const r = getTodayRhythm();
     r.mode = r.mode === 'low' ? 'normal' : 'low';
     saveRhythmCloud();
-    renderRhythm();
-};
-document.getElementById('rhythm-save-note-btn').onclick = () => {
+    RenderBus.emit('rhythm');
+});
+bindEvent('#rhythm-save-note-btn', 'click', () => {
     const r = getTodayRhythm();
-    r.note = document.getElementById('rhythm-note-input').value.trim();
+    r.note = $('#rhythm-note-input').value.trim();
     saveRhythmCloud();
     alert('记录已保存');
-};
-document.getElementById('rhythm-edit-toggle-btn').onclick = () => {
+});
+bindEvent('#rhythm-edit-toggle-btn', 'click', () => {
     rhythmEditMode = !rhythmEditMode;
-    const btn = document.getElementById('rhythm-edit-toggle-btn');
+    const btn = $('#rhythm-edit-toggle-btn');
     btn.textContent = rhythmEditMode ? '✅ 完成编辑' : '进入编辑模式';
     btn.classList.toggle('btn-secondary', !rhythmEditMode);
     btn.classList.toggle('btn-primary', rhythmEditMode);
-    document.getElementById('rhythm-edit-bar').style.display = rhythmEditMode ? 'block' : 'none';
-    document.getElementById('rhythm-hint').textContent = rhythmEditMode ? '编辑模式：点击节点修改内容。' : '点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。';
-    renderRhythm();
-};
-document.getElementById('rhythm-add-node-btn').onclick = openRhythmAddModal;
-document.getElementById('rhythm-reset-nodes-btn').onclick = resetRhythmNodes;
-document.getElementById('rhythm-edit-up').onclick = () => moveRhythmNode(-1);
-document.getElementById('rhythm-edit-down').onclick = () => moveRhythmNode(1);
-document.getElementById('rhythm-edit-save').onclick = saveRhythmNodeEdit;
-document.getElementById('rhythm-edit-cancel').onclick = () => { document.getElementById('rhythm-edit-modal').classList.remove('active'); rhythmEditingIndex = -1; };
-document.getElementById('rhythm-edit-del').onclick = deleteRhythmNode;
+    $('#rhythm-edit-bar').style.display = rhythmEditMode ? 'block' : 'none';
+    $('#rhythm-hint').textContent = rhythmEditMode ? '编辑模式：点击节点修改内容。' : '点击卡片打卡。时间只做参考，哪怕晚一点、看一眼，只要做了就算成功。';
+    RenderBus.emit('rhythm');
+});
+bindEvent('#rhythm-add-node-btn', 'click', openRhythmAddModal);
+bindEvent('#rhythm-reset-nodes-btn', 'click', resetRhythmNodes);
+bindEvent('#rhythm-edit-up', 'click', () => moveRhythmNode(-1));
+bindEvent('#rhythm-edit-down', 'click', () => moveRhythmNode(1));
+bindEvent('#rhythm-edit-save', 'click', saveRhythmNodeEdit);
+bindEvent('#rhythm-edit-cancel', 'click', () => { $('#rhythm-edit-modal').classList.remove('active'); rhythmEditingIndex = -1; });
+bindEvent('#rhythm-edit-del', 'click', deleteRhythmNode);
+bindEvent('.rhythm-node', 'click', (e, el) => {
+    if (e.target.closest('.rhythm-edit-btn')) return;
+    const idx = parseInt(el.dataset.idx, 10);
+    if (rhythmEditMode) { openRhythmEditModal(idx); return; }
+    const r = getTodayRhythm();
+    const key = el.dataset.key;
+    const i = r.done.indexOf(key);
+    if (i > -1) r.done.splice(i, 1); else r.done.push(key);
+    saveRhythmCloud();
+    RenderBus.emit('rhythm');
+});
+bindEvent('.rhythm-edit-btn', 'click', (e, el) => { openRhythmEditModal(parseInt(el.dataset.editIdx, 10)); });
 
 /* ================= 微习惯打卡 ================= */
 function calcStreak(habit) {
@@ -1477,16 +1530,16 @@ function toggleHabit(id) {
     if (!habit.dates) habit.dates = [];
     const idx = habit.dates.indexOf(currentDay);
     if (idx > -1) habit.dates.splice(idx, 1); else habit.dates.push(currentDay);
-    saveHabitsLocal(); saveHabitsToCloud(); renderHabits();
+    saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
 }
 function openEditHabitModal(id) {
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
     currentEditingHabitId = id;
-    document.getElementById('edit-habit-name-input').value = habit.name;
-    document.getElementById('edit-habit-category').value = habit.category || '其他';
+    $('edit-habit-name-input').value = habit.name;
+    $('edit-habit-category').value = habit.category || '其他';
     updateModalMoveButtons();
-    document.getElementById('edit-habit-modal').classList.add('active');
+    $('edit-habit-modal').classList.add('active');
 }
 function updateModalMoveButtons() {
     if (!currentEditingHabitId) return;
@@ -1495,8 +1548,8 @@ function updateModalMoveButtons() {
     const cat = habit.category || '其他';
     const catHabits = habits.filter(h => (h.category || '其他') === cat);
     const idx = catHabits.findIndex(h => h.id === currentEditingHabitId);
-    document.getElementById('edit-habit-up-btn').disabled = (idx === 0);
-    document.getElementById('edit-habit-down-btn').disabled = (idx === catHabits.length - 1);
+    $('edit-habit-up-btn').disabled = (idx === 0);
+    $('edit-habit-down-btn').disabled = (idx === catHabits.length - 1);
 }
 function moveHabitInModal(dir) {
     if (!currentEditingHabitId) return;
@@ -1516,36 +1569,36 @@ function moveHabitInModal(dir) {
         const g2 = habits.findIndex(h => h.id === target.id);
         [habits[g1], habits[g2]] = [habits[g2], habits[g1]];
     } else return;
-    saveHabitsLocal(); saveHabitsToCloud(); renderHabits(); updateModalMoveButtons();
+    saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits'); updateModalMoveButtons();
 }
 function saveHabitModal() {
     if (!currentEditingHabitId) return;
     const habit = habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
-    const name = document.getElementById('edit-habit-name-input').value.trim();
-    const category = document.getElementById('edit-habit-category').value;
+    const name = $('edit-habit-name-input').value.trim();
+    const category = $('edit-habit-category').value;
     if (!name) return alert('名称不能为空');
     habit.name = name; habit.category = category;
-    saveHabitsLocal(); saveHabitsToCloud(); renderHabits();
-    document.getElementById('edit-habit-modal').classList.remove('active');
+    saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
+    $('edit-habit-modal').classList.remove('active');
     currentEditingHabitId = null;
 }
 function deleteHabitInModal() {
     if (!currentEditingHabitId) return;
     if (!confirm('确定删除这个微习惯和所有打卡记录吗？')) return;
     habits = habits.filter(h => h.id !== currentEditingHabitId);
-    saveHabitsLocal(); saveHabitsToCloud(); renderHabits();
-    document.getElementById('edit-habit-modal').classList.remove('active');
+    saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
+    $('edit-habit-modal').classList.remove('active');
     currentEditingHabitId = null;
 }
 function addNewHabit() {
-    const input = document.getElementById('new-habit-name');
-    const select = document.getElementById('new-habit-category');
+    const input = $('new-habit-name');
+    const select = $('new-habit-category');
     const name = input.value.trim();
     if (!name) return;
     habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name, category: select.value, icon: '🎯', dates: [] });
     input.value = '';
-    saveHabitsLocal(); saveHabitsToCloud(); renderHabits();
+    saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
 }
 function importMorningRoutine() {
     const morningHabits = [
@@ -1561,11 +1614,11 @@ function importMorningRoutine() {
             added++;
         }
     });
-    if (added > 0) { saveHabitsLocal(); saveHabitsToCloud(); renderHabits(); alert(`已导入 ${added} 个早晨流程！`); }
+    if (added > 0) { saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits'); alert(`已导入 ${added} 个早晨流程！`); }
     else alert('早晨流程已经在你的习惯列表里了。');
 }
 function renderHabits() {
-    const el = document.getElementById('habit-list');
+    const el = $('habit-list');
     if (!habits.length) { el.innerHTML = '<div class="empty-hint">还没有微习惯，展开下方添加</div>'; return; }
     const grouped = {};
     habits.forEach(h => { const cat = h.category || '其他'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(h); });
@@ -1578,14 +1631,14 @@ function renderHabits() {
             const done = h.dates && h.dates.includes(currentDay);
             const streak = calcStreak(h);
             html += `<div class="habit-item ${done ? 'done' : ''}">
-                <div class="habit-left" onclick="toggleHabit('${h.id}')">
+                <div class="habit-left" data-action="toggle-habit" data-id="${h.id}">
                     <span class="habit-icon">${esc(h.icon)}</span>
                     <span class="habit-name">${esc(h.name)}</span>
                     ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}天</span>` : ''}
                 </div>
                 <div class="habit-actions">
-                    <div class="habit-check" onclick="toggleHabit('${h.id}')">✓</div>
-                    <button class="habit-action-btn" onclick="openEditHabitModal('${h.id}')">✏️</button>
+                    <div class="habit-check" data-action="toggle-habit" data-id="${h.id}">✓</div>
+                    <button class="habit-action-btn" data-action="edit-habit" data-id="${h.id}">✏️</button>
                 </div>
             </div>`;
         });
@@ -1607,7 +1660,7 @@ async function addIncome(amount, day) {
     accountsData.balances.survival += amount * RATIOS.survival;
     accountsData.balances.stable += amount * RATIOS.stable;
     accountsData.balances.develop += amount * RATIOS.develop;
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
     return true;
 }
 async function addExpense(amount, account, desc, day, subCategory) {
@@ -1622,7 +1675,7 @@ async function addExpense(amount, account, desc, day, subCategory) {
     record.id = inserted.id;
     accountsData.balances[account] -= amount;
     accountsData.expenses.push(record);
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
     return true;
 }
 async function addTransfer(amount, from, to, desc, day) {
@@ -1638,7 +1691,7 @@ async function addTransfer(amount, from, to, desc, day) {
     accountsData.balances[from] -= amount;
     accountsData.balances[to] += amount;
     accountsData.transfers.push({ id: inserted.id, amount, from, to, desc: record.desc, day: d, month: record.month, ts });
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
     return true;
 }
 async function deleteExpense(id) {
@@ -1648,7 +1701,7 @@ async function deleteExpense(id) {
     await deleteAccountRecord(id);
     accountsData.balances[item.account] += item.amount;
     accountsData.expenses.splice(idx, 1);
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
 }
 async function deleteTransfer(id) {
     const idx = accountsData.transfers.findIndex(e => String(e.id) === String(id));
@@ -1658,7 +1711,7 @@ async function deleteTransfer(id) {
     accountsData.balances[item.from] += item.amount;
     accountsData.balances[item.to] -= item.amount;
     accountsData.transfers.splice(idx, 1);
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
 }
 async function updateExpenseDate(id, newDate) {
     const e = accountsData.expenses.find(x => String(x.id) === String(id));
@@ -1667,7 +1720,7 @@ async function updateExpenseDate(id, newDate) {
     if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
     await updateAccountRecord(id, { day, month });
     e.day = day; e.month = month;
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
 }
 async function updateExpenseSubcategory(id, sub) {
     const e = accountsData.expenses.find(x => String(x.id) === String(id));
@@ -1675,7 +1728,7 @@ async function updateExpenseSubcategory(id, sub) {
     const v = SUB_CATEGORIES[sub] ? sub : null;
     await updateAccountRecord(id, { sub_category: v });
     e.subCategory = v;
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
 }
 async function updateIncomeDate(id, newDate) {
     const r = accountsData.incomeRecords.find(x => String(x.id) === String(id));
@@ -1684,15 +1737,15 @@ async function updateIncomeDate(id, newDate) {
     if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
     await updateAccountRecord(id, { day, month });
     r.day = day; r.month = month;
-    saveCache(); renderAccounts();
+    saveCache(); RenderBus.emit('accounts');
 }
 
 function renderAccounts() {
-    document.getElementById('balance-survival').textContent = accountsData.balances.survival.toFixed(2);
-    document.getElementById('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
-    document.getElementById('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
+    $('balance-survival').textContent = accountsData.balances.survival.toFixed(2);
+    $('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
+    $('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
 
-    const expEl = document.getElementById('expense-list');
+    const expEl = $('expense-list');
     if (accountsData.expenses.length === 0) { expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>'; }
     else {
         const grouped = {};
@@ -1722,12 +1775,9 @@ function renderAccounts() {
             html += `</tbody></table></div></details>`;
         });
         expEl.innerHTML = html;
-        expEl.querySelectorAll('.edit-expense-date').forEach(inp => inp.addEventListener('change', function() { updateExpenseDate(this.dataset.id, this.value); }));
-        expEl.querySelectorAll('.edit-subcategory').forEach(sel => sel.addEventListener('change', function() { updateExpenseSubcategory(this.dataset.id, this.value); }));
-        expEl.querySelectorAll('[data-del-expense]').forEach(b => b.onclick = () => deleteExpense(b.dataset.delExpense));
     }
 
-    const transEl = document.getElementById('transfer-list');
+    const transEl = $('transfer-list');
     if (accountsData.transfers.length === 0) { transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>'; }
     else {
         const sorted = [...accountsData.transfers].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
@@ -1737,10 +1787,9 @@ function renderAccounts() {
         });
         html += '</tbody></table>';
         transEl.innerHTML = html;
-        transEl.querySelectorAll('[data-del-transfer]').forEach(b => b.onclick = () => deleteTransfer(b.dataset.delTransfer));
     }
 
-    const incEl = document.getElementById('income-list');
+    const incEl = $('income-list');
     if (accountsData.incomeRecords.length === 0) { incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>'; }
     else {
         const sorted = [...accountsData.incomeRecords].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
@@ -1751,11 +1800,10 @@ function renderAccounts() {
         });
         html += '</tbody></table>';
         incEl.innerHTML = html;
-        incEl.querySelectorAll('.edit-income-date').forEach(inp => inp.addEventListener('change', function() { updateIncomeDate(this.dataset.id, this.value); }));
     }
 
     const totalExpense = accountsData.expenses.reduce((s, e) => s + e.amount, 0);
-    document.getElementById('accounts-summary').textContent = `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${accountsData.income.toFixed(2)} · 剩余 ¥${(accountsData.income - totalExpense).toFixed(2)}`;
+    $('accounts-summary').textContent = `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${accountsData.income.toFixed(2)} · 剩余 ¥${(accountsData.income - totalExpense).toFixed(2)}`;
 
     renderMonthly();
 }
@@ -1773,7 +1821,7 @@ function renderMonthly() {
         if (!item.days[d]) item.days[d] = { expense: 0, count: 0 };
         item.days[d].expense += e.amount; item.days[d].count += 1;
     });
-    const listEl = document.getElementById('monthly-list');
+    const listEl = $('monthly-list');
     const list = Object.values(map).sort((a, b) => { if (a.month === 'unknown') return 1; if (b.month === 'unknown') return -1; return b.month.localeCompare(a.month); });
     if (list.length === 0) { listEl.innerHTML = '<div class="empty-hint">暂无月度记录</div>'; return; }
 
@@ -1804,20 +1852,6 @@ function renderMonthly() {
     const tb = tI - tE;
     html += `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 4px 0;border-top:2px solid var(--border);font-size:13px;margin-top:12px;"><span>合计收入 <b style="color:#2d7d46;">${tI.toFixed(2)}</b></span><span>合计支出 <b style="color:#c0392b;">${tE.toFixed(2)}</b></span><span>总结余 <b style="${tb>=0?'color:#2d7d46;':'color:#c0392b;'}">${tb>0?'+':''}${tb.toFixed(2)}</b></span></div>`;
     listEl.innerHTML = html;
-
-    listEl.querySelectorAll('.clickable-chip').forEach(chip => {
-        chip.onclick = (e) => {
-            const day = e.target.dataset.day;
-            if (!day) return;
-            const month = day.slice(0, 7);
-            const monthDetail = document.querySelector(`#expense-list details[data-month="${month}"]`);
-            if (monthDetail) monthDetail.open = true;
-            setTimeout(() => {
-                const rows = document.querySelectorAll(`#expense-list tr[data-day="${day}"]`);
-                if (rows.length > 0) { rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); rows.forEach(r => { r.classList.remove('highlight-row'); void r.offsetWidth; r.classList.add('highlight-row'); setTimeout(() => r.classList.remove('highlight-row'), 2000); }); }
-            }, 200);
-        };
-    });
 }
 
 /* ================= 健康系统 ================= */
@@ -1829,120 +1863,120 @@ let selectedSignals = new Set();
 function filterByDay(list) { return list.filter(r => r.date === currentDay); }
 function updateDayBar() {
     const dateStr = fullDayLabel(currentDay) + ' · ' + weekdayLabel(currentDay);
-    document.getElementById('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
-    document.getElementById('day-sub').textContent = dateStr;
-    document.getElementById('day-picker').value = currentDay;
-    document.getElementById('habit-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
-    document.getElementById('habit-day-sub').textContent = dateStr;
-    document.getElementById('habit-day-picker').value = currentDay;
-    document.getElementById('news-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
-    document.getElementById('news-day-sub').textContent = dateStr;
-    document.getElementById('news-day-picker').value = currentDay;
+    $('day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+    $('day-sub').textContent = dateStr;
+    $('day-picker').value = currentDay;
+    $('habit-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+    $('habit-day-sub').textContent = dateStr;
+    $('habit-day-picker').value = currentDay;
+    $('news-day-label').textContent = currentDay === todayStr() ? '今天' : currentDay.slice(5).replace('-','/');
+    $('news-day-sub').textContent = dateStr;
+    $('news-day-picker').value = currentDay;
 }
-function setDay(d) { currentDay = d; updateDayBar(); resetIpSession(); renderHealthAll(); renderNews(); }
+function setDay(d) { currentDay = d; updateDayBar(); resetIpSession(); RenderBus.emitAll(['health', 'habits', 'news']); }
 
 function buildChipRow(containerId, items, selectedSet) {
-    const el = document.getElementById(containerId);
+    const el = $(containerId);
     if (!el) return;
     let html = '';
     items.forEach(it => { html += `<span class="chip ${selectedSet.has(it.key)?'active':''}" data-key="${it.key}">${esc(it.label)}</span>`; });
     el.innerHTML = html;
-    el.querySelectorAll('.chip').forEach(c => {
-        c.onclick = () => {
-            const k = c.dataset.key;
-            if (selectedSet.has(k)) { selectedSet.delete(k); c.classList.remove('active'); }
-            else { selectedSet.add(k); c.classList.add('active'); }
-            updateOtherInputs();
-        };
-    });
     updateOtherInputs();
+    /* chip 点击由事件委托区统一绑定（toggleChip） */
 }
 function updateOtherInputs() {
-    const po = document.getElementById('posture-other');
-    const ho = document.getElementById('habit-other');
-    const so = document.getElementById('signal-other');
+    const po = $('posture-other');
+    const ho = $('habit-other');
+    const so = $('signal-other');
     if (po) po.classList.toggle('hidden', !selectedPosture.has('other'));
     if (ho) ho.classList.toggle('hidden', !selectedHabit.has('other'));
     if (so) so.classList.toggle('hidden', !selectedSignals.has('other'));
 }
 
 async function addSleep() {
-    const start = document.getElementById('sleep-start').value;
-    const end = document.getElementById('sleep-end').value;
-    const feeling = document.getElementById('sleep-feeling').value;
-    const note = document.getElementById('sleep-note').value.trim();
+    const start = $('#sleep-start').value;
+    const end = $('#sleep-end').value;
+    const feeling = $('#sleep-feeling').value;
+    const note = $('#sleep-note').value.trim();
     if (!start || !end) return alert('请填写入睡和醒来时间');
-    const item = await pushHealthRecord('sleep', currentDay, { start_time: start, end_time: end, feeling, note });
-    if (item) { healthData.sleep.unshift({ id: item.id, date: currentDay, ts: item.ts, start_time: start, end_time: end, feeling, note }); saveCache(); renderSleep(); document.getElementById('sleep-start').value=''; document.getElementById('sleep-end').value=''; document.getElementById('sleep-note').value=''; }
+    const rec = { date: currentDay, ts: Date.now(), start_time: start, end_time: end, feeling, note };
+    const item = await syncRecord('sleep', currentDay, rec, rec);
+    if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#sleep-start').value=''; $('#sleep-end').value=''; $('#sleep-note').value=''; }
 }
 async function addEnergy() {
     let am = 5, pm = 5;
-    document.querySelectorAll('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); });
-    document.querySelectorAll('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
-    const note = document.getElementById('energy-note').value.trim();
-    const item = await pushHealthRecord('energy', currentDay, { am_score: am, pm_score: pm, note });
-    if (item) { healthData.energy.unshift({ id: item.id, date: currentDay, ts: item.ts, am_score: am, pm_score: pm, note }); saveCache(); renderEnergy(); document.getElementById('energy-note').value=''; }
+    $$('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); });
+    $$('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
+    const note = $('#energy-note').value.trim();
+    const rec = { date: currentDay, ts: Date.now(), am_score: am, pm_score: pm, note };
+    const item = await syncRecord('energy', currentDay, rec, rec);
+    if (item) { healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#energy-note').value=''; }
 }
 async function addCharge() {
-    const type = document.getElementById('charge-type').value;
-    const delta = parseInt(document.getElementById('charge-delta').value, 10) || 0;
-    const note = document.getElementById('charge-note').value.trim();
-    const item = await pushHealthRecord('charge', currentDay, { type, delta, note });
-    if (item) { healthData.charge.unshift({ id: item.id, date: currentDay, ts: item.ts, type, delta, note }); saveCache(); renderCharge(); document.getElementById('charge-note').value=''; }
+    const type = $('#charge-type').value;
+    const delta = parseInt($('#charge-delta').value, 10) || 0;
+    const note = $('#charge-note').value.trim();
+    const rec = { date: currentDay, ts: Date.now(), type, delta, note };
+    const item = await syncRecord('charge', currentDay, rec, rec);
+    if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#charge-note').value=''; }
 }
 async function addExercise() {
-    const dur = parseInt(document.getElementById('exercise-duration').value, 10);
+    const dur = parseInt($('#exercise-duration').value, 10);
     if (!dur || dur <= 0) return alert('请填写时长');
-    const type = document.getElementById('exercise-type').value;
-    const note = document.getElementById('exercise-note').value.trim();
-    const item = await pushHealthRecord('exercise', currentDay, { type, duration: dur, note });
-    if (item) { healthData.exercise.unshift({ id: item.id, date: currentDay, ts: item.ts, type, duration: dur, note }); saveCache(); renderExercise(); document.getElementById('exercise-duration').value=''; document.getElementById('exercise-note').value=''; }
+    const type = $('#exercise-type').value;
+    const note = $('#exercise-note').value.trim();
+    const rec = { date: currentDay, ts: Date.now(), type, duration: dur, note };
+    const item = await syncRecord('exercise', currentDay, rec, rec);
+    if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('#exercise-duration').value=''; $('#exercise-note').value=''; }
 }
 async function addMicro() {
     if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
-    const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('posture-other').value.trim() } : { key: k });
-    const habitsArr = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('habit-other').value.trim() } : { key: k });
-    const note = document.getElementById('micro-note').value.trim();
-    const item = await pushHealthRecord('micro', currentDay, { posture, habits: habitsArr, note });
+    const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: $('#posture-other').value.trim() } : { key: k });
+    const habitsArr = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: $('#habit-other').value.trim() } : { key: k });
+    const note = $('#micro-note').value.trim();
+    const rec = { date: currentDay, ts: Date.now(), posture, habits: habitsArr, note };
+    const item = await syncRecord('micro', currentDay, rec, rec);
     if (item) {
-        healthData.microExercise.unshift({ id: item.id, date: currentDay, ts: item.ts, posture, habits: habitsArr, note });
-        saveCache(); renderMicro();
+        healthData.microExercise.unshift({ id: item.id, ...rec });
+        saveCache(); RenderBus.emit('health');
         selectedPosture.clear(); selectedHabit.clear();
         buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
         buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-        document.getElementById('posture-other').value = ''; document.getElementById('habit-other').value = ''; document.getElementById('micro-note').value = '';
+        $('#posture-other').value = ''; $('#habit-other').value = ''; $('#micro-note').value = '';
     }
 }
 async function addBody() {
-    const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: document.getElementById('signal-other').value.trim() } : { key: k });
-    const acneLocation = document.getElementById('acne-location').value;
-    const acne = { location: acneLocation, locationCustom: acneLocation === 'other' ? document.getElementById('acne-location-other').value.trim() : '', type: document.getElementById('acne-type').value, severity: parseInt(document.getElementById('acne-severity').value, 10) || null, note: document.getElementById('acne-note').value.trim() };
+    const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: $('#signal-other').value.trim() } : { key: k });
+    const acneLocation = $('#acne-location').value;
+    const acne = { location: acneLocation, locationCustom: acneLocation === 'other' ? $('#acne-location-other').value.trim() : '', type: $('#acne-type').value, severity: parseInt($('#acne-severity').value, 10) || null, note: $('#acne-note').value.trim() };
     const hasAcne = acne.location || acne.type || acne.severity || acne.note;
     if (signals.length === 0 && !hasAcne) return alert('请至少选择一项或填写痘痘记录');
-    const note = document.getElementById('signal-note').value.trim();
-    const item = await pushHealthRecord('body', currentDay, { signals, acne: hasAcne ? acne : null, note });
+    const note = $('#signal-note').value.trim();
+    const rec = { date: currentDay, ts: Date.now(), signals, acne: hasAcne ? acne : null, note };
+    const item = await syncRecord('body', currentDay, rec, rec);
     if (item) {
-        healthData.bodySignals.unshift({ id: item.id, date: currentDay, ts: item.ts, signals, acne: hasAcne ? acne : null, note });
-        saveCache(); renderBody();
+        healthData.bodySignals.unshift({ id: item.id, ...rec });
+        saveCache(); RenderBus.emit('health');
         selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-        document.getElementById('signal-other').value = ''; document.getElementById('acne-location').value = ''; document.getElementById('acne-location-other').value = ''; document.getElementById('acne-location-other-field').style.display = 'none'; document.getElementById('acne-type').value = ''; document.getElementById('acne-severity').value = ''; document.getElementById('acne-note').value = ''; document.getElementById('signal-note').value = '';
+        $('#signal-other').value = ''; $('#acne-location').value = ''; $('#acne-location-other').value = ''; $('#acne-location-other-field').style.display = 'none'; $('#acne-type').value = ''; $('#acne-severity').value = ''; $('#acne-note').value = ''; $('#signal-note').value = '';
     }
 }
 async function addMeal() {
-    const meals = { breakfast: document.getElementById('meal-breakfast').value.trim(), lunch: document.getElementById('meal-lunch').value.trim(), dinner: document.getElementById('meal-dinner').value.trim() };
-    const water = parseInt(document.getElementById('water-cups').value, 10) || 0;
-    const snack = document.getElementById('snack').value.trim();
+    const meals = { breakfast: $('#meal-breakfast').value.trim(), lunch: $('#meal-lunch').value.trim(), dinner: $('#meal-dinner').value.trim() };
+    const water = parseInt($('#water-cups').value, 10) || 0;
+    const snack = $('#snack').value.trim();
     if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐');
-    const item = await pushHealthRecord('meal', currentDay, { ...meals, water, snack });
+    const rec = { date: currentDay, ts: Date.now(), ...meals, water, snack };
+    const item = await syncRecord('meal', currentDay, rec, rec);
     if (item) {
-        healthData.meal.unshift({ id: item.id, date: currentDay, ts: item.ts, ...meals, water, snack });
-        saveCache(); renderMeal(); showFoodAnalysis(meals, water, snack);
-        ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => document.getElementById(id).value = '');
+        healthData.meal.unshift({ id: item.id, ...rec });
+        saveCache(); RenderBus.emit('health'); showFoodAnalysis(meals, water, snack);
+        ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value = '');
     }
 }
 
 function renderSleep() {
-    const el = document.getElementById('sleep-history');
+    const el = $('sleep-history');
     const list = filterByDay(healthData.sleep);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有睡眠记录</div>'; return; }
     const fm = { refreshed: { text: '😊 神清气爽', cls: 'tag-good' }, ok: { text: '😐 还行', cls: 'tag-warn' }, tired: { text: '😫 疲惫', cls: 'tag-bad' }, groggy: { text: '😵 昏沉', cls: 'tag-bad' } };
@@ -1960,10 +1994,9 @@ function renderSleep() {
         html += `<div class="list-item"><div class="main"><div>${esc(r.start_time)} → ${esc(r.end_time)} <span class="meta">(${dur})</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><div style="display:flex;align-items:center;gap:6px;"><span class="tag ${f.cls}">${f.text}</span><button class="btn btn-danger btn-sm" data-del-sleep="${r.id}">✕</button></div></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-sleep]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(b.dataset.delSleep)); saveCache(); renderSleep(); });
 }
 function renderEnergy() {
-    const el = document.getElementById('energy-history');
+    const el = $('energy-history');
     const list = filterByDay(healthData.energy);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有能量记录</div>'; return; }
     let html = '';
@@ -1973,10 +2006,9 @@ function renderEnergy() {
         html += `<div class="list-item"><div class="main"><div>上午 ${r.am_score} · 下午 ${r.pm_score} <span class="tag ${cls}">均 ${avg}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-energy="${r.id}">✕</button></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-energy]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(b.dataset.delEnergy)); saveCache(); renderEnergy(); });
 }
 function renderCharge() {
-    const el = document.getElementById('charge-history');
+    const el = $('charge-history');
     const list = filterByDay(healthData.charge);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有充电记录</div>'; return; }
     const tm = { rest:'🛌 休息', nature:'🌿 自然', social:'👥 社交', hobby:'🎨 爱好', exercise:'🏃 轻度运动', food:'🍵 好好吃饭', other:'✨ 其他' };
@@ -1987,21 +2019,19 @@ function renderCharge() {
         html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} <span class="tag ${cls}">能量 ${d}</span></div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-charge="${r.id}">✕</button></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-charge]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(b.dataset.delCharge)); saveCache(); renderCharge(); });
 }
 function renderExercise() {
     renderExerciseWeek();
-    const el = document.getElementById('exercise-history');
+    const el = $('exercise-history');
     const list = filterByDay(healthData.exercise);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有运动记录</div>'; return; }
     const tm = { walk:'🚶 散步', run:'🏃 跑步', cycling:'🚴 骑行', strength:'🏋️ 力量', yoga:'🧘 瑜伽', ball:'⚽ 球类', swim:'🏊 游泳', other:'✨ 其他' };
     let html = '';
     list.forEach(r => { html += `<div class="list-item"><div class="main"><div>${tm[r.type]||r.type} · ${r.duration} 分钟</div>${r.note?`<div class="meta">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-exercise="${r.id}">✕</button></div>`; });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-exercise]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(b.dataset.delExercise)); saveCache(); renderExercise(); });
 }
 function renderMicro() {
-    const el = document.getElementById('micro-history');
+    const el = $('micro-history');
     const list = filterByDay(healthData.microExercise);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有微运动记录</div>'; return; }
     let html = '';
@@ -2011,10 +2041,9 @@ function renderMicro() {
         html += `<div class="list-item"><div class="main"><div><span class="tag tag-neutral">体态</span> ${esc(pLabels)}</div><div style="margin-top:4px;"><span class="tag tag-good">微运动</span> ${esc(hLabels)}</div>${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-micro="${r.id}">✕</button></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-micro]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(b.dataset.delMicro)); saveCache(); renderMicro(); });
 }
 function renderBody() {
-    const el = document.getElementById('body-history');
+    const el = $('body-history');
     const list = filterByDay(healthData.bodySignals);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
     let html = '';
@@ -2036,16 +2065,14 @@ function renderBody() {
         html += `<div class="list-item"><div class="main"><div><span class="tag tag-warn">身体</span> ${esc(sigs)}</div>${aText?`<div style="margin-top:4px;"><span class="tag tag-bad">🫥 痘痘</span> ${esc(aText)}</div>`:''}${r.note?`<div class="meta" style="margin-top:4px;">${esc(r.note)}</div>`:''}</div><button class="btn btn-danger btn-sm" data-del-body="${r.id}">✕</button></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-body]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(b.dataset.delBody)); saveCache(); renderBody(); });
 }
 function renderMeal() {
-    const el = document.getElementById('meal-history');
+    const el = $('meal-history');
     const list = filterByDay(healthData.meal);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有饮食记录</div>'; return; }
     let html = '';
     list.forEach(r => { html += `<div class="list-item"><div class="main"><div>饮水 ${r.water||0} 杯</div><div class="meta">早：${esc(r.breakfast||'—')} · 午：${esc(r.lunch||'—')} · 晚：${esc(r.dinner||'—')} · 加餐：${esc(r.snack||'—')}</div></div><button class="btn btn-danger btn-sm" data-del-meal="${r.id}">✕</button></div>`; });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-meal]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(b.dataset.delMeal)); saveCache(); renderMeal(); document.getElementById('food-analysis').classList.add('hidden'); });
 }
 function showFoodAnalysis(meals, water, snack) {
     const all = [meals.breakfast, meals.lunch, meals.dinner, snack].join(' ');
@@ -2069,7 +2096,7 @@ function showFoodAnalysis(meals, water, snack) {
     if (fc >= 2) issues.push('脂肪来源较多，注意量。');
     if (water && water < 6) issues.push(`饮水 ${water} 杯偏少，建议 6-8 杯。`); else if (water >= 8) good.push('饮水充足。');
     const summary = issues.length === 0 ? '今天饮食结构比较均衡，继续保持 🌿' : '注意：' + issues.join(' ');
-    const el = document.getElementById('food-analysis');
+    const el = $('food-analysis');
     el.classList.remove('hidden');
     el.innerHTML = `<div style="font-weight:600;color:var(--accent);margin-bottom:6px;">📊 今日饮食分析</div>
         <div class="macro-bar"><div class="carb" style="width:${pC}%"></div><div class="protein" style="width:${pP}%"></div><div class="fat" style="width:${pF}%"></div></div>
@@ -2085,7 +2112,7 @@ function getWeekDays() {
     return days;
 }
 function renderExerciseWeek() {
-    const el = document.getElementById('exercise-week');
+    const el = $('exercise-week');
     const days = getWeekDays();
     const today = todayStr();
     let html = '';
@@ -2096,7 +2123,6 @@ function renderExerciseWeek() {
         html += `<div class="exercise-day"><div class="dot ${has?'done':''} ${isToday?'today':''} ${isSel?'selected':''}" data-day="${d.date}">${has?'✓':d.label}</div><div>周${d.label}</div></div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('.dot').forEach(dot => dot.onclick = () => setDay(dot.dataset.day));
 }
 
 /* ================= 反内耗 ================= */
@@ -2120,10 +2146,9 @@ function resetIpSession() { ipConversation = []; ipCurrentKey = null; ipAnswers 
 function startIpSession() { ipConversation = []; ipAnswers = {}; ipSelectedOption = null; ipCurrentKey = 'step1'; renderIpChat(); }
 
 function renderIpChat() {
-    const container = document.getElementById('ip-chat-container');
+    const container = $('ip-chat-container');
     if (ipCurrentKey === null) {
         container.innerHTML = `<div class="ip-welcome"><div class="ip-welcome-text">跟随引导，一步一步来。<br>走完会生成一份引导报告。</div><button class="btn btn-primary" id="ip-start-btn">开始练习</button></div>`;
-        document.getElementById('ip-start-btn').onclick = startIpSession;
         return;
     }
     const step = ipFlow[ipCurrentKey];
@@ -2151,47 +2176,15 @@ function renderIpChat() {
     html += `<div class="ip-confirm-row"><label class="ip-confirm-label"><input type="checkbox" id="ip-confirm-cb"> ${esc(step.checkboxLabel||'我完成了这一步')}</label><button class="btn btn-primary" id="ip-confirm-next" disabled>${nextLabel}</button></div></div>`;
     container.innerHTML = html;
     container.scrollTop = container.scrollHeight;
-    if (step.type === 'choice') {
-        container.querySelectorAll('[data-opt-idx]').forEach(btn => {
-            btn.onclick = () => {
-                ipSelectedOption = parseInt(btn.dataset.optIdx, 10);
-                container.querySelectorAll('[data-opt-idx]').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                syncConfirmState();
-            };
-        });
-    }
-    const cb = document.getElementById('ip-confirm-cb');
-    const nextBtn = document.getElementById('ip-confirm-next');
-    function syncConfirmState() {
-        if (step.type === 'choice' && ipSelectedOption === null) { nextBtn.disabled = true; return; }
-        nextBtn.disabled = !cb.checked;
-    }
-    cb.onchange = () => {
-        if (step.type === 'choice' && ipSelectedOption === null && cb.checked) { alert('请先选择'); cb.checked = false; return; }
-        syncConfirmState();
-    };
-    nextBtn.onclick = async () => {
-        if (step.type === 'form') container.querySelectorAll('[data-field-key]').forEach(el => { ipAnswers[el.dataset.fieldKey] = el.value.trim(); });
-        let userMsg = '';
-        if (step.type === 'form') userMsg = step.fields.map(f => `${f.label}：${ipAnswers[f.key]||'（未填写）'}`).join('\n');
-        else if (step.type === 'choice' && ipSelectedOption !== null) userMsg = step.options[ipSelectedOption].label;
-        else userMsg = '✓ ' + (step.checkboxLabel || '完成');
-        ipConversation.push({ role: 'user', text: userMsg });
-        if (ipCurrentKey === 'step4' && ipSelectedOption !== null) ipAnswers['step4_choice'] = step.options[ipSelectedOption].label;
-        if (step.next === '__end__') { await finishIpSession(); return; }
-        ipCurrentKey = (step.type === 'choice' && ipSelectedOption !== null) ? step.options[ipSelectedOption].next : step.next;
-        ipSelectedOption = null;
-        renderIpChat();
-    };
+    /* 交互按钮由事件委托区统一绑定：ip-start-btn / [data-opt-idx] / ip-confirm-cb / ip-confirm-next */
 }
 
 async function finishIpSession() {
     const now = new Date();
-    const dataObj = { feeling: ipAnswers.feeling || '（未记录）', answers: { ...ipAnswers }, conversation: ipConversation.map(m => ({ role: m.role, text: m.text })), createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) };
-    const item = await pushHealthRecord('innerPeace', currentDay, dataObj);
+    const rec = { date: currentDay, ts: Date.now(), feeling: ipAnswers.feeling || '（未记录）', answers: { ...ipAnswers }, conversation: ipConversation.map(m => ({ role: m.role, text: m.text })), createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) };
+    const item = await syncRecord('innerPeace', currentDay, rec, rec);
     if (item) {
-        healthData.innerPeace.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj });
+        healthData.innerPeace.unshift({ id: item.id, ...rec });
         saveCache();
         renderIpReport(healthData.innerPeace[0]);
         renderInnerPeaceHistory();
@@ -2200,7 +2193,7 @@ async function finishIpSession() {
 }
 
 function renderIpReport(record) {
-    const container = document.getElementById('ip-chat-container');
+    const container = $('ip-chat-container');
     let html = `<div class="ip-report"><div class="ip-report-title">📋 引导报告 · ${esc(record.date)} ${esc(record.createdAt||'')}</div>`;
     if (record.answers?.step4_choice) html += `<div class="ip-report-section"><b>分类判断</b><br>${esc(record.answers.step4_choice)}</div>`;
     const s3 = [['s3_1','我在反复想什么'],['s3_2','我担心会发生什么'],['s3_3','别人的情绪'],['s3_4','别人的选择'],['s3_5','别人的课题']];
@@ -2218,19 +2211,16 @@ function renderIpReport(record) {
     }
     html += `<div style="margin-top:12px;text-align:right;"><button class="btn btn-secondary btn-sm" id="ip-restart-btn">再做一次</button></div></div>`;
     container.innerHTML = html;
-    document.getElementById('ip-restart-btn').onclick = startIpSession;
     container.scrollTop = 0;
 }
 
 function renderInnerPeaceHistory() {
-    const el = document.getElementById('ip-history');
+    const el = $('ip-history');
     const list = filterByDay(healthData.innerPeace);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有反内耗练习记录</div>'; return; }
     let html = '';
     list.forEach(r => { html += `<div class="list-item"><div class="main"><div><b>${esc(r.createdAt||'')}</b></div><div style="margin-top:4px;color:var(--text2);">感受：${esc(r.feeling||'（未记录）')}</div></div><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" data-view-ip="${r.id}">查看</button><button class="btn btn-danger btn-sm" data-del-ip="${r.id}">✕</button></div></div>`; });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-ip]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(b.dataset.delIp)); saveCache(); renderInnerPeaceHistory(); });
-    el.querySelectorAll('[data-view-ip]').forEach(b => b.onclick = () => { const r = healthData.innerPeace.find(x => String(x.id) === String(b.dataset.viewIp)); if (r) renderIpReport(r); });
 }
 
 /* ================= AI 每日分析 ================= */
@@ -2251,8 +2241,8 @@ function buildHealthPrompt(d) {
 }
 async function runAIAnalysis() {
     if (!aiConfig.apiKey) { alert('请先在右上角 ⚙️ 设置中配置 API Key'); return; }
-    const resultEl = document.getElementById('ai-result');
-    const btn = document.getElementById('ai-analyze-btn');
+    const resultEl = $('ai-result');
+    const btn = $('ai-analyze-btn');
     btn.disabled = true; btn.textContent = '⏳ 分析中...';
     resultEl.innerHTML = '<div class="empty-hint">正在呼叫 AI…</div>';
     const d = collectDayData();
@@ -2267,8 +2257,9 @@ async function runAIAnalysis() {
         const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
         for (const e of existing) { await deleteHealthRecord(e.id); }
         healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-        const item = await pushHealthRecord('ai', currentDay, { content });
-        if (item) healthData.aiAnalysis.push({ id: item.id, date: currentDay, ts: item.ts, content });
+        const rec = { date: currentDay, ts: Date.now(), content };
+        const item = await syncRecord('ai', currentDay, rec, rec);
+        if (item) healthData.aiAnalysis.push({ id: item.id, ...rec });
         saveCache();
     } catch (err) {
         console.error(err);
@@ -2277,14 +2268,14 @@ async function runAIAnalysis() {
 }
 function renderAIAnalysis() {
     const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
-    const resultEl = document.getElementById('ai-result');
+    const resultEl = $('ai-result');
     if (!list.length) { resultEl.innerHTML = '<div class="empty-hint">还没有今日分析</div>'; return; }
     resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:var(--text);line-height:1.8;">${md2html(list[0].content||'')}</div>`;
 }
 
 /* ================= RSS 源 UI ================= */
 function renderRssSources() {
-    const el = document.getElementById('rss-source-list');
+    const el = $('rss-source-list');
     if (!rssFeeds.length) { el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，展开下方"添加新源"输入</div>'; return; }
     let html = '';
     rssFeeds.forEach(f => {
@@ -2298,21 +2289,20 @@ function renderRssSources() {
         </div>`;
     });
     el.innerHTML = html;
-    el.querySelectorAll('[data-del-feed]').forEach(b => b.onclick = () => { rssFeeds = rssFeeds.filter(x => x.id !== b.dataset.delFeed); saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources(); });
-    el.querySelectorAll('[data-toggle-feed]').forEach(cb => cb.onchange = () => { const f = rssFeeds.find(x => x.id === cb.dataset.toggleFeed); if (f) { f.enabled = cb.checked; saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources(); } });
+    /* 删除/启停由事件委托区统一绑定：data-del-feed / data-toggle-feed */
 }
 function addRssFeed() {
-    const url = document.getElementById('rss-url').value.trim();
-    const name = document.getElementById('rss-name').value.trim();
-    const category = document.getElementById('rss-category').value;
+    const url = $('rss-url').value.trim();
+    const name = $('rss-name').value.trim();
+    const category = $('rss-category').value;
     if (!url) return alert('请填写 RSS 链接');
     if (!/^https?:\/\//i.test(url)) return alert('链接需要以 http:// 或 https:// 开头');
     if (rssFeeds.some(f => f.url === url)) return alert('这个源已经在列表里了');
     rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url, name, category, enabled: true });
-    saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
-    document.getElementById('rss-url').value = ''; document.getElementById('rss-name').value = '';
-    document.getElementById('rss-status').textContent = '✅ 已保存';
-    setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 3000);
+    saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
+    $('rss-url').value = ''; $('rss-name').value = '';
+    $('rss-status').textContent = '✅ 已保存';
+    setTimeout(() => { const s = $('rss-status'); if (s) s.textContent = ''; }, 3000);
 }
 
 /* ================= 一键优化源列表 ================= */
@@ -2324,7 +2314,7 @@ function optimizeFeedList() {
     rssFeeds = rssFeeds.filter(f => { const hit = FEEDS_TO_DELETE.some(k => (f.url || '').includes(k)); if (hit) deleted++; return !hit; });
     rssFeeds.forEach(f => { for (const [domain, cat] of Object.entries(FEED_CATEGORY_FIX)) { if ((f.url || '').includes(domain) && f.category !== cat) { f.category = cat; fixed++; break; } } });
     FEEDS_TO_ADD.forEach(nf => { if (!rssFeeds.some(f => f.url === nf.url)) { rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), ...nf, enabled: true }); added++; } });
-    saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
+    saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     return { deleted, fixed, added };
 }
 
@@ -2377,7 +2367,7 @@ function handleOpmlFile(file) {
     reader.readAsText(file, 'UTF-8');
 }
 function renderOpmlPreview() {
-    const el = document.getElementById('opml-preview');
+    const el = $('opml-preview');
     if (!opmlPreviewData || !opmlPreviewData.length) { el.innerHTML = ''; return; }
     const feeds = opmlPreviewData;
     const existing = feeds.filter(f => f._isExisting).length;
@@ -2390,21 +2380,19 @@ function renderOpmlPreview() {
     });
     html += `</div><div class="opml-preview-actions"><button class="btn btn-secondary btn-sm" id="opml-cancel-btn">取消</button><button class="btn btn-primary btn-sm" id="opml-confirm-btn" ${newCount === 0 ? 'disabled' : ''}>确认导入 ${newCount} 个新源</button></div></div>`;
     el.innerHTML = html;
-    el.querySelectorAll('[data-opml-idx]').forEach(sel => { sel.onchange = () => { const idx = parseInt(sel.dataset.opmlIdx, 10); if (!opmlPreviewData[idx]) return; opmlPreviewData[idx].category = sel.value; const badge = sel.closest('.opml-preview-row').querySelector('.opml-cat-badge'); const cat = NEWS_CATEGORY[sel.value]; if (badge) badge.textContent = `${cat.icon} ${cat.label}`; }; });
-    document.getElementById('opml-cancel-btn').onclick = () => { opmlPreviewData = null; document.getElementById('opml-preview').innerHTML = ''; };
-    document.getElementById('opml-confirm-btn').onclick = () => confirmOpmlImport();
+    /* 分类选择/取消/确认由事件委托区统一绑定：data-opml-idx / opml-cancel-btn / opml-confirm-btn */
 }
 function confirmOpmlImport() {
     if (!opmlPreviewData) return;
     const toImport = opmlPreviewData.filter(f => !f._isExisting);
-    if (!toImport.length) { opmlPreviewData = null; document.getElementById('opml-preview').innerHTML = ''; return; }
+    if (!toImport.length) { opmlPreviewData = null; $('opml-preview').innerHTML = ''; return; }
     toImport.forEach(f => { rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url: f.url, name: f.name, category: f.category, enabled: true }); });
-    saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
+    saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     const n = toImport.length;
     opmlPreviewData = null;
-    document.getElementById('opml-preview').innerHTML = '';
-    document.getElementById('rss-status').textContent = `✅ 已导入 ${n} 个源`;
-    setTimeout(() => { const s = document.getElementById('rss-status'); if (s) s.textContent = ''; }, 4000);
+    $('opml-preview').innerHTML = '';
+    $('rss-status').textContent = `✅ 已导入 ${n} 个源`;
+    setTimeout(() => { const s = $('rss-status'); if (s) s.textContent = ''; }, 4000);
 }
 
 /* ================= RSS 抓取 ================= */
@@ -2488,14 +2476,14 @@ async function fetchAllFeedsConcurrent(onProgress) {
     return { results, errors, total };
 }
 function renderFetchProgress(done, total, okCount, errCount) {
-    const el = document.getElementById('rss-progress-wrap');
+    const el = $('rss-progress-wrap');
     if (!total) { el.innerHTML = ''; return; }
     const pct = Math.round(done / total * 100);
     el.innerHTML = `<div class="rss-progress"><div style="display:flex;justify-content:space-between;"><span>抓取进度 ${done}/${total}</span><span>✓ ${okCount} · ✗ ${errCount}</span></div><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
 }
-function clearFetchProgress() { document.getElementById('rss-progress-wrap').innerHTML = ''; }
+function clearFetchProgress() { $('rss-progress-wrap').innerHTML = ''; }
 function renderFetchResult(articles, errors, results) {
-    const el = document.getElementById('rss-fetch-result');
+    const el = $('rss-fetch-result');
     let html = '';
     if (errors.length) html += `<div class="briefing-errors"><b>以下源抓取失败：</b><br>${errors.map(e => '· ' + esc(e.feed.name || hostOf(e.feed.url)) + '：' + esc(e.message)).join('<br>')}</div>`;
     if (results.length || articles.length) html += `<div style="font-size:12px;color:var(--text2);margin:10px 0;">✅ ${results.filter(r=>r.items.length>0).length} 个源有更新 · 共 ${articles.length} 篇新文章</div>`;
@@ -2526,7 +2514,7 @@ async function callDeepSeekRaw(messages, { temperature = 0.3, max_tokens = 2000,
 }
 function chunkArray(arr, size) { const out = []; for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size)); return out; }
 function setBriefingStageStatus(text) {
-    const el = document.getElementById('briefing-stage-status');
+    const el = $('briefing-stage-status');
     if (!el) return;
     if (!text) { el.style.display = 'none'; el.innerHTML = ''; return; }
     el.style.display = 'block'; el.innerHTML = text;
@@ -2617,9 +2605,9 @@ async function stage3WriteBriefing(selectedGroups, scoredItems, dateStr) {
 }
 
 async function generateBriefing() {
-    const btn = document.getElementById('rss-fetch-btn');
-    const statusEl = document.getElementById('rss-status');
-    const resultEl = document.getElementById('rss-fetch-result');
+    const btn = $('rss-fetch-btn');
+    const statusEl = $('rss-status');
+    const resultEl = $('rss-fetch-result');
 
     const enabled = rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
     if (!enabled.length) return alert('请先添加至少一个 RSS 源');
@@ -2702,19 +2690,24 @@ async function generateBriefing() {
         const dataObj = { content: briefingText, articles: articlePayload, feedCount: results.filter(r=>r.items.length>0).length, articleCount: all.length, errors: errors.map(e => (e.feed.name || hostOf(e.feed.url)) + '：' + e.message), isRead: false };
 
         let inserted = null;
-        try { inserted = await pushHealthRecord('briefing', currentDay, dataObj); }
-        catch (fetchError) { console.warn('[简报] 云端保存失败，尝试压缩重试：', fetchError.message); const lightDataObj = { ...dataObj }; delete lightDataObj.articles; try { inserted = await pushHealthRecord('briefing', currentDay, lightDataObj); if (inserted) inserted.articles = articlePayload; } catch (retryError) { console.error('[简报] 压缩重试仍失败：', retryError.message); } }
+        try { inserted = await syncRecord('briefing', currentDay, dataObj, dataObj, { silent: true }); }
+        catch (saveError) { console.warn('[简报] 云端保存异常：', saveError.message); }
+        if (!inserted) {
+            const lightDataObj = { ...dataObj }; delete lightDataObj.articles;
+            try { inserted = await syncRecord('briefing', currentDay, lightDataObj, lightDataObj, { silent: true }); if (inserted) inserted.articles = articlePayload; }
+            catch (retryError) { console.error('[简报] 压缩重试仍失败：', retryError.message); }
+        }
 
         if (!inserted) {
             const localRecord = { id: 'local_' + Date.now(), date: currentDay, ts: Date.now(), ...dataObj };
             if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
             newsData.briefings.unshift(localRecord);
-            saveCache(); renderBriefings();
+            saveCache(); RenderBus.emit('news');
             statusEl.textContent = `⚠️ 简报已保存在本地（云端同步失败）。`;
         } else {
             if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
-            if (!newsData.briefings.find(b => b.id === inserted.id)) newsData.briefings.unshift({ ...inserted, ...dataObj });
-            saveCache(); renderBriefings();
+            if (!newsData.briefings.find(b => String(b.id) === String(inserted.id))) newsData.briefings.unshift({ ...dataObj, id: inserted.id, date: currentDay, ts: inserted.ts, _cloudId: inserted.id });
+            saveCache(); RenderBus.emit('news');
             statusEl.textContent = `✅ 简报生成成功！${all.length} 篇原文 → 选中 ${quotaResult.selected.length} 条事件。`;
         }
 
@@ -2724,7 +2717,7 @@ async function generateBriefing() {
         const catLine = BRIEFING_CATEGORIES.map(c => `${c} ${catCounts[c]}`).filter(s => !s.endsWith(' 0')).join(' · ');
         setBriefingStageStatus(`<div class="stage-line"><span class="stage-name">阶段一</span><span class="stage-val">${scored.length} 篇 → ${kept.length} 通过</span></div><div class="stage-line"><span class="stage-name">阶段二</span><span class="stage-val">${groups.length} 组</span></div><div class="stage-line"><span class="stage-name">代码层 · 配额</span><span class="stage-val">选中 ${quotaResult.selected.length} 条（${catLine}）</span></div><div class="stage-line"><span class="stage-name">阶段三</span><span class="stage-val">${briefingText.length} 字</span></div>`);
 
-        setTimeout(() => { const s = document.getElementById('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 5000);
+        setTimeout(() => { const s = $('rss-status'); if (s && s.textContent.includes('成功')) s.textContent = ''; }, 5000);
     }
 
     renderFetchResult(all.slice(0, 60), errors, results);
@@ -2734,7 +2727,7 @@ async function generateBriefing() {
 
 /* ================= 简报存档 ================= */
 function renderBriefings() {
-    const el = document.getElementById('briefing-history');
+    const el = $('briefing-history');
     if (!el) return;
     const list = [...(newsData.briefings || [])].sort((a, b) => { const aRead = a.isRead ? 1 : 0; const bRead = b.isRead ? 1 : 0; if (aRead !== bRead) return aRead - bRead; return (b.ts || 0) - (a.ts || 0); });
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有生成过简报</div>'; return; }
@@ -2751,58 +2744,41 @@ function renderBriefings() {
         html += `<details class="briefing-card ${isRead ? 'read' : ''}" ${openAttr}>
             <summary class="briefing-head">
                 <div style="min-width:0;"><div class="briefing-title">${esc(b.date)} 简报 ${isToday ? '<span class="tag tag-good" style="font-size:10px;margin-left:6px;vertical-align:middle;">今天</span>' : ''}</div><div class="briefing-meta">${b.feedCount || 0} 个源 · ${b.articleCount || arts.length} 篇 · ${new Date(b.ts || Date.now()).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</div></div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <label class="mark-read-label" onclick="event.stopPropagation()"><input type="checkbox" class="mark-read-cb" data-id="${b.id}" ${isRead ? 'checked' : ''}>已读</label>
-                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}" onclick="event.stopPropagation()">✕</button>
+                <div style="display:flex;align-items:center;gap:8px;" onclick="event.stopPropagation()">
+                    <label class="mark-read-label"><input type="checkbox" class="mark-read-cb" data-id="${b.id}" ${isRead ? 'checked' : ''}>已读</label>
+                    <button class="btn btn-danger btn-sm" data-del-briefing="${b.id}">✕</button>
                 </div>
             </summary>
             <div class="briefing-content-wrap"><div class="briefing-body">${md2html(b.content || '')}</div>${errHtml}${artHtml}</div>
         </details>`;
     });
     el.innerHTML = html;
-
-    el.querySelectorAll('[data-del-briefing]').forEach(btn => btn.onclick = async (e) => {
-        e.stopPropagation();
-        if (!confirm('删除这份简报？')) return;
-        if (String(btn.dataset.delBriefing).startsWith('local_')) { newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing)); saveCache(); renderBriefings(); }
-        else { await deleteHealthRecord(btn.dataset.delBriefing); newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(btn.dataset.delBriefing)); saveCache(); renderBriefings(); }
-    });
-    el.querySelectorAll('.mark-read-cb').forEach(cb => {
-        cb.onclick = (e) => e.stopPropagation();
-        cb.onchange = async () => {
-            const id = cb.dataset.id;
-            const isRead = cb.checked;
-            const item = newsData.briefings.find(x => String(x.id) === String(id));
-            if (!item) return;
-            item.isRead = isRead; saveCache(); renderBriefings();
-            if (String(id).startsWith('local_')) return;
-            const dataObj = { ...item }; delete dataObj.id; delete dataObj.date; delete dataObj.ts;
-            await updateHealthRecord(id, dataObj);
-        };
-    });
+    /* 已读勾选 / 删除由事件委托区统一绑定：mark-read-cb / data-del-briefing（summary 内联 stopPropagation 防止误触开合） */
 }
 
 /* ================= 每日世事（手动） ================= */
 async function addNewsItem() {
-    const cat = document.getElementById('news-category').value;
-    const title = document.getElementById('news-title').value.trim();
-    const content = document.getElementById('news-content').value.trim();
+    const cat = $('#news-category').value;
+    const title = $('#news-title').value.trim();
+    const content = $('#news-content').value.trim();
     if (!title) return alert('请填写新闻标题');
-    const dataObj = { category: cat, title, content };
-    const item = await pushHealthRecord('news_item', currentDay, dataObj);
-    if (item) { newsData.items.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj }); saveCache(); renderNews(); document.getElementById('news-title').value = ''; document.getElementById('news-content').value = ''; }
+    const rec = { date: currentDay, ts: Date.now(), category: cat, title, content };
+    const item = await syncRecord('news_item', currentDay, rec, rec);
+    if (item) { newsData.items.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('#news-title').value = ''; $('#news-content').value = ''; }
 }
 async function addNewsSummary() {
-    const summary = document.getElementById('news-summary').value.trim();
+    const summary = $('#news-summary').value.trim();
     if (!summary) return alert('请填写总结内容');
-    const dataObj = { content: summary };
-    const existing = newsData.summaries.find(x => x.date === currentDay);
-    if (existing && !confirm('今天已经有总结了，是否覆盖？')) return;
-    const item = await pushHealthRecord('news_summary', currentDay, dataObj);
-    if (item) { newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay); newsData.summaries.unshift({ id: item.id, date: currentDay, ts: item.ts, ...dataObj }); saveCache(); renderNews(); document.getElementById('news-summary').value = ''; }
+    const existing = newsData.summaries.filter(x => x.date === currentDay);
+    if (existing.length && !confirm('今天已经有总结了，是否覆盖？')) return;
+    for (const e of existing) { await deleteHealthRecord(e.id); }
+    newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay);
+    const rec = { date: currentDay, ts: Date.now(), content: summary };
+    const item = await syncRecord('news_summary', currentDay, rec, rec);
+    if (item) { newsData.summaries.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('#news-summary').value = ''; }
 }
 function renderNews() {
-    const itemEl = document.getElementById('news-history');
+    const itemEl = $('news-history');
     const todayItems = newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
     if (!todayItems.length) { itemEl.innerHTML = '<div class="empty-hint">这一天还没有记录世事</div>'; }
     else {
@@ -2815,211 +2791,329 @@ function renderNews() {
             html += `<div class="news-item"><div class="news-header"><div style="display:flex;align-items:flex-start;gap:8px;"><span class="tag tag-neutral" style="white-space:nowrap;margin-top:2px;">${catInfo.icon} ${catInfo.label}</span><span class="news-title">${esc(n.title)}</span></div><button class="btn btn-danger btn-sm" data-del-news="${n.id}">✕</button></div>${n.content ? `<div class="news-content">${displayContent}</div>` : ''}</div>`;
         });
         itemEl.innerHTML = html;
-        itemEl.querySelectorAll('[data-del-news]').forEach(b => b.onclick = async () => { await deleteHealthRecord(b.dataset.delNews); newsData.items = newsData.items.filter(x => String(x.id) !== String(b.dataset.delNews)); saveCache(); renderNews(); });
+        /* 删除由事件委托区统一绑定：data-del-news */
     }
-    const summaryEl = document.getElementById('news-summary-history');
+    const summaryEl = $('news-summary-history');
     const todaySummary = newsData.summaries.find(x => x.date === currentDay);
-    if (!todaySummary) { summaryEl.innerHTML = '<div class="empty-hint">这一天还没有写总结</div>'; document.getElementById('news-summary').value = ''; }
+    if (!todaySummary) { summaryEl.innerHTML = '<div class="empty-hint">这一天还没有写总结</div>'; $('news-summary').value = ''; }
     else {
         summaryEl.innerHTML = `<div style="background:#fdf6f6;padding:14px;border-radius:12px;position:relative;"><div style="font-size:13px;color:var(--text);line-height:1.6;padding-right:30px;">${esc(todaySummary.content).replace(/\n/g, '<br>')}</div><button class="btn btn-danger btn-sm" style="position:absolute;top:8px;right:8px;" data-del-summary="${todaySummary.id}">✕</button></div>`;
-        document.getElementById('news-summary').value = todaySummary.content;
-        summaryEl.querySelector('[data-del-summary]').onclick = async (e) => { const id = e.target.dataset.delSummary; await deleteHealthRecord(id); newsData.summaries = newsData.summaries.filter(x => String(x.id) !== String(id)); saveCache(); renderNews(); };
+        $('news-summary').value = todaySummary.content;
+        /* 删除由事件委托区统一绑定：data-del-summary */
     }
     renderBriefings();
 }
 
-/* ================= 渲染全部 ================= */
+/* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
-    renderHabits();
     renderSleep(); renderEnergy(); renderCharge();
     renderExercise(); renderMicro(); renderBody(); renderMeal();
     renderInnerPeaceHistory(); renderAIAnalysis();
 }
 function renderAll() {
-    renderExecution();
-    renderAccounts();
-    renderRhythm();
-    renderHealthAll();
-    renderNews();
-    renderRssSources();
+    MODULES.forEach(m => RenderBus.emitAll(m.renders));
+}
+RenderBus.on('execution', renderExecution);
+RenderBus.on('accounts', renderAccounts);
+RenderBus.on('rhythm', renderRhythm);
+RenderBus.on('health', renderHealthAll);
+RenderBus.on('habits', renderHabits);
+RenderBus.on('news', renderNews);
+RenderBus.on('rss', renderRssSources);
+
+/* ================= 事件绑定（统一委托，全部判空） ================= */
+/* 小工具：chip 切换 / 评分选择 / 生存账户分类显隐 */
+function toggleChip(selectedSet, el) {
+    const k = el.dataset.key;
+    if (selectedSet.has(k)) { selectedSet.delete(k); el.classList.remove('active'); }
+    else { selectedSet.add(k); el.classList.add('active'); }
+    updateOtherInputs();
+}
+function selectScore(containerId, btn) {
+    const cont = $(containerId);
+    if (!cont) return;
+    cont.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function updateExpenseSubcatVisibility(v) {
+    const s = $('#expense-subcategory');
+    if (!s) return;
+    const show = v === 'survival';
+    s.style.display = show ? '' : 'none';
+    s.disabled = !show;
 }
 
-/* ================= 事件绑定 ================= */
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    };
-});
-document.getElementById('open-settings-btn').onclick = () => { document.getElementById('settings-modal').classList.add('active'); };
-document.getElementById('close-settings-btn').onclick = () => { document.getElementById('settings-modal').classList.remove('active'); };
-document.getElementById('ai-save-config').onclick = async () => {
-    aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
-    aiConfig.apiUrl = document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
-    aiConfig.model = document.getElementById('ai-model').value.trim() || 'deepseek-chat';
+// 导航与设置
+bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
+bindEvent('#open-settings-btn', 'click', () => { const m = $('#settings-modal'); if (m) m.classList.add('active'); });
+bindEvent('#close-settings-btn', 'click', () => { const m = $('#settings-modal'); if (m) m.classList.remove('active'); });
+bindEvent('#ai-save-config', 'click', async () => {
+    aiConfig.apiKey = $('#ai-api-key').value.trim();
+    aiConfig.apiUrl = $('#ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+    aiConfig.model = $('#ai-model').value.trim() || 'deepseek-chat';
     saveAIConfigLocal(aiConfig);
     await saveAIConfigToCloud(aiConfig);
     alert('配置已保存，并同步至云端 ✓');
-    document.getElementById('settings-modal').classList.remove('active');
-};
+    const m = $('#settings-modal'); if (m) m.classList.remove('active');
+});
 
-// 执行系统事件
-document.getElementById('add-exec-btn').onclick = () => openExecModal(null);
-document.getElementById('exec-cancel-btn').onclick = () => { document.getElementById('exec-modal').classList.remove('active'); currentEditingExecId = null; };
-document.getElementById('exec-save-btn').onclick = saveExec;
-
-document.getElementById('edit-habit-up-btn').onclick = () => moveHabitInModal(-1);
-document.getElementById('edit-habit-down-btn').onclick = () => moveHabitInModal(1);
-document.getElementById('edit-habit-save-btn').onclick = () => saveHabitModal();
-document.getElementById('edit-habit-del-btn').onclick = () => deleteHabitInModal();
-document.getElementById('edit-habit-cancel-btn').onclick = () => { document.getElementById('edit-habit-modal').classList.remove('active'); currentEditingHabitId = null; };
-
-document.getElementById('login-btn').onclick = async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const pwd = document.getElementById('auth-password').value;
+// 认证
+bindEvent('#login-btn', 'click', async () => {
+    const email = $('#auth-email').value.trim();
+    const pwd = $('#auth-password').value;
     if (!email || !pwd) return alert('请填写邮箱和密码');
     if (await signIn(email, pwd)) { await loadAllFromCloud(); setupRealtime(); }
-};
-document.getElementById('register-btn').onclick = async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const pwd = document.getElementById('auth-password').value;
+});
+bindEvent('#register-btn', 'click', async () => {
+    const email = $('#auth-email').value.trim();
+    const pwd = $('#auth-password').value;
     if (!email || pwd.length < 6) return alert('密码至少6位');
     await signUp(email, pwd);
-};
-document.getElementById('logout-btn').onclick = signOut;
+});
+bindEvent('#logout-btn', 'click', signOut);
 
-document.getElementById('add-btn').onclick = async () => {
-    const amount = parseFloat(document.getElementById('expense-amount').value);
-    const account = document.getElementById('expense-account').value;
-    const desc = document.getElementById('expense-desc').value.trim() || undefined;
-    const day = document.getElementById('expense-date').value || todayStr();
-    const sub = (account === 'survival') ? document.getElementById('expense-subcategory').value : null;
-    if (await addExpense(amount, account, desc, day, sub)) { document.getElementById('expense-amount').value = ''; document.getElementById('expense-desc').value = ''; }
-};
-document.getElementById('income-btn').onclick = async () => {
-    const amount = parseFloat(document.getElementById('income-amount').value);
-    const day = document.getElementById('income-date').value || todayStr();
-    if (await addIncome(amount, day)) document.getElementById('income-amount').value = '';
-};
-document.getElementById('transfer-btn').onclick = async () => {
-    const amount = parseFloat(document.getElementById('transfer-amount').value);
-    const from = document.getElementById('transfer-from').value;
-    const to = document.getElementById('transfer-to').value;
-    const desc = document.getElementById('transfer-desc').value.trim();
-    const day = document.getElementById('transfer-date').value || todayStr();
-    if (await addTransfer(amount, from, to, desc, day)) { document.getElementById('transfer-amount').value = ''; document.getElementById('transfer-desc').value = ''; }
-};
-document.getElementById('reset-accounts-btn').onclick = async () => {
+// 执行系统（静态按钮 + 列表内 data-action 委托）
+bindEvent('#add-exec-btn', 'click', () => openExecModal(null));
+bindEvent('#exec-cancel-btn', 'click', () => { const m = $('#exec-modal'); if (m) m.classList.remove('active'); currentEditingExecId = null; });
+bindEvent('#exec-save-btn', 'click', saveExec);
+bindEvent('[data-action="exec-edit"]', 'click', (e, el) => openExecModal(el.dataset.id));
+bindEvent('[data-action="exec-delete"]', 'click', (e, el) => deleteExec(el.dataset.id));
+
+// 习惯（静态按钮 + 列表内 data-action 委托）
+bindEvent('#add-habit-btn', 'click', addNewHabit);
+bindEvent('#import-morning-btn', 'click', importMorningRoutine);
+bindEvent('#new-habit-name', 'keydown', (e) => { if (e.key === 'Enter') addNewHabit(); });
+bindEvent('[data-action="toggle-habit"]', 'click', (e, el) => toggleHabit(el.dataset.id));
+bindEvent('[data-action="edit-habit"]', 'click', (e, el) => openEditHabitModal(el.dataset.id));
+bindEvent('#edit-habit-up-btn', 'click', () => moveHabitInModal(-1));
+bindEvent('#edit-habit-down-btn', 'click', () => moveHabitInModal(1));
+bindEvent('#edit-habit-save-btn', 'click', () => saveHabitModal());
+bindEvent('#edit-habit-del-btn', 'click', () => deleteHabitInModal());
+bindEvent('#edit-habit-cancel-btn', 'click', () => { const m = $('#edit-habit-modal'); if (m) m.classList.remove('active'); currentEditingHabitId = null; });
+
+// 账户
+bindEvent('#add-btn', 'click', async () => {
+    const amount = parseFloat($('#expense-amount').value);
+    const account = $('#expense-account').value;
+    const desc = $('#expense-desc').value.trim() || undefined;
+    const day = $('#expense-date').value || todayStr();
+    const sub = (account === 'survival') ? $('#expense-subcategory').value : null;
+    if (await addExpense(amount, account, desc, day, sub)) { $('#expense-amount').value = ''; $('#expense-desc').value = ''; }
+});
+bindEvent('#income-btn', 'click', async () => {
+    const amount = parseFloat($('#income-amount').value);
+    const day = $('#income-date').value || todayStr();
+    if (await addIncome(amount, day)) $('#income-amount').value = '';
+});
+bindEvent('#transfer-btn', 'click', async () => {
+    const amount = parseFloat($('#transfer-amount').value);
+    const from = $('#transfer-from').value;
+    const to = $('#transfer-to').value;
+    const desc = $('#transfer-desc').value.trim();
+    const day = $('#transfer-date').value || todayStr();
+    if (await addTransfer(amount, from, to, desc, day)) { $('#transfer-amount').value = ''; $('#transfer-desc').value = ''; }
+});
+bindEvent('#reset-accounts-btn', 'click', async () => {
     if (!confirm('确定清空三账户数据？')) return;
     await sb.from('records').delete().eq('user_id', currentUser.id);
     accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
-    saveCache(); renderAccounts();
-};
-document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
-document.getElementById('transfer-amount').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('transfer-btn').click(); });
-(function () {
-    const a = document.getElementById('expense-account'), s = document.getElementById('expense-subcategory');
-    function u() { if (a.value === 'survival') { s.style.display = ''; s.disabled = false; } else { s.style.display = 'none'; s.disabled = true; } }
-    a.addEventListener('change', u); u();
-})();
+    saveCache(); RenderBus.emit('accounts');
+});
+bindEvent('#expense-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('#add-btn'); if (b) b.click(); } });
+bindEvent('#transfer-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('#transfer-btn'); if (b) b.click(); } });
+bindEvent('#expense-account', 'change', (e, el) => updateExpenseSubcatVisibility(el.value));
+bindEvent('.edit-expense-date', 'change', (e, el) => updateExpenseDate(el.dataset.id, el.value));
+bindEvent('.edit-subcategory', 'change', (e, el) => updateExpenseSubcategory(el.dataset.id, el.value));
+bindEvent('[data-del-expense]', 'click', (e, el) => deleteExpense(el.dataset.delExpense));
+bindEvent('[data-del-transfer]', 'click', (e, el) => deleteTransfer(el.dataset.delTransfer));
+bindEvent('.edit-income-date', 'change', (e, el) => updateIncomeDate(el.dataset.id, el.value));
+bindEvent('.clickable-chip', 'click', (e, el) => {
+    const day = el.dataset.day;
+    if (!day) return;
+    const month = day.slice(0, 7);
+    const monthDetail = qs(`#expense-list details[data-month="${month}"]`);
+    if (monthDetail) monthDetail.open = true;
+    setTimeout(() => {
+        const rows = $$(`#expense-list tr[data-day="${day}"]`);
+        if (rows.length > 0) { rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); rows.forEach(r => { r.classList.remove('highlight-row'); void r.offsetWidth; r.classList.add('highlight-row'); setTimeout(() => r.classList.remove('highlight-row'), 2000); }); }
+    }, 200);
+});
 
-document.getElementById('sleep-save').onclick = addSleep;
-document.getElementById('energy-save').onclick = addEnergy;
-document.getElementById('charge-save').onclick = addCharge;
-document.getElementById('exercise-save').onclick = addExercise;
-document.getElementById('micro-save').onclick = addMicro;
-document.getElementById('signal-save').onclick = addBody;
-document.getElementById('meal-save').onclick = addMeal;
-
-document.getElementById('add-habit-btn').onclick = addNewHabit;
-document.getElementById('import-morning-btn').onclick = importMorningRoutine;
-document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addNewHabit(); });
-
-document.getElementById('news-save').onclick = addNewsItem;
-document.getElementById('news-summary-save').onclick = addNewsSummary;
-
-document.getElementById('rss-add-btn').onclick = addRssFeed;
-document.getElementById('rss-fetch-btn').onclick = generateBriefing;
-document.getElementById('rss-optimize-btn').onclick = () => {
-    if (!confirm('将执行以下操作：\n\n· 删除 10 个冗余/违规源\n· 修正若干源的分类\n· 补充 36氪\n\n你手动添加的其他源会保留。继续？')) return;
-    const r = optimizeFeedList();
-    const statusEl = document.getElementById('rss-status');
-    statusEl.textContent = `✅ 优化完成：删除 ${r.deleted} 个，修正分类 ${r.fixed} 个，新增 ${r.added} 个`;
-    setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
-};
-document.getElementById('rss-clear-btn').onclick = () => {
-    if (!rssFeeds.length) return;
-    if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
-    rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); renderRssSources();
-    document.getElementById('rss-fetch-result').innerHTML = ''; document.getElementById('rss-status').textContent = '';
-    clearFetchProgress(); setBriefingStageStatus('');
-};
-document.getElementById('rss-url').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
-document.getElementById('rss-name').addEventListener('keydown', e => { if (e.key === 'Enter') addRssFeed(); });
-document.getElementById('opml-import-btn').onclick = () => document.getElementById('opml-file-input').click();
-document.getElementById('opml-file-input').addEventListener('change', function() { const file = this.files && this.files[0]; if (file) handleOpmlFile(file); this.value = ''; });
-
-document.getElementById('day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
-document.getElementById('day-prev').onclick = () => setDay(addDays(currentDay, -1));
-document.getElementById('day-next').onclick = () => setDay(addDays(currentDay, 1));
-document.getElementById('day-today').onclick = () => setDay(todayStr());
-document.getElementById('habit-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
-document.getElementById('habit-day-prev').onclick = () => setDay(addDays(currentDay, -1));
-document.getElementById('habit-day-next').onclick = () => setDay(addDays(currentDay, 1));
-document.getElementById('habit-day-today').onclick = () => setDay(todayStr());
-document.getElementById('news-day-picker').addEventListener('change', function () { if (this.value) setDay(this.value); });
-document.getElementById('news-day-prev').onclick = () => setDay(addDays(currentDay, -1));
-document.getElementById('news-day-next').onclick = () => setDay(addDays(currentDay, 1));
-document.getElementById('news-day-today').onclick = () => setDay(todayStr());
-
-document.getElementById('acne-location').addEventListener('change', function () { document.getElementById('acne-location-other-field').style.display = this.value === 'other' ? '' : 'none'; });
-document.getElementById('ai-analyze-btn').onclick = runAIAnalysis;
-document.getElementById('ai-clear-btn').onclick = async () => {
+// 健康
+bindEvent('#sleep-save', 'click', addSleep);
+bindEvent('#energy-save', 'click', addEnergy);
+bindEvent('#charge-save', 'click', addCharge);
+bindEvent('#exercise-save', 'click', addExercise);
+bindEvent('#micro-save', 'click', addMicro);
+bindEvent('#signal-save', 'click', addBody);
+bindEvent('#meal-save', 'click', addMeal);
+bindEvent('#acne-location', 'change', (e, el) => { const f = $('#acne-location-other-field'); if (f) f.style.display = el.value === 'other' ? '' : 'none'; });
+bindEvent('#ai-analyze-btn', 'click', runAIAnalysis);
+bindEvent('#ai-clear-btn', 'click', async () => {
     if (!confirm('清除今天的 AI 分析？')) return;
     const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
     for (const e of list) { await deleteHealthRecord(e.id); }
     healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
-    saveCache(); renderAIAnalysis();
-};
+    saveCache(); RenderBus.emit('health');
+});
+bindEvent('#posture-chips .chip', 'click', (e, el) => toggleChip(selectedPosture, el));
+bindEvent('#habit-chips .chip', 'click', (e, el) => toggleChip(selectedHabit, el));
+bindEvent('#signal-chips .chip', 'click', (e, el) => toggleChip(selectedSignals, el));
+bindEvent('#energy-am .score-btn', 'click', (e, el) => selectScore('energy-am', el));
+bindEvent('#energy-pm .score-btn', 'click', (e, el) => selectScore('energy-pm', el));
+bindEvent('#exercise-week .dot', 'click', (e, el) => setDay(el.dataset.day));
+bindEvent('[data-del-sleep]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(el.dataset.delSleep)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-energy]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(el.dataset.delEnergy)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-charge]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(el.dataset.delCharge)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-exercise]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(el.dataset.delExercise)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-micro]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(el.dataset.delMicro)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-body]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(el.dataset.delBody)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-meal]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(el.dataset.delMeal)); saveCache(); RenderBus.emit('health'); const fa = $('#food-analysis'); if (fa) fa.classList.add('hidden'); });
+bindEvent('[data-view-ip]', 'click', (e, el) => { const r = healthData.innerPeace.find(x => String(x.id) === String(el.dataset.viewIp)); if (r) renderIpReport(r); });
+bindEvent('[data-del-ip]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(el.dataset.delIp)); saveCache(); RenderBus.emit('health'); });
+bindEvent('#ip-start-btn', 'click', startIpSession);
+bindEvent('#ip-restart-btn', 'click', startIpSession);
+bindEvent('[data-opt-idx]', 'click', (e, el) => {
+    ipSelectedOption = parseInt(el.dataset.optIdx, 10);
+    $$('#ip-chat-container [data-opt-idx]').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    const cb = $('#ip-confirm-cb');
+    const next = $('#ip-confirm-next');
+    if (next) next.disabled = !(cb && cb.checked);
+});
+bindEvent('#ip-confirm-cb', 'change', (e, el) => {
+    const step = ipFlow[ipCurrentKey];
+    if (!step) return;
+    if (step.type === 'choice' && ipSelectedOption === null && el.checked) { alert('请先选择'); el.checked = false; return; }
+    const next = $('#ip-confirm-next');
+    if (next) next.disabled = !el.checked;
+});
+bindEvent('#ip-confirm-next', 'click', async () => {
+    const step = ipFlow[ipCurrentKey];
+    if (!step) return;
+    const container = $('#ip-chat-container');
+    if (!container) return;
+    if (step.type === 'form') container.querySelectorAll('[data-field-key]').forEach(f => { ipAnswers[f.dataset.fieldKey] = f.value.trim(); });
+    let userMsg = '';
+    if (step.type === 'form') userMsg = step.fields.map(f => `${f.label}：${ipAnswers[f.key]||'（未填写）'}`).join('\n');
+    else if (step.type === 'choice' && ipSelectedOption !== null) userMsg = step.options[ipSelectedOption].label;
+    else userMsg = '✓ ' + (step.checkboxLabel || '完成');
+    ipConversation.push({ role: 'user', text: userMsg });
+    if (ipCurrentKey === 'step4' && ipSelectedOption !== null) ipAnswers['step4_choice'] = step.options[ipSelectedOption].label;
+    if (step.next === '__end__') { await finishIpSession(); return; }
+    ipCurrentKey = (step.type === 'choice' && ipSelectedOption !== null) ? step.options[ipSelectedOption].next : step.next;
+    ipSelectedOption = null;
+    renderIpChat();
+});
+
+// 日期导航（健康 / 习惯 / 世事 三处 day-bar）
+bindEvent('#day-picker', 'change', (e, el) => { if (el.value) setDay(el.value); });
+bindEvent('#day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+bindEvent('#day-next', 'click', () => setDay(addDays(currentDay, 1)));
+bindEvent('#day-today', 'click', () => setDay(todayStr()));
+bindEvent('#habit-day-picker', 'change', (e, el) => { if (el.value) setDay(el.value); });
+bindEvent('#habit-day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+bindEvent('#habit-day-next', 'click', () => setDay(addDays(currentDay, 1)));
+bindEvent('#habit-day-today', 'click', () => setDay(todayStr()));
+bindEvent('#news-day-picker', 'change', (e, el) => { if (el.value) setDay(el.value); });
+bindEvent('#news-day-prev', 'click', () => setDay(addDays(currentDay, -1)));
+bindEvent('#news-day-next', 'click', () => setDay(addDays(currentDay, 1)));
+bindEvent('#news-day-today', 'click', () => setDay(todayStr()));
+
+// 世事（手动记录 / 简报 / RSS / OPML）
+bindEvent('#news-save', 'click', addNewsItem);
+bindEvent('#news-summary-save', 'click', addNewsSummary);
+bindEvent('[data-del-news]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delNews); newsData.items = newsData.items.filter(x => String(x.id) !== String(el.dataset.delNews)); saveCache(); RenderBus.emit('news'); });
+bindEvent('[data-del-summary]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSummary); newsData.summaries = newsData.summaries.filter(x => String(x.id) !== String(el.dataset.delSummary)); saveCache(); RenderBus.emit('news'); });
+bindEvent('[data-del-briefing]', 'click', async (e, el) => {
+    const id = el.dataset.delBriefing;
+    if (!confirm('删除这份简报？')) return;
+    if (String(id).startsWith('local_')) { newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
+    else { await deleteHealthRecord(id); newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
+});
+bindEvent('.mark-read-cb', 'change', async (e, el) => {
+    const id = el.dataset.id;
+    const isRead = el.checked;
+    const item = newsData.briefings.find(x => String(x.id) === String(id));
+    if (!item) return;
+    item.isRead = isRead;
+    saveCache(); RenderBus.emit('news');
+    if (String(id).startsWith('local_')) return;
+    await syncRecord('briefing', item.date, item, item, { silent: true });
+});
+bindEvent('#rss-add-btn', 'click', addRssFeed);
+bindEvent('#rss-fetch-btn', 'click', generateBriefing);
+bindEvent('#rss-optimize-btn', 'click', () => {
+    if (!confirm('将执行以下操作：\n\n· 删除 10 个冗余/违规源\n· 修正若干源的分类\n· 补充 36氪\n\n你手动添加的其他源会保留。继续？')) return;
+    const r = optimizeFeedList();
+    const statusEl = $('#rss-status');
+    statusEl.textContent = `✅ 优化完成：删除 ${r.deleted} 个，修正分类 ${r.fixed} 个，新增 ${r.added} 个`;
+    setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
+});
+bindEvent('#rss-clear-btn', 'click', () => {
+    if (!rssFeeds.length) return;
+    if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
+    rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
+    $('#rss-fetch-result').innerHTML = ''; $('#rss-status').textContent = '';
+    clearFetchProgress(); setBriefingStageStatus('');
+});
+bindEvent('#rss-url', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
+bindEvent('#rss-name', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
+bindEvent('#opml-import-btn', 'click', () => { const f = $('#opml-file-input'); if (f) f.click(); });
+bindEvent('#opml-file-input', 'change', (e, el) => { const file = el.files && el.files[0]; if (file) handleOpmlFile(file); el.value = ''; });
+bindEvent('[data-del-feed]', 'click', (e, el) => { rssFeeds = rssFeeds.filter(x => x.id !== el.dataset.delFeed); saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); });
+bindEvent('[data-toggle-feed]', 'change', (e, el) => { const f = rssFeeds.find(x => x.id === el.dataset.toggleFeed); if (f) { f.enabled = el.checked; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); } });
+bindEvent('[data-opml-idx]', 'change', (e, el) => {
+    const idx = parseInt(el.dataset.opmlIdx, 10);
+    if (!opmlPreviewData || !opmlPreviewData[idx]) return;
+    opmlPreviewData[idx].category = el.value;
+    const row = el.closest('.opml-preview-row');
+    const badge = row ? row.querySelector('.opml-cat-badge') : null;
+    const cat = NEWS_CATEGORY[el.value];
+    if (badge && cat) badge.textContent = cat.icon + ' ' + cat.label;
+});
+bindEvent('#opml-cancel-btn', 'click', () => { opmlPreviewData = null; const p = $('#opml-preview'); if (p) p.innerHTML = ''; });
+bindEvent('#opml-confirm-btn', 'click', confirmOpmlImport);
 
 /* ================= 启动 ================= */
 document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('expense-date').value = todayStr();
-    document.getElementById('income-date').value = todayStr();
-    document.getElementById('transfer-date').value = todayStr();
-    document.getElementById('sleep-start').value = '23:00';
-    document.getElementById('sleep-end').value = '07:00';
+    buildNav();
+
+    $('#expense-date').value = todayStr();
+    $('#income-date').value = todayStr();
+    $('#transfer-date').value = todayStr();
+    $('#sleep-start').value = '23:00';
+    $('#sleep-end').value = '07:00';
 
     function buildScoreRow(el) {
         let html = '';
         for (let i = 1; i <= 10; i++) html += `<button class="score-btn" data-val="${i}">${i}</button>`;
         el.innerHTML = html;
-        el.querySelectorAll('.score-btn').forEach(btn => { btn.onclick = () => { el.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }; });
+        /* 点击选择由事件委托区统一绑定（selectScore） */
     }
-    buildScoreRow(document.getElementById('energy-am'));
-    buildScoreRow(document.getElementById('energy-pm'));
-    document.querySelectorAll('#energy-am .score-btn')[4].click();
-    document.querySelectorAll('#energy-pm .score-btn')[4].click();
+    buildScoreRow($('#energy-am'));
+    buildScoreRow($('#energy-pm'));
+    $$('#energy-am .score-btn')[4].click();
+    $$('#energy-pm .score-btn')[4].click();
+    updateExpenseSubcatVisibility($('#expense-account').value);
 
     buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
     buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
     buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
 
     aiConfig = loadAIConfigLocal();
-    document.getElementById('ai-api-key').value = aiConfig.apiKey || '';
-    document.getElementById('ai-api-url').value = aiConfig.apiUrl;
-    document.getElementById('ai-model').value = aiConfig.model;
+    $('#ai-api-key').value = aiConfig.apiKey || '';
+    $('#ai-api-url').value = aiConfig.apiUrl;
+    $('#ai-model').value = aiConfig.model;
 
     loadRhythmNodesLocal();
     loadRssFeedsLocal();
-    renderRssSources();
+    RenderBus.emit('rss');
 
     updateDayBar();
     resetIpSession();
-    renderRhythm();
-    renderExecution();
+    RenderBus.emit('rhythm');
+    RenderBus.emit('execution');
 
     try {
         console.log('⏳ 正在检查登录状态...');
@@ -3038,6 +3132,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         showLoginUI();
     }
 });
+
+/* ================= 如何添加新模块（以衣橱系统为例） =================
+   1. HTML：在最后一个 tab 区块后加
+      <div id="tab-wardrobe" class="tab-content"><h1 class="page-title">衣橱</h1>…你的界面…</div>
+   2. 导航：MODULES 注册表加一条 { id:'wardrobe', icon:'👔', label:'衣橱', renders:['wardrobe'] }（导航按钮自动出现）
+   3. 数据：数据区加 let wardrobeData = [];
+      loadAllFromCloud 的 hd.forEach 里加一行：
+      if (r.type === 'wardrobe') { wardrobeData.push({ ...d, _cloudId: r.id }); return; }
+   4. 渲染：写 renderWardrobe()，然后在渲染调度区注册 RenderBus.on('wardrobe', renderWardrobe)
+   5. 交互：所有按钮 bindEvent('selector', 'click', handler)（动态列表用 data-action / data-id 属性，天然委托）
+   6. 持久化：新建/修改一律 syncRecord('wardrobe', date, dataObj, dataObj)，删除用 deleteHealthRecord(id)
+   7. 缓存：saveCache / loadCache 的 JSON 对象里加 wardrobe: wardrobeData
+   完。不需要改动其他任何模块。
+================================================================== */
 </script>
 </body>
 </html>
