@@ -244,6 +244,27 @@ tr{scroll-margin-top:20px}
 .exec-step-content{white-space:pre-wrap}
 .exec-arrow{text-align:center;color:var(--text3);font-size:12px;margin:-4px 0 4px 0}
 
+/* Wardrobe System Styles */
+.wd-weather-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f7fbf9;border-radius:var(--rSm);padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--text);line-height:1.6}
+.wd-weather-bar .temp{font-size:22px;font-weight:700;color:var(--accent)}
+.wd-slot{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.wd-slot:last-child{border-bottom:none}
+.wd-slot-cat{flex:0 0 56px;font-size:12px;color:var(--text2);font-weight:600}
+.wd-slot-main{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+.wd-color-dot{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0;display:inline-block}
+.wd-thick{color:#d9a441;letter-spacing:1px;font-size:11px}
+.wd-tips{background:#fdf6f0;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:#8a5a2b;line-height:1.7}
+.wd-tips div{margin:2px 0}
+.wd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.wd-preset{background:#f5f5f7;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px}
+.wd-empty-slot{color:#c0392b;font-size:12px}
+.wd-item-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.wd-mini-tag{font-size:10px;color:var(--text2);background:#eef1f6;border-radius:6px;padding:1px 6px}
+.wd-kb-card{background:#f5f5f7;border-radius:var(--rSm);padding:12px 14px;margin-bottom:10px;font-size:13px;line-height:1.7}
+.wd-kb-card .kb-t{font-weight:700;color:var(--accent);margin-bottom:6px;font-size:14px}
+.wd-gap{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef7ec;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;flex-wrap:wrap}
+.wd-budget-box{background:#f7fbf9;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.8}
+
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
@@ -567,6 +588,75 @@ tr{scroll-margin-top:20px}
         </details>
     </div>
 
+    <!-- ========== 衣橱 ========== -->
+    <div id="tab-wardrobe" class="tab-content">
+        <h1 class="page-title">衣橱</h1>
+
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <span style="font-size:13px;color:var(--text2);">今日穿搭 · 按天气自动生成，确认后计入穿着统计</span>
+                <span id="wd-city-label" style="font-size:12px;color:var(--text3);"></span>
+            </div>
+            <div id="wardrobe-weather-bar" class="wd-weather-bar">打开衣橱时自动获取天气</div>
+            <div id="wd-scene-chips" class="chip-row" style="margin-bottom:10px;"></div>
+            <div id="wd-outfit-slots"></div>
+            <div id="wd-today-tips"></div>
+            <div id="wd-presets"></div>
+            <div id="wd-today-actions" class="wd-actions"></div>
+            <div id="wd-ai-result"></div>
+        </div>
+
+        <details class="fold" open>
+            <summary>👕 衣物清单</summary>
+            <div class="fold-body">
+                <button class="btn btn-primary btn-full" data-action="wd-add-item">＋ 添加衣物</button>
+                <div id="wd-items-list" style="margin-top:12px;"></div>
+                <div id="wd-idle-list"></div>
+            </div>
+        </details>
+
+        <details class="fold">
+            <summary>🎽 预设搭配</summary>
+            <div class="fold-body">
+                <button class="btn btn-primary btn-full" data-action="wd-add-outfit">＋ 新建搭配方案</button>
+                <div id="wd-outfits-list" style="margin-top:12px;"></div>
+            </div>
+        </details>
+
+        <details class="fold">
+            <summary>🛒 购买建议</summary>
+            <div class="fold-body">
+                <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">缺口检测 + 愿望清单。确认要买时，再查看可购额度并一键记账。</div>
+                <div id="wd-gaps"></div>
+                <button class="btn btn-primary btn-full" data-action="wd-add-wish">＋ 加入愿望清单</button>
+                <div id="wd-wishlist" style="margin-top:12px;"></div>
+                <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" data-action="wd-budget">📊 查看本月可购额度</button>
+                    <button class="btn btn-secondary" data-action="wd-ai-buy" id="wd-ai-buy-btn" style="display:none;">🤖 AI 购买优先级建议</button>
+                </div>
+                <div id="wd-budget" class="wd-budget-box" style="display:none;"></div>
+                <div id="wd-buy-ai-result"></div>
+            </div>
+        </details>
+
+        <details class="fold">
+            <summary>📖 穿搭知识</summary>
+            <div class="fold-body">
+                <div class="wd-kb-card"><div class="kb-t">🧅 三层穿搭法</div>贴身层排汗（棉/速干）→ 中间层保暖（针织/抓绒）→ 外层防风防雨。江淮地区早晚温差大，三层可穿可脱最实用。</div>
+                <div class="wd-kb-card"><div class="kb-t">🎨 三色原则</div>全身主色不超过 3 种；拿不准就同色系深浅搭配（米+棕、藏青+浅蓝、黑+灰），几乎不会出错。</div>
+                <div class="wd-kb-card"><div class="kb-t">🧵 面料与温度</div>夏：棉麻透气；春秋：针织/卫衣；冬：抓绒+羽绒/棉服。羊毛保暖但贴身易痒，内加一层打底即可。</div>
+                <div class="wd-kb-card"><div class="kb-t">🏡 基层场景要点</div>下乡走访：深色耐脏 + 舒适运动鞋；办公室：备一件正式外套应急；会议/面试：白衬衫+深色裤最稳；雨天：防水外套优先于雨伞（腾出手来）。</div>
+                <div class="wd-kb-card"><div class="kb-t">☀️ 防晒与温差</div>紫外线高时帽子/长袖防晒；早晚温差 ≥10°C 必带可脱外套；风大时外层选抗风面料。</div>
+                <div class="wd-kb-card"><div class="kb-t">👜 极简胶囊衣橱参考</div>7 上装 + 5 下装 + 3 外套 + 4 鞋，两两可搭 ≈ 百套组合。买新衣前先问：能和已有 3 件搭配吗？单次穿着成本能接受吗？</div>
+            </div>
+        </details>
+
+        <details class="fold">
+            <summary>📅 穿着日志</summary>
+            <div class="fold-body"><div id="wd-logs-list"></div></div>
+        </details>
+    </div>
+
     <!-- ========== 世事 ========== -->
     <div id="tab-news" class="tab-content">
         <h1 class="page-title">世事</h1>
@@ -689,6 +779,100 @@ tr{scroll-margin-top:20px}
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
             <button class="btn btn-secondary" id="close-settings-btn">取消</button>
             <button class="btn btn-primary" id="ai-save-config">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 衣橱弹窗 ========== -->
+<div class="modal-overlay" id="wd-item-modal">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+        <div class="modal-title" id="wd-item-title">➕ 添加衣物</div>
+        <div class="field"><label>名称</label><input type="text" id="wd-item-name" placeholder="例如：黑色针织衫"></div>
+        <div class="grid-2">
+            <div class="field"><label>类别</label><select id="wd-item-category"><option value="inner">🧦 内搭</option><option value="top" selected>👕 上装</option><option value="bottom">👖 下装</option><option value="outer">🧥 外套</option><option value="shoes">👟 鞋</option><option value="acc">🧣 配饰</option></select></div>
+            <div class="field"><label>颜色</label><select id="wd-item-color"><option value="black">黑</option><option value="white">白</option><option value="grey">灰</option><option value="navy">藏青</option><option value="blue">蓝</option><option value="brown">棕</option><option value="beige">米</option><option value="green">绿</option><option value="red">红</option><option value="yellow">黄</option><option value="pink">粉</option><option value="purple">紫</option><option value="denim">牛仔</option></select></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label>保暖厚度（1 薄 — 5 厚）</label><select id="wd-item-thickness"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+            <div class="field"><label>状态</label><select id="wd-item-status"><option value="在用" selected>在用</option><option value="闲置">闲置</option><option value="破损">破损</option></select></div>
+        </div>
+        <div class="field"><label>适用季节（不选 = 四季通用）</label><div class="chip-row" id="wd-item-seasons"></div></div>
+        <div class="field"><label>场景（不选 = 通用）</label><div class="chip-row" id="wd-item-scenes"></div></div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:8px;background:#f5f5f7;padding:10px 12px;border-radius:8px;">
+            <input type="checkbox" id="wd-item-waterproof" style="width:18px;height:18px;">
+            <label for="wd-item-waterproof" style="margin-bottom:0;cursor:pointer;">☔ 防水（雨天优先当外层）</label>
+        </div>
+        <div class="grid-3">
+            <div class="field"><label>价格 ¥</label><input type="number" id="wd-item-price" step="0.01" placeholder="选填"></div>
+            <div class="field"><label>购入账户</label><select id="wd-item-account"><option value="">无</option><option value="survival">生存</option><option value="develop">发展</option><option value="stable">稳定</option></select></div>
+            <div class="field"><label>购入日期</label><input type="date" id="wd-item-date"></div>
+        </div>
+        <div class="field"><label>备注</label><input type="text" id="wd-item-note" placeholder="选填"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="wd-item-del" style="display:none;">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="wd-item-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="wd-item-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="wd-outfit-modal">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+        <div class="modal-title" id="wd-outfit-title">➕ 新建搭配方案</div>
+        <div class="field"><label>名称</label><input type="text" id="wd-outfit-name" placeholder="例如：通勤舒适套"></div>
+        <div class="grid-2">
+            <div class="field"><label>适用最低温度 °C</label><input type="number" id="wd-outfit-tmin" step="1"></div>
+            <div class="field"><label>适用最高温度 °C</label><input type="number" id="wd-outfit-tmax" step="1"></div>
+        </div>
+        <div class="field"><label>场景</label><select id="wd-outfit-scene"><option value="不限">不限</option><option value="通勤">通勤</option><option value="日常">日常</option><option value="运动">运动</option><option value="正式">正式</option><option value="居家">居家</option></select></div>
+        <div class="field"><label>🧦 内搭</label><select id="wd-outfit-slot-inner"></select></div>
+        <div class="field"><label>👕 上装</label><select id="wd-outfit-slot-top"></select></div>
+        <div class="field"><label>👖 下装</label><select id="wd-outfit-slot-bottom"></select></div>
+        <div class="field"><label>🧥 外套</label><select id="wd-outfit-slot-outer"></select></div>
+        <div class="field"><label>👟 鞋</label><select id="wd-outfit-slot-shoes"></select></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="wd-outfit-del" style="display:none;">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="wd-outfit-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="wd-outfit-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="wd-wish-modal">
+    <div class="modal-box">
+        <div class="modal-title" id="wd-wish-title">＋ 加入愿望清单</div>
+        <div class="field"><label>想买的衣物</label><input type="text" id="wd-wish-name" placeholder="例如：黑色羽绒服"></div>
+        <div class="grid-2">
+            <div class="field"><label>类别</label><select id="wd-wish-category"><option value="inner">🧦 内搭</option><option value="top">👕 上装</option><option value="bottom">👖 下装</option><option value="outer" selected>🧥 外套</option><option value="shoes">👟 鞋</option><option value="acc">🧣 配饰</option></select></div>
+            <div class="field"><label>优先级</label><select id="wd-wish-priority"><option value="高">高</option><option value="中" selected>中</option><option value="低">低</option></select></div>
+        </div>
+        <div class="field"><label>目标价格 ¥</label><input type="number" id="wd-wish-price" step="0.01" placeholder="选填"></div>
+        <div class="field"><label>理由</label><textarea id="wd-wish-reason" style="min-height:50px;" placeholder="为什么需要它？"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+            <button class="btn btn-secondary btn-sm" id="wd-wish-cancel">取消</button>
+            <button class="btn btn-primary btn-sm" id="wd-wish-save">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="wd-buy-modal">
+    <div class="modal-box">
+        <div class="modal-title">🛍️ 购买并记账</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px;" id="wd-buy-info"></div>
+        <div class="field"><label>支出账户</label><select id="wd-buy-account"><option value="develop" selected>📈 发展</option><option value="survival">🥣 生存</option><option value="stable">🛡️ 稳定</option></select></div>
+        <div class="field" id="wd-buy-subcat-field" style="display:none;"><label>生存账户分类</label><select id="wd-buy-subcategory"><option value="rigid">🥣 刚性生存</option><option value="emotional">🎈 情绪消费</option><option value="once" selected>📦 一次性支出</option></select></div>
+        <div class="grid-2">
+            <div class="field"><label>金额</label><input type="number" id="wd-buy-amount" step="0.01"></div>
+            <div class="field"><label>日期</label><input type="date" id="wd-buy-date"></div>
+        </div>
+        <p style="font-size:12px;color:var(--text3);line-height:1.5;">确认后：① 记一笔支出到所选账户 ② 衣物自动加入衣橱（颜色/厚度可稍后编辑）③ 从愿望清单移除。</p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+            <button class="btn btn-secondary" id="wd-buy-cancel">取消</button>
+            <button class="btn btn-primary" id="wd-buy-save">确认购买</button>
         </div>
     </div>
 </div>
@@ -824,7 +1008,7 @@ async function deleteHealthRecord(id) {
 }
 
 /* 配置类记录的云端 id 引用 */
-const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null } };
+const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null } };
 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
@@ -833,6 +1017,7 @@ const MODULES = [
     { id: 'rhythm', icon: '⏱️', label: '节律', renders: ['rhythm'] },
     { id: 'health', icon: '🌿', label: '健康', renders: ['health'] },
     { id: 'habits', icon: '🎯', label: '习惯', renders: ['habits'] },
+    { id: 'wardrobe', icon: '👔', label: '衣橱', renders: ['wardrobe'] },
     { id: 'news', icon: '📰', label: '世事', renders: ['news', 'rss'] }
 ];
 function buildNav() {
@@ -850,6 +1035,7 @@ function buildNav() {
 function switchTab(id) {
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
     $$('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + id));
+    if (id === 'wardrobe') { ensureWardrobeWeather(); }
 }
 
 /* ================= 工具 ================= */
@@ -1041,6 +1227,9 @@ let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions'
 let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 let currentEditingHabitId = null;
 let rhythmDaily = [];
+let wardrobeData = { items: [], outfits: [], wishlist: [], config: { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null } };
+let wardrobeLog = [];
+let wardrobeWeather = null;
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
@@ -1059,7 +1248,7 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: executionData }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: executionData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -1074,6 +1263,8 @@ function loadCache() {
         if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
         rhythmDaily = d.rhythm || rhythmDaily;
         executionData = d.exec || executionData;
+        if (d.wardrobe) { wardrobeData = { items: [], outfits: [], wishlist: [], config: wardrobeData.config, ...d.wardrobe }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
+        wardrobeLog = d.wardrobeLog || wardrobeLog;
         return true;
     } catch (e) { return false; }
 }
@@ -1138,6 +1329,7 @@ async function loadAllFromCloud(silent = false) {
         newsData = { items: [], summaries: [], briefings: [] };
         executionData = [];
         rhythmDaily = [];
+        wardrobeLog = [];
         let cloudFeeds = null;
         Object.values(cloudConfigRefs).forEach(ref => ref._cloudId = null);
         loadHabitsLocal();
@@ -1151,6 +1343,8 @@ async function loadAllFromCloud(silent = false) {
             if (r.type === 'habits_config') { cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
             if (r.type === 'rhythm_config') { cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
             if (r.type === 'rhythm_daily') { rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'wardrobe') { cloudConfigRefs.wardrobe._cloudId = r.id; wardrobeData = { ...wardrobeData, ...d }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; return; }
+            if (r.type === 'wardrobe_log') { wardrobeLog.push({ ...d, _cloudId: r.id }); return; }
             if (r.type === 'news_item') { newsData.items.push(item); return; }
             if (r.type === 'news_summary') { newsData.summaries.push(item); return; }
             if (r.type === 'briefing') { newsData.briefings.push({ ...item, _cloudId: r.id }); return; }
@@ -2804,6 +2998,774 @@ function renderNews() {
     renderBriefings();
 }
 
+/* ================= 衣橱系统 ================= */
+const WD_WEATHER_KEY = 'wardrobe_weather_v1';
+const WD_COLORS = ['black','white','grey','navy','blue','brown','beige','green','red','yellow','pink','purple','denim'];
+const WD_COLOR_LABEL = { black:'黑', white:'白', grey:'灰', navy:'藏青', blue:'蓝', brown:'棕', beige:'米', green:'绿', red:'红', yellow:'黄', pink:'粉', purple:'紫', denim:'牛仔' };
+const WD_COLOR_HEX = { black:'#2c2c2e', white:'#f5f5f7', grey:'#9a9a9e', navy:'#2b3a67', blue:'#4a7fc1', brown:'#7a5230', beige:'#d9c7a7', green:'#4f7d5a', red:'#b5483f', yellow:'#d9b23a', pink:'#d98ca8', purple:'#7d5f9e', denim:'#5f7fa8' };
+const WD_CATEGORIES = [
+    { key: 'inner', label: '内搭', icon: '🧦' },
+    { key: 'top', label: '上装', icon: '👕' },
+    { key: 'bottom', label: '下装', icon: '👖' },
+    { key: 'outer', label: '外套', icon: '🧥' },
+    { key: 'shoes', label: '鞋', icon: '👟' },
+    { key: 'acc', label: '配饰', icon: '🧣' }
+];
+const WD_SCENES = ['通勤', '日常', '运动', '正式', '居家'];
+const WD_SEASONS = ['春', '夏', '秋', '冬'];
+const WD_WMO = { 0:'晴', 1:'基本晴', 2:'多云', 3:'阴', 45:'雾', 48:'雾凇', 51:'毛毛雨', 53:'毛毛雨', 55:'浓毛毛雨', 56:'冻毛毛雨', 57:'冻毛毛雨', 61:'小雨', 63:'中雨', 65:'大雨', 66:'冻雨', 67:'冻雨', 71:'小雪', 73:'中雪', 75:'大雪', 77:'雪粒', 80:'阵雨', 81:'强阵雨', 82:'暴雨', 85:'阵雪', 86:'强阵雪', 95:'雷暴', 96:'雷暴伴冰雹', 99:'强雷暴伴冰雹' };
+
+let wdEditingItemId = null, wdEditingOutfitId = null, wdEditingWishId = null, wdBuyingWishId = null;
+let wdSlotOverrides = {};
+let wdItemSeasons = new Set(), wdItemScenes = new Set();
+
+try { wardrobeWeather = JSON.parse(localStorage.getItem(WD_WEATHER_KEY)) || null; } catch (e) { wardrobeWeather = null; }
+
+function wdIcon(cat) { const c = WD_CATEGORIES.find(x => x.key === cat); return c ? c.icon : '👕'; }
+function wdSeasonOf(month) { return month >= 3 && month <= 5 ? '春' : month >= 6 && month <= 8 ? '夏' : month >= 9 && month <= 11 ? '秋' : '冬'; }
+function wdWeatherGroup(code) {
+    if (code >= 95) return 'thunder';
+    if (code >= 71 && code <= 86) return 'snow';
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+    if (code === 45 || code === 48) return 'fog';
+    if (code >= 2) return 'cloud';
+    return 'clear';
+}
+function wdWarmLevel(feels) {
+    if (feels >= 28) return { lv: 1, label: '炎热', layers: ['top','bottom','shoes'], outerNeed: false, tip: '单层为主，透气防晒' };
+    if (feels >= 24) return { lv: 2, label: '暖', layers: ['top','bottom','shoes'], outerNeed: false, tip: '短袖/薄长袖，可备薄外套' };
+    if (feels >= 20) return { lv: 3, label: '舒适', layers: ['top','bottom','shoes'], outerNeed: false, tip: '长袖即可' };
+    if (feels >= 15) return { lv: 4, label: '微凉', layers: ['inner','top','bottom','shoes'], outerNeed: true, tip: '薄外套/针织开衫' };
+    if (feels >= 10) return { lv: 5, label: '凉', layers: ['inner','top','bottom','outer','shoes'], outerNeed: true, tip: '夹克/风衣' };
+    if (feels >= 5) return { lv: 6, label: '冷', layers: ['inner','top','bottom','outer','shoes'], outerNeed: true, tip: '毛衣+大衣/棉服' };
+    if (feels >= 0) return { lv: 7, label: '寒冷', layers: ['inner','top','bottom','outer','shoes'], outerNeed: true, tip: '厚棉服/羽绒服' };
+    return { lv: 8, label: '严寒', layers: ['inner','top','bottom','outer','shoes'], outerNeed: true, tip: '羽绒服+保暖内搭+帽子围巾' };
+}
+function wdSlotThickness(lv, cat) {
+    if (cat === 'outer') return lv <= 3 ? [1, 2] : lv === 4 ? [2, 4] : lv === 5 ? [3, 4] : [4, 5];
+    if (cat === 'inner') return [1, 2];
+    if (cat === 'top') return lv <= 3 ? [1, 2] : lv <= 6 ? [2, 4] : [3, 5];
+    return [1, 5];
+}
+
+/* ---------- 当日记录与云端保存 ---------- */
+function getTodayWardrobeLog() {
+    const d = todayStr();
+    let l = wardrobeLog.find(x => x.date === d);
+    if (!l) {
+        const day = new Date().getDay();
+        l = { date: d, scene: (day === 0 || day === 6) ? '日常' : '通勤', outfit: null, confirmed: false, weatherText: '' };
+        wardrobeLog.push(l);
+    }
+    return l;
+}
+async function saveWardrobeCloud() {
+    if (!currentUser) return;
+    await syncRecord('wardrobe', todayStr(), wardrobeData, cloudConfigRefs.wardrobe, { silent: true });
+    saveCache();
+}
+async function saveWardrobeLogCloud() {
+    const l = getTodayWardrobeLog();
+    if (!currentUser) { saveCache(); return; }
+    await syncRecord('wardrobe_log', l.date, l, l, { silent: true });
+    saveCache();
+}
+
+/* ---------- 天气 ---------- */
+async function ensureWardrobeWeather(force) {
+    const today = todayStr();
+    if (!force && wardrobeWeather && wardrobeWeather.date === today && wardrobeWeather.ok) { RenderBus.emit('wardrobe'); return; }
+    renderWdWeatherBar();
+    try {
+        let { lat, lon } = wardrobeData.config;
+        if (!lat || !lon) {
+            const names = [wardrobeData.config.city, '安徽省合肥市长丰县', '合肥'].filter(Boolean);
+            for (const n of names) {
+                const res = await withTimeout(fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(n) + '&count=1&language=zh'), 8000, '天气定位');
+                if (!res.ok) continue;
+                const j = await res.json();
+                if (j.results && j.results.length) {
+                    lat = j.results[0].latitude; lon = j.results[0].longitude;
+                    wardrobeData.config.lat = lat; wardrobeData.config.lon = lon;
+                    saveWardrobeCloud();
+                    break;
+                }
+            }
+        }
+        if (!lat || !lon) throw new Error('找不到城市坐标');
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,apparent_temperature,weather_code,precipitation_probability,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=Asia%2FShanghai&forecast_days=1';
+        const res = await withTimeout(fetch(url), 10000, '天气获取');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const j = await res.json();
+        const cur = j.current || {};
+        const dly = j.daily || {};
+        const code = cur.weather_code != null ? cur.weather_code : 0;
+        wardrobeWeather = {
+            date: today, ok: true, manual: false,
+            temp: cur.temperature_2m, feels: cur.apparent_temperature != null ? cur.apparent_temperature : cur.temperature_2m,
+            code: code, group: wdWeatherGroup(code), pop: cur.precipitation_probability || 0, wind: cur.wind_speed_10m || 0,
+            tmax: (dly.temperature_2m_max && dly.temperature_2m_max[0]) || cur.temperature_2m,
+            tmin: (dly.temperature_2m_min && dly.temperature_2m_min[0]) || cur.temperature_2m,
+            uv: (dly.uv_index_max && dly.uv_index_max[0]) || 0,
+            text: WD_WMO[code] || '未知'
+        };
+        try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(wardrobeWeather)); } catch (e) {}
+    } catch (err) {
+        console.warn('[衣橱] 天气获取失败：' + err.message);
+        wardrobeWeather = { date: today, ok: false, manual: false, err: err.message };
+    }
+    RenderBus.emit('wardrobe');
+}
+function wdApplyManualWeather() {
+    const t = parseFloat($('wd-manual-temp').value);
+    if (isNaN(t)) return alert('请填写体感温度');
+    const code = parseInt($('wd-manual-weather').value, 10) || 0;
+    wardrobeWeather = { date: todayStr(), ok: true, manual: true, temp: t, feels: t, code: code, group: wdWeatherGroup(code), pop: 0, wind: 0, tmax: t, tmin: t, uv: 0, text: WD_WMO[code] || '手动' };
+    try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(wardrobeWeather)); } catch (e) {}
+    RenderBus.emit('wardrobe');
+}
+function wdWeatherSummaryText() {
+    const w = wardrobeWeather;
+    if (!w || !w.ok) return '天气未获取';
+    return Math.round(w.temp) + '°C 体感' + Math.round(w.feels) + '°C · ' + w.text + ' · 降水' + w.pop + '%';
+}
+
+/* ---------- 规则引擎：自动穿搭 ---------- */
+function wdItemFit(it, cat, lv, scene, season, w) {
+    if (!it || (it.status || '在用') !== '在用') return false;
+    if (it.category !== cat) return false;
+    const win = wdSlotThickness(lv, cat);
+    if (it.thickness < win[0] || it.thickness > win[1]) return false;
+    if (it.seasons && it.seasons.length && !it.seasons.includes(season)) return false;
+    if (it.scenes && it.scenes.length && !it.scenes.includes(scene)) return false;
+    return true;
+}
+function wdSortedCandidates(cat, lv, scene, season, w) {
+    const tryScene = (s) => wardrobeData.items.filter(it => wdItemFit(it, cat, lv, s, season, w));
+    let pool = tryScene(scene);
+    if (!pool.length && scene !== '通勤') pool = tryScene('通勤');
+    if (!pool.length && scene !== '日常') pool = tryScene('日常');
+    const rain = w.group === 'rain' || w.group === 'snow';
+    return pool.sort((a, b) => {
+        if (rain && cat === 'outer') { const d = (b.waterproof ? 1 : 0) - (a.waterproof ? 1 : 0); if (d) return d; }
+        const ka = a.lastWorn || a.addedAt || '0000-00-00';
+        const kb = b.lastWorn || b.addedAt || '0000-00-00';
+        if (ka !== kb) return ka.localeCompare(kb);
+        return (a.wears || 0) - (b.wears || 0);
+    });
+}
+function wdComputeOutfit() {
+    const log = getTodayWardrobeLog();
+    if (log.outfit && log.outfit.length) return { outfit: log.outfit, confirmed: !!log.confirmed, scene: log.scene };
+    const w = wardrobeWeather;
+    if (!w || !w.ok) return { needWeather: true, scene: log.scene || '通勤' };
+    const scene = log.scene || '通勤';
+    const level = wdWarmLevel(w.feels);
+    const season = wdSeasonOf(new Date().getMonth() + 1);
+    const used = new Set();
+    const outfit = [];
+    const slots = [...level.layers];
+    if (level.outerNeed && !slots.includes('outer')) slots.push('outer');
+    slots.forEach(cat => {
+        let item = wdSlotOverrides[cat] ? wardrobeData.items.find(x => x.id === wdSlotOverrides[cat]) : null;
+        if (item && !wdItemFit(item, cat, level.lv, scene, season, w)) item = null;
+        if (!item) {
+            const pool = wdSortedCandidates(cat, level.lv, scene, season, w);
+            if (pool.length) item = pool[0];
+        }
+        if (item && !used.has(item.id)) { used.add(item.id); outfit.push(item); }
+    });
+    return { outfit, confirmed: false, scene, level, season };
+}
+function wdReroll() {
+    const log = getTodayWardrobeLog();
+    if (log.outfit && log.outfit.length) return;
+    const w = wardrobeWeather;
+    if (!w || !w.ok) return;
+    const level = wdWarmLevel(w.feels);
+    const season = wdSeasonOf(new Date().getMonth() + 1);
+    const scene = log.scene || '通勤';
+    const slots = [...level.layers];
+    if (level.outerNeed && !slots.includes('outer')) slots.push('outer');
+    wdSlotOverrides = {};
+    slots.forEach(cat => {
+        const pool = wdSortedCandidates(cat, level.lv, scene, season, w);
+        if (pool.length > 1) {
+            const top = pool.slice(0, Math.min(4, pool.length));
+            wdSlotOverrides[cat] = top[Math.floor(Math.random() * top.length)].id;
+        }
+    });
+    RenderBus.emit('wardrobe');
+}
+function wdSwapSlot(cat) {
+    const log = getTodayWardrobeLog();
+    if (log.outfit && log.outfit.length) return;
+    const w = wardrobeWeather;
+    if (!w || !w.ok) return;
+    const level = wdWarmLevel(w.feels);
+    const season = wdSeasonOf(new Date().getMonth() + 1);
+    const scene = log.scene || '通勤';
+    const pool = wdSortedCandidates(cat, level.lv, scene, season, w);
+    if (!pool.length) return;
+    const curId = wdSlotOverrides[cat];
+    const idx = pool.findIndex(x => x.id === curId);
+    const next = pool[(idx + 1) % pool.length];
+    wdSlotOverrides[cat] = next.id;
+    RenderBus.emit('wardrobe');
+}
+function wdTodayTips(sug) {
+    const tips = [];
+    const w = wardrobeWeather;
+    if (w && w.ok) {
+        if (w.manual) tips.push('天气为手动填写');
+        if (w.group === 'rain' || w.group === 'snow') tips.push('有降水：优先防水外套，带伞更稳');
+        if (w.group === 'snow') tips.push('雪天防滑保暖，帽子围巾安排上');
+        if (w.wind >= 20) tips.push('风较大（' + Math.round(w.wind) + 'km/h），外层选抗风款');
+        if (w.uv >= 6) tips.push('紫外线强（UV ' + Math.round(w.uv) + '），外出注意防晒');
+        if (w.tmax != null && w.tmin != null && w.tmax - w.tmin >= 10) tips.push('早晚温差 ≥10°C：带一件可脱的外套');
+    }
+    if (sug.level && sug.level.tip) tips.push('🧥 ' + sug.level.tip);
+    if (sug.scene === '正式') tips.push('正式场合：衬衫/正式外套更合适');
+    return tips;
+}
+
+/* ---------- 确认 / 清除 / 预设应用 ---------- */
+async function wdConfirmToday() {
+    const log = getTodayWardrobeLog();
+    if (log.confirmed) return;
+    const sug = wdComputeOutfit();
+    if (!sug.outfit || !sug.outfit.length) return alert('还没有可确认的穿搭，先获取天气或手动填写温度');
+    const snap = sug.outfit.map(it => {
+        const real = wardrobeData.items.find(x => x.id === it.id);
+        if (!real) return null;
+        const s = { id: real.id, name: real.name, icon: wdIcon(real.category), color: real.color, category: real.category, wearsBefore: real.wears || 0, lastWornBefore: real.lastWorn || null };
+        real.wears = (real.wears || 0) + 1;
+        real.lastWorn = todayStr();
+        return s;
+    }).filter(Boolean);
+    log.outfit = snap;
+    log.confirmed = true;
+    log.weatherText = wdWeatherSummaryText();
+    await saveWardrobeLogCloud();
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+    alert('✅ 已记录今日穿搭，穿着次数已更新');
+}
+async function wdClearToday() {
+    const log = getTodayWardrobeLog();
+    if (!log.outfit || !log.outfit.length) return;
+    if (!confirm('清除今日穿搭记录？相关衣物的穿着次数会恢复。')) return;
+    log.outfit.forEach(s => {
+        const it = wardrobeData.items.find(x => x.id === s.id);
+        if (it) { it.wears = s.wearsBefore || 0; it.lastWorn = s.lastWornBefore || null; }
+    });
+    log.outfit = null; log.confirmed = false; log.weatherText = '';
+    wdSlotOverrides = {};
+    await saveWardrobeLogCloud();
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+async function wdApplyOutfit(id) {
+    const o = wardrobeData.outfits.find(x => x.id === id);
+    if (!o) return;
+    const log = getTodayWardrobeLog();
+    if (log.confirmed) return alert('今天已确认过穿搭，先「清除重选」再换');
+    const snap = [];
+    ['inner','top','bottom','outer','shoes'].forEach(cat => {
+        const it = o.slots && o.slots[cat] ? wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
+        if (it && (it.status || '在用') === '在用') snap.push({ id: it.id, name: it.name, icon: wdIcon(it.category), color: it.color, category: it.category, wearsBefore: it.wears || 0, lastWornBefore: it.lastWorn || null });
+    });
+    if (!snap.length) return alert('这套搭配里没有有效衣物');
+    log.outfit = snap;
+    log.confirmed = false;
+    if (o.scene !== '不限') log.scene = o.scene;
+    await saveWardrobeLogCloud();
+    RenderBus.emit('wardrobe');
+}
+
+/* ---------- 衣物 CRUD ---------- */
+function wdBuildChips(containerId, items, set) {
+    const el = $(containerId);
+    if (!el) return;
+    el.innerHTML = items.map(it => `<span class="chip ${set.has(it) ? 'active' : ''}" data-key="${it}">${esc(it)}</span>`).join('');
+}
+function openWdItemModal(id) {
+    wdEditingItemId = id || null;
+    const item = id ? wardrobeData.items.find(x => x.id === id) : null;
+    wdItemSeasons = new Set(item && item.seasons ? item.seasons : [wdSeasonOf(new Date().getMonth() + 1)]);
+    wdItemScenes = new Set(item && item.scenes ? item.scenes : []);
+    $('wd-item-title').textContent = item ? '✏️ 编辑衣物' : '➕ 添加衣物';
+    $('wd-item-name').value = item ? item.name : '';
+    $('wd-item-category').value = item ? item.category : 'top';
+    $('wd-item-color').value = item ? item.color : 'black';
+    $('wd-item-thickness').value = item ? item.thickness : 3;
+    $('wd-item-status').value = item ? (item.status || '在用') : '在用';
+    $('wd-item-waterproof').checked = !!(item && item.waterproof);
+    $('wd-item-price').value = item && item.price != null ? item.price : '';
+    $('wd-item-account').value = item && item.account ? item.account : '';
+    $('wd-item-date').value = item && item.boughtAt ? item.boughtAt : '';
+    $('wd-item-note').value = item && item.note ? item.note : '';
+    $('wd-item-del').style.display = item ? '' : 'none';
+    wdBuildChips('wd-item-seasons', WD_SEASONS, wdItemSeasons);
+    wdBuildChips('wd-item-scenes', WD_SCENES, wdItemScenes);
+    $('wd-item-modal').classList.add('active');
+}
+async function saveWdItem() {
+    const name = $('wd-item-name').value.trim();
+    if (!name) return alert('请填写衣物名称');
+    const data = {
+        id: wdEditingItemId || ('wi_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        name: name,
+        category: $('wd-item-category').value,
+        color: $('wd-item-color').value,
+        thickness: parseInt($('wd-item-thickness').value, 10) || 3,
+        status: $('wd-item-status').value,
+        waterproof: $('wd-item-waterproof').checked,
+        seasons: Array.from(wdItemSeasons),
+        scenes: Array.from(wdItemScenes),
+        price: $('wd-item-price').value === '' ? null : parseFloat($('wd-item-price').value),
+        account: $('wd-item-account').value || null,
+        boughtAt: $('wd-item-date').value || null,
+        note: $('wd-item-note').value.trim(),
+        addedAt: todayStr(),
+        wears: 0,
+        lastWorn: null
+    };
+    if (wdEditingItemId) {
+        const old = wardrobeData.items.find(x => x.id === wdEditingItemId);
+        if (old) { data.addedAt = old.addedAt || todayStr(); data.wears = old.wears || 0; data.lastWorn = old.lastWorn || null; }
+        wardrobeData.items = wardrobeData.items.map(x => x.id === wdEditingItemId ? data : x);
+    } else {
+        wardrobeData.items.push(data);
+    }
+    await saveWardrobeCloud();
+    $('wd-item-modal').classList.remove('active');
+    wdEditingItemId = null;
+    RenderBus.emit('wardrobe');
+}
+async function deleteWdItem(id) {
+    const it = wardrobeData.items.find(x => x.id === id);
+    if (!it) return;
+    if (!confirm('删除「' + it.name + '」？预设搭配中的引用会一并移除。')) return;
+    wardrobeData.items = wardrobeData.items.filter(x => x.id !== id);
+    wardrobeData.outfits.forEach(o => { if (o.slots) { Object.keys(o.slots).forEach(k => { if (o.slots[k] === id) o.slots[k] = null; }); } });
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+async function wdToggleStatus(id) {
+    const it = wardrobeData.items.find(x => x.id === id);
+    if (!it) return;
+    it.status = it.status === '在用' ? '闲置' : '在用';
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+async function wdMarkIdle(id) {
+    const it = wardrobeData.items.find(x => x.id === id);
+    if (!it) return;
+    it.status = '闲置';
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+
+/* ---------- 预设搭配 CRUD ---------- */
+function openWdOutfitModal(id) {
+    wdEditingOutfitId = id || null;
+    const o = id ? wardrobeData.outfits.find(x => x.id === id) : null;
+    $('wd-outfit-title').textContent = o ? '✏️ 编辑搭配方案' : '➕ 新建搭配方案';
+    $('wd-outfit-name').value = o ? o.name : '';
+    $('wd-outfit-tmin').value = o ? o.tmin : 10;
+    $('wd-outfit-tmax').value = o ? o.tmax : 25;
+    $('wd-outfit-scene').value = o ? o.scene : '不限';
+    ['inner','top','bottom','outer','shoes'].forEach(cat => {
+        const sel = $('wd-outfit-slot-' + cat);
+        if (!sel) return;
+        const list = wardrobeData.items.filter(it => it.category === cat);
+        sel.innerHTML = '<option value="">— 不选 —</option>' + list.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('');
+        sel.value = o && o.slots && o.slots[cat] ? o.slots[cat] : '';
+    });
+    $('wd-outfit-del').style.display = o ? '' : 'none';
+    $('wd-outfit-modal').classList.add('active');
+}
+async function saveWdOutfit() {
+    const name = $('wd-outfit-name').value.trim();
+    if (!name) return alert('请填写搭配名称');
+    const slots = {};
+    ['inner','top','bottom','outer','shoes'].forEach(cat => { slots[cat] = $('wd-outfit-slot-' + cat).value || null; });
+    if (!Object.values(slots).some(Boolean)) return alert('至少选择一件衣物');
+    const data = {
+        id: wdEditingOutfitId || ('wo_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        name: name,
+        tmin: parseFloat($('wd-outfit-tmin').value),
+        tmax: parseFloat($('wd-outfit-tmax').value),
+        scene: $('wd-outfit-scene').value,
+        slots: slots
+    };
+    if (isNaN(data.tmin) || isNaN(data.tmax)) return alert('请填写适用温度范围');
+    if (wdEditingOutfitId) wardrobeData.outfits = wardrobeData.outfits.map(x => x.id === wdEditingOutfitId ? data : x);
+    else wardrobeData.outfits.push(data);
+    await saveWardrobeCloud();
+    $('wd-outfit-modal').classList.remove('active');
+    wdEditingOutfitId = null;
+    RenderBus.emit('wardrobe');
+}
+async function deleteWdOutfit(id) {
+    if (!confirm('删除这个搭配方案？')) return;
+    wardrobeData.outfits = wardrobeData.outfits.filter(x => x.id !== id);
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+function wdOutfitMemberText(o) {
+    const names = [];
+    ['inner','top','bottom','outer','shoes'].forEach(cat => {
+        const it = o.slots && o.slots[cat] ? wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
+        names.push(it ? esc(it.name) : '—');
+    });
+    return names.join(' + ');
+}
+
+/* ---------- 愿望清单与购买 ---------- */
+let wdWishFromGap = false;
+function openWdWishModal(id, prefill) {
+    wdEditingWishId = id || null;
+    wdWishFromGap = !!(prefill && prefill.gap);
+    const w = id ? wardrobeData.wishlist.find(x => x.id === id) : null;
+    $('wd-wish-title').textContent = w ? '✏️ 编辑愿望' : '＋ 加入愿望清单';
+    $('wd-wish-name').value = w ? w.name : (prefill ? '' : '');
+    $('wd-wish-category').value = w ? w.category : (prefill ? prefill.category : 'outer');
+    $('wd-wish-price').value = w && w.price != null ? w.price : '';
+    $('wd-wish-priority').value = w ? w.priority : '中';
+    $('wd-wish-reason').value = w ? w.reason : (prefill ? prefill.reason : '');
+    $('wd-wish-modal').classList.add('active');
+}
+async function saveWdWish() {
+    const name = $('wd-wish-name').value.trim();
+    if (!name) return alert('请填写想买的衣物');
+    const data = {
+        id: wdEditingWishId || ('ws_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        name: name,
+        category: $('wd-wish-category').value,
+        price: $('wd-wish-price').value === '' ? null : parseFloat($('wd-wish-price').value),
+        priority: $('wd-wish-priority').value,
+        reason: $('wd-wish-reason').value.trim(),
+        gap: wdEditingWishId ? (wardrobeData.wishlist.find(x => x.id === wdEditingWishId) || {}).gap : wdWishFromGap,
+        addedAt: todayStr()
+    };
+    if (wdEditingWishId) wardrobeData.wishlist = wardrobeData.wishlist.map(x => x.id === wdEditingWishId ? data : x);
+    else wardrobeData.wishlist.push(data);
+    await saveWardrobeCloud();
+    $('wd-wish-modal').classList.remove('active');
+    wdEditingWishId = null; wdWishFromGap = false;
+    RenderBus.emit('wardrobe');
+}
+async function deleteWdWish(id) {
+    if (!confirm('从愿望清单移除？')) return;
+    wardrobeData.wishlist = wardrobeData.wishlist.filter(x => x.id !== id);
+    await saveWardrobeCloud();
+    RenderBus.emit('wardrobe');
+}
+function wdWishRank(w) { return (w.priority === '高' ? 3 : w.priority === '中' ? 2 : 1) + (w.gap ? 2 : 0); }
+function openWdBuyModal(id) {
+    const w = wardrobeData.wishlist.find(x => x.id === id);
+    if (!w) return;
+    wdBuyingWishId = id;
+    $('wd-buy-info').textContent = w.name + ' · 目标价 ' + (w.price != null ? '¥' + w.price : '未定');
+    $('wd-buy-account').value = 'develop';
+    $('wd-buy-amount').value = w.price != null ? w.price : '';
+    $('wd-buy-date').value = todayStr();
+    wdUpdateBuySubcat();
+    $('wd-buy-modal').classList.add('active');
+}
+function wdUpdateBuySubcat() {
+    const a = $('wd-buy-account');
+    const f = $('wd-buy-subcat-field');
+    if (!a || !f) return;
+    f.style.display = a.value === 'survival' ? '' : 'none';
+}
+async function saveWdBuy() {
+    const w = wardrobeData.wishlist.find(x => x.id === wdBuyingWishId);
+    if (!w) return;
+    const amount = parseFloat($('wd-buy-amount').value);
+    if (isNaN(amount) || amount <= 0) return alert('请填写金额');
+    const account = $('wd-buy-account').value;
+    const day = $('wd-buy-date').value || todayStr();
+    const sub = account === 'survival' ? $('wd-buy-subcategory').value : null;
+    const ok = await addExpense(amount, account, '购入衣物：' + w.name, day, sub);
+    if (!ok) return;
+    const season = wdSeasonOf(new Date().getMonth() + 1);
+    wardrobeData.items.push({ id: 'wi_' + Date.now() + Math.random().toString(36).slice(2, 6), name: w.name, category: w.category || 'top', color: 'black', thickness: 3, status: '在用', waterproof: false, seasons: [season], scenes: [], price: amount, account: account, boughtAt: day, note: '愿望清单购入' + (w.reason ? '：' + w.reason : ''), addedAt: day, wears: 0, lastWorn: null });
+    wardrobeData.wishlist = wardrobeData.wishlist.filter(x => x.id !== wdBuyingWishId);
+    await saveWardrobeCloud();
+    $('wd-buy-modal').classList.remove('active');
+    wdBuyingWishId = null;
+    alert('✅ 已记入「' + ACCOUNT_LABEL[account] + '」账户，衣物已入库');
+    RenderBus.emit('wardrobe');
+}
+
+/* ---------- 缺口检测 / 可购额度 / AI ---------- */
+function wdComputeGaps(w) {
+    const gaps = [];
+    const season = wdSeasonOf(new Date().getMonth() + 1);
+    const active = wardrobeData.items.filter(it => (it.status || '在用') === '在用');
+    const seasonItems = active.filter(it => !it.seasons || !it.seasons.length || it.seasons.includes(season));
+    ['outer','top','bottom','shoes','inner'].forEach(cat => {
+        const n = seasonItems.filter(it => it.category === cat).length;
+        const label = WD_CATEGORIES.find(c => c.key === cat).label;
+        if (n === 0) gaps.push({ text: '当季没有' + label + '，自动穿搭会出现空缺', cat: cat });
+        else if (n === 1 && cat !== 'inner') gaps.push({ text: '当季只有 1 件' + label + '，建议补充 1 件换洗', cat: cat });
+    });
+    if (w && w.ok) {
+        if ((w.group === 'rain' || w.group === 'snow') && !active.some(it => it.waterproof)) gaps.push({ text: '雨天/雪天没有防水外套，自动搭配只能提示带伞', cat: 'outer' });
+        if (w.feels <= 5 && !active.some(it => it.thickness >= 5)) gaps.push({ text: '严寒天气缺少厚外套（厚度 5）', cat: 'outer' });
+        if (w.tmax != null && w.tmin != null && w.tmax - w.tmin >= 10 && !active.some(it => it.category === 'outer')) gaps.push({ text: '早晚温差大，建议备一件可脱外套', cat: 'outer' });
+        if (w.uv >= 6) gaps.push({ text: '紫外线强（UV ' + Math.round(w.uv) + '），备帽子/长袖防晒', cat: 'acc' });
+    }
+    if (!active.some(it => it.scenes && it.scenes.includes('正式'))) gaps.push({ text: '没有正式场合衣物，开会/面试会缺', cat: 'top' });
+    return gaps;
+}
+function wdBudgetHtml() {
+    const b = accountsData.balances;
+    const monthSpend = accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
+    let html = '<b>账户余额</b>：生存 ¥' + b.survival.toFixed(2) + ' · 稳定 ¥' + b.stable.toFixed(2) + ' · 发展 ¥' + b.develop.toFixed(2) + '<br>本月已支出：¥' + monthSpend.toFixed(2) + '<br><b>建议</b>：衣物类建议从「发展」账户支出，参考可支配额度 ¥' + b.develop.toFixed(2) + '（也可走生存账户的「一次性支出」）。';
+    const wish = [...wardrobeData.wishlist].sort((a, b2) => wdWishRank(b2) - wdWishRank(a));
+    if (wish.length) {
+        html += '<div style="margin-top:8px;"><b>愿望优先级</b>：</div>';
+        wish.forEach((w2, i) => {
+            html += '<div style="margin-top:4px;">' + (i + 1) + '. ' + esc(w2.name) + '（' + esc(w2.priority) + '优先级' + (w2.gap ? ' · 缺口相关' : '') + '）' + (w2.price != null ? ' · ¥' + w2.price : '') + '</div>';
+        });
+    }
+    return html;
+}
+function toggleWdBudget() {
+    const box = $('wd-budget');
+    if (!box) return;
+    const hidden = box.style.display === 'none';
+    box.style.display = hidden ? 'block' : 'none';
+    if (hidden) box.innerHTML = wdBudgetHtml();
+}
+async function runWardrobeAI(mode) {
+    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    const el = $('wd-ai-result');
+    if (!el) return;
+    el.innerHTML = '<div class="empty-hint">⏳ AI 思考中…</div>';
+    try {
+        const w = wardrobeWeather && wardrobeWeather.ok ? wardrobeWeather : null;
+        const log = getTodayWardrobeLog();
+        const outfitText = (log.outfit && log.outfit.length) ? log.outfit.map(s => s.name + '（' + (WD_COLOR_LABEL[s.color] || s.color) + '）').join('、') : '尚未确认穿搭';
+        const active = wardrobeData.items.filter(it => (it.status || '在用') === '在用');
+        const itemsBrief = active.slice(0, 40).map(it => wdIcon(it.category) + it.name + '（' + (WD_COLOR_LABEL[it.color] || it.color) + '，厚度' + it.thickness + '，' + ((it.scenes || []).join('/') || '通用') + '）').join('；') || '衣橱还是空的';
+        const weatherText = w ? ('温度' + Math.round(w.temp) + '°C、体感' + Math.round(w.feels) + '°C、' + w.text + '、降水概率' + w.pop + '%、风速' + Math.round(w.wind) + 'km/h') : '天气未获取';
+        let prompt;
+        if (mode === 'comment') {
+            prompt = '我是一名西部计划基层志愿者。今日天气：' + weatherText + '。今日场景：' + (log.scene || '通勤') + '。我今天的穿搭：' + outfitText + '。我衣橱中在用的衣物：' + itemsBrief + '。请点评这身穿搭是否适合今天的天气和场景，最多指出1-2个实际问题，并给出1个明天就能执行的改进建议。要求简洁务实、不说空话，150字以内。';
+        } else {
+            prompt = '我是一名西部计划基层志愿者。今日天气：' + weatherText + '。今日场景：' + (log.scene || '通勤') + '。我衣橱中在用的衣物：' + itemsBrief + '。请基于以上衣物，给出2套不同的今日穿搭建议，每套列出具体衣物名称，并各用一句话说明为什么适合今天。只使用我衣橱中已有的衣物，200字以内。';
+        }
+        const content = await callDeepSeekRaw([{ role: 'system', content: '你是务实、简洁、不空泛的个人穿搭顾问。' }, { role: 'user', content: prompt }], { temperature: 0.6, max_tokens: 600 });
+        el.innerHTML = '<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;">' + md2html(content) + '</div>';
+    } catch (err) {
+        console.error(err);
+        el.innerHTML = '<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;">AI 失败：' + esc(err.message) + '</div>';
+    }
+}
+async function runWardrobeBuyAI() {
+    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    const el = $('wd-buy-ai-result');
+    if (!el) return;
+    el.innerHTML = '<div class="empty-hint">⏳ AI 思考中…</div>';
+    try {
+        const gaps = wdComputeGaps(wardrobeWeather).map(g => g.text).join('；') || '无';
+        const wish = wardrobeData.wishlist.map(w => w.name + '（' + w.category + '，¥' + (w.price != null ? w.price : '未定') + '，' + w.priority + '优先级）').join('；') || '无';
+        const b = accountsData.balances;
+        const monthSpend = accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
+        const prompt = '我是西部计划基层志愿者，工资微薄，需要务实的购衣建议。账户余额：生存 ¥' + b.survival.toFixed(2) + '、稳定 ¥' + b.stable.toFixed(2) + '、发展 ¥' + b.develop.toFixed(2) + '；本月已支出 ¥' + monthSpend.toFixed(2) + '。衣橱缺口：' + gaps + '。愿望清单：' + wish + '。请给出购买优先级建议：先买什么、大概什么价位合理、什么可以缓一缓。150字以内，不说空话。';
+        const content = await callDeepSeekRaw([{ role: 'system', content: '你是务实的极简消费顾问，为低收入用户给出真实省钱的建议。' }, { role: 'user', content: prompt }], { temperature: 0.5, max_tokens: 500 });
+        el.innerHTML = '<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;margin-top:10px;">' + md2html(content) + '</div>';
+    } catch (err) {
+        console.error(err);
+        el.innerHTML = '<div style="background:#fdeaea;border-radius:10px;padding:14px;font-size:13px;color:#c0392b;margin-top:10px;">AI 失败：' + esc(err.message) + '</div>';
+    }
+}
+
+/* ---------- 日志 ---------- */
+async function wdDeleteLog(date) {
+    const l = wardrobeLog.find(x => x.date === date);
+    if (!l) return;
+    if (!confirm('删除 ' + shortDay(date) + ' 的穿搭记录？相关衣物的穿着次数会恢复。')) return;
+    (l.outfit || []).forEach(s => {
+        const it = wardrobeData.items.find(x => x.id === s.id);
+        if (it) { it.wears = s.wearsBefore || 0; it.lastWorn = s.lastWornBefore || null; }
+    });
+    if (l._cloudId) await deleteHealthRecord(l._cloudId);
+    wardrobeLog = wardrobeLog.filter(x => x.date !== date);
+    await saveWardrobeCloud();
+    saveCache();
+    RenderBus.emit('wardrobe');
+}
+
+/* ---------- 渲染 ---------- */
+function renderWdWeatherBar() {
+    const el = $('wardrobe-weather-bar');
+    const city = $('wd-city-label');
+    if (city) city.textContent = '📍 ' + (wardrobeData.config.city || '未设置');
+    if (!el) return;
+    const w = wardrobeWeather;
+    if (!w || w.date !== todayStr()) {
+        el.innerHTML = '<span style="font-size:13px;color:var(--text2);">还没有今天的天气数据。</span> <button class="btn btn-secondary btn-sm" data-action="wd-fetch">🌤 获取天气</button>';
+        return;
+    }
+    if (!w.ok) {
+        el.innerHTML = '<span style="color:#c0392b;">天气获取失败（' + esc(w.err || '网络问题') + '）</span> 手动填写：温度 <input type="number" id="wd-manual-temp" placeholder="体感°C" style="width:90px;display:inline-block;"> <select id="wd-manual-weather" style="width:90px;display:inline-block;"><option value="0">晴</option><option value="2">多云</option><option value="3">阴</option><option value="61">小雨</option><option value="63">中雨</option><option value="71">雪</option><option value="45">雾</option></select> <button class="btn btn-primary btn-sm" data-action="wd-manual-apply">应用</button> <button class="btn btn-secondary btn-sm" data-action="wd-fetch">重试</button>';
+        return;
+    }
+    el.innerHTML = '<span class="temp">' + Math.round(w.temp) + '°C</span><span>体感 ' + Math.round(w.feels) + '°C · ' + esc(w.text) + '</span><span>💧降水 ' + w.pop + '%</span><span>🌬 风 ' + Math.round(w.wind) + 'km/h</span><span>' + (w.tmin != null ? ('低 ' + Math.round(w.tmin) + '° / 高 ' + Math.round(w.tmax) + '°') : '') + '</span>' + (w.manual ? '<span class="wd-mini-tag">手动</span>' : '') + '<button class="btn btn-secondary btn-sm" data-action="wd-fetch">🔄 刷新</button>';
+}
+function renderWdToday() {
+    const slotsEl = $('wd-outfit-slots');
+    if (!slotsEl) return;
+    const log = getTodayWardrobeLog();
+    const chipsEl = $('wd-scene-chips');
+    if (chipsEl) chipsEl.innerHTML = WD_SCENES.map(s => `<span class="chip ${log.scene === s ? 'active' : ''}" data-action="wd-scene" data-scene="${s}">${esc(s)}</span>`).join('');
+    const tipsEl = $('wd-today-tips');
+    const presetsEl = $('wd-presets');
+    const actionsEl = $('wd-today-actions');
+    const sug = wdComputeOutfit();
+    if (sug.needWeather) {
+        slotsEl.innerHTML = '<div class="empty-hint">获取天气后自动生成今日穿搭</div>';
+        if (tipsEl) tipsEl.innerHTML = '';
+        if (presetsEl) presetsEl.innerHTML = '';
+        if (actionsEl) actionsEl.innerHTML = '<button class="btn btn-primary" data-action="wd-fetch">🌤 获取天气并生成穿搭</button>';
+        return;
+    }
+    const slotOrder = ['inner','top','bottom','outer','shoes'];
+    let html = '';
+    slotOrder.forEach(cat => {
+        const item = (sug.outfit || []).find(x => x.category === cat);
+        const label = WD_CATEGORIES.find(c => c.key === cat);
+        if (!item) {
+            if (sug.level && sug.level.layers.includes(cat)) html += `<div class="wd-slot"><span class="wd-slot-cat">${label.icon} ${label.label}</span><span class="wd-empty-slot">没有合适衣物（可到购买建议看缺口）</span></div>`;
+            return;
+        }
+        const hex = WD_COLOR_HEX[item.color] || '#ccc';
+        html += `<div class="wd-slot"><span class="wd-slot-cat">${label.icon} ${label.label}</span><div class="wd-slot-main"><span class="wd-color-dot" style="background:${hex};"></span><span>${esc(item.name)}</span><span class="wd-thick">${'●'.repeat(item.thickness || 3)}</span>${item.waterproof ? '<span class="wd-mini-tag">☔</span>' : ''}</div>${sug.confirmed ? '' : `<button class="btn btn-secondary btn-sm" data-action="wd-swap-slot" data-slot="${cat}">↻</button>`}</div>`;
+    });
+    slotsEl.innerHTML = html;
+    const tips = wdTodayTips(sug);
+    if (tipsEl) tipsEl.innerHTML = tips.length ? `<div class="wd-tips">${tips.map(t => `<div>· ${esc(t)}</div>`).join('')}</div>` : '';
+    let presetHtml = '';
+    if (!sug.confirmed && wardrobeWeather && wardrobeWeather.ok) {
+        const matched = wardrobeData.outfits.filter(o => (o.tmin == null || wardrobeWeather.feels >= o.tmin) && (o.tmax == null || wardrobeWeather.feels <= o.tmax) && (o.scene === '不限' || o.scene === log.scene));
+        if (matched.length) {
+            presetHtml = '<div class="habit-section-title" style="margin-top:12px;">📌 匹配的预设搭配</div>' + matched.map(o => `<div class="wd-preset"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div><b>${esc(o.name)}</b> <span class="meta">${o.tmin}~${o.tmax}°C · ${esc(o.scene)}</span></div><button class="btn btn-secondary btn-sm" data-action="wd-apply-outfit" data-id="${o.id}">用这套</button></div><div class="meta" style="margin-top:4px;">${wdOutfitMemberText(o)}</div></div>`).join('');
+        }
+    }
+    if (presetsEl) presetsEl.innerHTML = presetHtml;
+    let act = '';
+    if (sug.confirmed) {
+        act += '<span class="tag tag-good">✅ 已记录今日穿搭</span>';
+        act += '<button class="btn btn-secondary btn-sm" data-action="wd-clear-today">↺ 清除重选</button>';
+    } else if (sug.outfit && sug.outfit.length) {
+        act += '<button class="btn btn-primary" data-action="wd-confirm">✅ 确认今日穿搭</button>';
+        act += '<button class="btn btn-secondary" data-action="wd-reroll">🔀 换一套</button>';
+    }
+    if (aiConfig.apiKey) {
+        act += '<button class="btn btn-secondary btn-sm" data-action="wd-ai-comment">🤖 AI 点评</button><button class="btn btn-secondary btn-sm" data-action="wd-ai-suggest">💡 AI 建议搭配</button>';
+    }
+    if (actionsEl) actionsEl.innerHTML = act;
+    const buyBtn = $('wd-ai-buy-btn');
+    if (buyBtn) buyBtn.style.display = aiConfig.apiKey ? '' : 'none';
+}
+function renderWdItems() {
+    const el = $('wd-items-list');
+    const idleEl = $('wd-idle-list');
+    if (!el) return;
+    if (!wardrobeData.items.length) {
+        el.innerHTML = '<div class="empty-hint">衣橱还是空的，点击上方添加第一件衣物</div>';
+        if (idleEl) idleEl.innerHTML = '';
+        return;
+    }
+    const grouped = {};
+    wardrobeData.items.forEach(it => { const c = it.category || 'top'; (grouped[c] = grouped[c] || []).push(it); });
+    let html = '';
+    WD_CATEGORIES.forEach(c => {
+        const list = grouped[c.key] || [];
+        if (!list.length) return;
+        html += `<div class="habit-section-title">${c.icon} ${c.label}（${list.length}）</div>`;
+        list.forEach(it => {
+            const hex = WD_COLOR_HEX[it.color] || '#ccc';
+            const costPerWear = (it.price != null && it.wears) ? (it.price / it.wears).toFixed(2) : null;
+            const seasonTags = (it.seasons || []).map(s => s + '季').join(' ');
+            html += `<div class="list-item">
+                <div class="main">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:18px;">${c.icon}</span>
+                        <span class="wd-color-dot" style="background:${hex};"></span>
+                        <b>${esc(it.name)}</b>
+                        ${it.waterproof ? '<span class="wd-mini-tag">☔ 防水</span>' : ''}
+                        <span class="wd-mini-tag">${esc(it.status || '在用')}</span>
+                    </div>
+                    <div class="wd-item-tags">
+                        <span class="wd-mini-tag">${WD_COLOR_LABEL[it.color] || it.color}</span>
+                        <span class="wd-mini-tag">厚度 <span class="wd-thick">${'●'.repeat(it.thickness || 3)}${'○'.repeat(5 - (it.thickness || 3))}</span></span>
+                        ${seasonTags ? `<span class="wd-mini-tag">${seasonTags}</span>` : '<span class="wd-mini-tag">四季</span>'}
+                        ${(it.scenes || []).length ? `<span class="wd-mini-tag">${esc(it.scenes.join(' / '))}</span>` : '<span class="wd-mini-tag">通用</span>'}
+                    </div>
+                    <div class="meta">穿过 ${it.wears || 0} 次${it.lastWorn ? ' · 上次 ' + shortDay(it.lastWorn) : ' · 还没穿过'}${it.price != null ? ' · ¥' + it.price : ''}${costPerWear ? ' · 单次 ¥' + costPerWear : ''}${it.note ? ' · ' + esc(it.note) : ''}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">
+                    <button class="btn btn-secondary btn-sm" data-action="wd-status-toggle" data-id="${it.id}">${it.status === '在用' ? '闲置' : '启用'}</button>
+                    <button class="btn btn-secondary btn-sm" data-action="wd-edit-item" data-id="${it.id}">✏️</button>
+                    <button class="btn btn-danger btn-sm" data-action="wd-del-item" data-id="${it.id}">✕</button>
+                </div>
+            </div>`;
+        });
+    });
+    el.innerHTML = html;
+    const never = wardrobeData.items.filter(it => (it.status || '在用') === '在用' && !it.wears);
+    const stale = wardrobeData.items.filter(it => (it.status || '在用') === '在用' && it.lastWorn && it.lastWorn < addDays(todayStr(), -60));
+    let idleHtml = '';
+    if (never.length) idleHtml += '<div class="habit-section-title">🕰️ 从没穿过（' + never.length + '）</div>' + never.map(it => `<div class="list-item"><div class="main"><div>${esc(it.name)}</div><div class="meta">添加于 ${shortDay(it.addedAt || todayStr())}</div></div><button class="btn btn-secondary btn-sm" data-action="wd-idle-item" data-id="${it.id}">标记闲置</button></div>`).join('');
+    if (stale.length) idleHtml += '<div class="habit-section-title">📦 超过 60 天没穿（' + stale.length + '）</div>' + stale.map(it => `<div class="list-item"><div class="main"><div>${esc(it.name)}</div><div class="meta">上次 ${shortDay(it.lastWorn)}</div></div><button class="btn btn-secondary btn-sm" data-action="wd-idle-item" data-id="${it.id}">标记闲置</button></div>`).join('');
+    if (idleEl) idleEl.innerHTML = idleHtml ? `<div style="margin-top:18px;border-top:1px dashed var(--border);padding-top:8px;">${idleHtml}</div>` : '';
+}
+function renderWdOutfits() {
+    const el = $('wd-outfits-list');
+    if (!el) return;
+    if (!wardrobeData.outfits.length) { el.innerHTML = '<div class="empty-hint">还没有预设搭配，新建后可在合适温度一键套用</div>'; return; }
+    el.innerHTML = wardrobeData.outfits.map(o => `<div class="list-item"><div class="main"><div><b>${esc(o.name)}</b></div><div class="meta">${o.tmin}~${o.tmax}°C · ${esc(o.scene)}</div><div class="meta">${wdOutfitMemberText(o)}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button class="btn btn-secondary btn-sm" data-action="wd-edit-outfit" data-id="${o.id}">✏️</button><button class="btn btn-danger btn-sm" data-action="wd-del-outfit" data-id="${o.id}">✕</button></div></div>`).join('');
+}
+function renderWdGaps() {
+    const el = $('wd-gaps');
+    if (!el) return;
+    const gaps = wdComputeGaps(wardrobeWeather);
+    if (!gaps.length) { el.innerHTML = '<div class="empty-hint">暂无缺口建议 ✓</div>'; return; }
+    el.innerHTML = '<div class="habit-section-title">🔍 缺口检测（基于当季衣橱与今日天气）</div>' + gaps.map(g => `<div class="wd-gap"><span style="flex:1;min-width:140px;">${esc(g.text)}</span><button class="btn btn-secondary btn-sm" data-action="wd-gap-add" data-cat="${g.cat}" data-text="${esc(g.text)}">＋ 加入愿望清单</button></div>`).join('');
+}
+function renderWdWishlist() {
+    const el = $('wd-wishlist');
+    if (!el) return;
+    if (!wardrobeData.wishlist.length) { el.innerHTML = '<div class="empty-hint">愿望清单是空的</div>'; return; }
+    el.innerHTML = [...wardrobeData.wishlist].sort((a, b) => wdWishRank(b) - wdWishRank(a)).map(w => {
+        const cat = WD_CATEGORIES.find(c => c.key === w.category) || {};
+        return `<div class="list-item"><div class="main"><div>${cat.icon || '👕'} <b>${esc(w.name)}</b> ${w.gap ? '<span class="tag tag-warn">缺口</span>' : ''} <span class="tag tag-neutral">${esc(w.priority)}优先</span></div>${w.reason ? `<div class="meta">${esc(w.reason)}</div>` : ''}</div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;"><span style="font-size:12px;color:var(--text2);">${w.price != null ? '¥' + w.price : '—'}</span><button class="btn btn-primary btn-sm" data-action="wd-buy-wish" data-id="${w.id}">🛍️ 购买并记账</button><button class="btn btn-secondary btn-sm" data-action="wd-edit-wish" data-id="${w.id}">✏️</button><button class="btn btn-danger btn-sm" data-action="wd-del-wish" data-id="${w.id}">✕</button></div></div>`;
+    }).join('');
+}
+function renderWdLogs() {
+    const el = $('wd-logs-list');
+    if (!el) return;
+    const list = [...wardrobeLog].filter(l => l.outfit && l.outfit.length).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
+    if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有穿搭记录，确认今日穿搭后会自动记录</div>'; return; }
+    el.innerHTML = list.map(l => `<div class="list-item"><div class="main"><div><b>${shortDay(l.date)}</b> · ${esc(l.scene || '通勤')}</div><div class="meta">${esc(l.weatherText || '')}</div><div class="meta">${(l.outfit || []).map(s => esc(s.name)).join(' · ')}</div></div><button class="btn btn-danger btn-sm" data-action="wd-del-log" data-date="${l.date}">✕</button></div>`).join('');
+}
+function renderWardrobe() {
+    renderWdWeatherBar();
+    renderWdToday();
+    renderWdItems();
+    renderWdOutfits();
+    renderWdGaps();
+    renderWdWishlist();
+    renderWdLogs();
+}
+
 /* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
     renderSleep(); renderEnergy(); renderCharge();
@@ -2820,6 +3782,7 @@ RenderBus.on('health', renderHealthAll);
 RenderBus.on('habits', renderHabits);
 RenderBus.on('news', renderNews);
 RenderBus.on('rss', renderRssSources);
+RenderBus.on('wardrobe', renderWardrobe);
 
 /* ================= 事件绑定（统一委托，全部判空） ================= */
 /* 小工具：chip 切换 / 评分选择 / 生存账户分类显隐 */
@@ -3075,6 +4038,52 @@ bindEvent('[data-opml-idx]', 'change', (e, el) => {
 bindEvent('#opml-cancel-btn', 'click', () => { opmlPreviewData = null; const p = $('#opml-preview'); if (p) p.innerHTML = ''; });
 bindEvent('#opml-confirm-btn', 'click', confirmOpmlImport);
 
+// 衣橱
+bindEvent('[data-action="wd-fetch"]', 'click', () => ensureWardrobeWeather(true));
+bindEvent('[data-action="wd-manual-apply"]', 'click', wdApplyManualWeather);
+bindEvent('[data-action="wd-scene"]', 'click', async (e, el) => {
+    const log = getTodayWardrobeLog();
+    log.scene = el.dataset.scene;
+    await saveWardrobeLogCloud();
+    RenderBus.emit('wardrobe');
+});
+bindEvent('[data-action="wd-reroll"]', 'click', wdReroll);
+bindEvent('[data-action="wd-swap-slot"]', 'click', (e, el) => wdSwapSlot(el.dataset.slot));
+bindEvent('[data-action="wd-confirm"]', 'click', wdConfirmToday);
+bindEvent('[data-action="wd-clear-today"]', 'click', wdClearToday);
+bindEvent('[data-action="wd-apply-outfit"]', 'click', (e, el) => wdApplyOutfit(el.dataset.id));
+bindEvent('[data-action="wd-ai-comment"]', 'click', () => runWardrobeAI('comment'));
+bindEvent('[data-action="wd-ai-suggest"]', 'click', () => runWardrobeAI('suggest'));
+bindEvent('[data-action="wd-add-item"]', 'click', () => openWdItemModal(null));
+bindEvent('[data-action="wd-edit-item"]', 'click', (e, el) => openWdItemModal(el.dataset.id));
+bindEvent('[data-action="wd-del-item"]', 'click', (e, el) => deleteWdItem(el.dataset.id));
+bindEvent('[data-action="wd-status-toggle"]', 'click', (e, el) => wdToggleStatus(el.dataset.id));
+bindEvent('[data-action="wd-idle-item"]', 'click', (e, el) => wdMarkIdle(el.dataset.id));
+bindEvent('#wd-item-seasons .chip', 'click', (e, el) => toggleChip(wdItemSeasons, el));
+bindEvent('#wd-item-scenes .chip', 'click', (e, el) => toggleChip(wdItemScenes, el));
+bindEvent('#wd-item-save', 'click', saveWdItem);
+bindEvent('#wd-item-cancel', 'click', () => { const m = $('#wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; });
+bindEvent('#wd-item-del', 'click', () => { const id = wdEditingItemId; const m = $('#wd-item-modal'); if (m) m.classList.remove('active'); wdEditingItemId = null; if (id) deleteWdItem(id); });
+bindEvent('[data-action="wd-add-outfit"]', 'click', () => openWdOutfitModal(null));
+bindEvent('[data-action="wd-edit-outfit"]', 'click', (e, el) => openWdOutfitModal(el.dataset.id));
+bindEvent('[data-action="wd-del-outfit"]', 'click', (e, el) => deleteWdOutfit(el.dataset.id));
+bindEvent('#wd-outfit-save', 'click', saveWdOutfit);
+bindEvent('#wd-outfit-cancel', 'click', () => { const m = $('#wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; });
+bindEvent('#wd-outfit-del', 'click', () => { const id = wdEditingOutfitId; const m = $('#wd-outfit-modal'); if (m) m.classList.remove('active'); wdEditingOutfitId = null; if (id) deleteWdOutfit(id); });
+bindEvent('[data-action="wd-add-wish"]', 'click', () => openWdWishModal(null, null));
+bindEvent('[data-action="wd-gap-add"]', 'click', (e, el) => openWdWishModal(null, { category: el.dataset.cat, reason: el.dataset.text, gap: true }));
+bindEvent('[data-action="wd-edit-wish"]', 'click', (e, el) => openWdWishModal(el.dataset.id, null));
+bindEvent('[data-action="wd-del-wish"]', 'click', (e, el) => deleteWdWish(el.dataset.id));
+bindEvent('#wd-wish-save', 'click', saveWdWish);
+bindEvent('#wd-wish-cancel', 'click', () => { const m = $('#wd-wish-modal'); if (m) m.classList.remove('active'); wdEditingWishId = null; wdWishFromGap = false; });
+bindEvent('[data-action="wd-buy-wish"]', 'click', (e, el) => openWdBuyModal(el.dataset.id));
+bindEvent('#wd-buy-account', 'change', (e, el) => wdUpdateBuySubcat());
+bindEvent('#wd-buy-save', 'click', saveWdBuy);
+bindEvent('#wd-buy-cancel', 'click', () => { const m = $('#wd-buy-modal'); if (m) m.classList.remove('active'); wdBuyingWishId = null; });
+bindEvent('[data-action="wd-budget"]', 'click', toggleWdBudget);
+bindEvent('[data-action="wd-ai-buy"]', 'click', runWardrobeBuyAI);
+bindEvent('[data-action="wd-del-log"]', 'click', (e, el) => wdDeleteLog(el.dataset.date));
+
 /* ================= 启动 ================= */
 document.addEventListener('DOMContentLoaded', async () => {
     buildNav();
@@ -3133,17 +4142,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-/* ================= 如何添加新模块（以衣橱系统为例） =================
-   1. HTML：在最后一个 tab 区块后加
-      <div id="tab-wardrobe" class="tab-content"><h1 class="page-title">衣橱</h1>…你的界面…</div>
-   2. 导航：MODULES 注册表加一条 { id:'wardrobe', icon:'👔', label:'衣橱', renders:['wardrobe'] }（导航按钮自动出现）
-   3. 数据：数据区加 let wardrobeData = [];
-      loadAllFromCloud 的 hd.forEach 里加一行：
-      if (r.type === 'wardrobe') { wardrobeData.push({ ...d, _cloudId: r.id }); return; }
-   4. 渲染：写 renderWardrobe()，然后在渲染调度区注册 RenderBus.on('wardrobe', renderWardrobe)
+/* ================= 如何添加新模块 =================
+   本文件的「衣橱系统」就是按这套模式实现的最新实例，可照抄：
+   1. HTML：添加 <div id="tab-xxx" class="tab-content">…</div> 区块（及需要的弹窗）
+   2. 导航：MODULES 注册表加一条 { id:'xxx', icon:'…', label:'…', renders:['xxx'] }（导航按钮自动出现）
+   3. 数据：数据区加 let xxxData = …；
+      loadAllFromCloud 的 hd.forEach 里加一行：if (r.type === 'xxx') { xxxData = { ...d, _cloudId: r.id }; return; }
+      （按天记录类参考 wardrobe_log；配置类需在 cloudConfigRefs 加引用）
+   4. 渲染：写 renderXxx()，然后在渲染调度区注册 RenderBus.on('xxx', renderXxx)
    5. 交互：所有按钮 bindEvent('selector', 'click', handler)（动态列表用 data-action / data-id 属性，天然委托）
-   6. 持久化：新建/修改一律 syncRecord('wardrobe', date, dataObj, dataObj)，删除用 deleteHealthRecord(id)
-   7. 缓存：saveCache / loadCache 的 JSON 对象里加 wardrobe: wardrobeData
+   6. 持久化：新建/修改一律 syncRecord('xxx', date, dataObj, dataObj)，删除用 deleteHealthRecord(id)
+   7. 缓存：saveCache / loadCache 的 JSON 对象里加对应字段
    完。不需要改动其他任何模块。
 ================================================================== */
 </script>
