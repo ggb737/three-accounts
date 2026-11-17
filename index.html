@@ -265,6 +265,37 @@ tr{scroll-margin-top:20px}
 .wd-gap{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef7ec;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;flex-wrap:wrap}
 .wd-budget-box{background:#f7fbf9;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.8}
 
+/* Execution System V2 Styles */
+.ex-banner{background:#fdf6f0;border:1px solid #f0d9b5;border-radius:var(--rSm);padding:12px 14px;margin-bottom:12px;font-size:13px;color:#8a5a2b;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ex-kr{background:#f5f5f7;border-radius:var(--rSm);padding:14px;margin-bottom:10px}
+.ex-kr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ex-kr-title{font-size:14px;font-weight:600}
+.ex-progress{height:8px;background:#e0eae6;border-radius:4px;overflow:hidden;margin:6px 0}
+.ex-progress-fill{height:100%;background:linear-gradient(90deg,#2d7d5a,#3a8f6e);border-radius:4px;transition:width .3s}
+.ex-domain{display:inline-flex;align-items:center;gap:6px;background:#f5f5f7;border-radius:10px;padding:8px 12px;margin:0 8px 8px 0;font-size:13px}
+.ex-domain.archived{opacity:.5}
+.ex-action{display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ex-action:last-child{border-bottom:none}
+.ex-action.done .ex-action-title{text-decoration:line-through;color:var(--text3)}
+.ex-action-title{flex:1;min-width:0;font-size:14px;font-weight:500;word-break:break-word}
+.ex-action-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ex-today-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ex-today-item:last-child{border-bottom:none}
+.ex-today-check{width:24px;height:24px;border-radius:50%;border:2px solid #d4e3dd;display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px;cursor:pointer;transition:all .2s;flex-shrink:0}
+.ex-today-item.done .ex-today-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.ex-today-item.lowdim{opacity:.45}
+.ex-trend{display:flex;align-items:flex-end;gap:6px;height:90px;margin:12px 0;padding:0 4px}
+.ex-trend-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.ex-trend-fill{width:100%;max-width:28px;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.ex-trend-fill.zero{background:#e0eae6}
+.ex-trend-label{font-size:10px;color:var(--text3)}
+.ex-trend-count{font-size:10px;color:var(--text2)}
+.ex-stats{background:#f7fbf9;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px}
+.ex-stats b{color:var(--accent)}
+.ex-review-item{background:#f5f5f7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.ex-filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.ex-filter-row select{width:auto;flex:0 0 auto;padding:8px 12px;font-size:13px}
+
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
@@ -301,12 +332,51 @@ tr{scroll-margin-top:20px}
             <div class="quote" style="border-left-color:transparent;padding-left:0;margin-top:12px;font-style:italic;">"我足够敏锐，足够有韧性，必将抵达我的旷野。"</div>
         </div>
 
-        <div class="card" style="padding:16px;">
-            <button class="btn btn-primary btn-full" id="add-exec-btn" style="background:#1c1c1e;color:#fff;border-radius:var(--rSm);">＋ 开启新闭环</button>
+        <div id="ex-review-banner"></div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">🌟 北极星（唯一终局目标）</h2>
+            <div class="field">
+                <textarea id="ex-north-star-text" style="min-height:50px;" placeholder="三年后，你希望在哪、成为谁？"></textarea>
+            </div>
+            <button class="btn btn-primary btn-full" id="ex-north-save">保存北极星</button>
         </div>
 
-        <div id="execution-list">
-            <!-- 由 JS 渲染 -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">🎯 关键结果（可量化的年度成果）</h2>
+            <div id="ex-kr-list"></div>
+            <button class="btn btn-primary btn-full" data-action="ex-kr-add">＋ 添加关键结果</button>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">🗂️ 领域（并行主线程）</h2>
+            <div id="ex-domain-list"></div>
+            <button class="btn btn-primary btn-full" data-action="ex-domain-add">＋ 添加领域</button>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">📌 行动清单</h2>
+            <div class="ex-filter-row">
+                <div class="chip-row" id="ex-filter-status" style="margin:0;"></div>
+                <select id="ex-filter-domain"><option value="all">全部领域</option></select>
+                <select id="ex-filter-energy"><option value="all">全部精力</option><option value="low">🔋 低电量可做</option><option value="high">⚡ 高精力</option></select>
+            </div>
+            <div id="ex-action-list"></div>
+            <button class="btn btn-primary btn-full" data-action="ex-action-add">＋ 添加行动</button>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:4px;">✅ 今日行动</h2>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">最多 3 件，自动同步到「节律」页；低电量模式下高精力行动会置灰。</div>
+            <div id="ex-today-list"></div>
+            <div id="ex-today-add-wrap"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">📈 复盘与趋势</h2>
+            <button class="btn btn-primary btn-full" data-action="ex-review-start">📋 开始周复盘（约 5 分钟）</button>
+            <div id="ex-trend"></div>
+            <div id="ex-review-history"></div>
         </div>
     </div>
 
@@ -408,6 +478,11 @@ tr{scroll-margin-top:20px}
                 <button class="btn btn-secondary btn-sm" id="rhythm-add-node-btn">➕ 添加节点</button>
                 <button class="btn btn-secondary btn-sm" id="rhythm-reset-nodes-btn" style="margin-left:8px;">↺ 恢复默认</button>
             </div>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:14px;font-weight:600;margin-bottom:10px;">📌 今日行动（来自执行系统）</h2>
+            <div id="exec-today-strip"></div>
         </div>
 
         <div class="card">
@@ -740,31 +815,89 @@ tr{scroll-margin-top:20px}
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
-<!-- 执行系统弹窗 -->
-<div class="modal-overlay" id="exec-modal">
-    <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
-        <div class="modal-title" id="exec-modal-title">🚀 开启执行闭环</div>
-        
-        <div class="field"><label>目标/事件标题</label><input type="text" id="exec-title-input" placeholder="例如：北航VR导师套磁"></div>
-        
-        <div class="field"><label>1. 直觉假设（绝对信任）</label><textarea id="exec-hypothesis" style="min-height:60px;" placeholder="直觉锁定的最优解是什么？只写方向，不写理由。"></textarea></div>
-        
-        <div class="field"><label>2. 观察与记录（客观事实）</label><textarea id="exec-observe" style="min-height:60px;" placeholder="不带情绪地记录现状、现象、数据。"></textarea></div>
-        
-        <div class="field"><label>3. 验证行动（战术冷酷）</label><textarea id="exec-verify" style="min-height:60px;" placeholder="像机器一样精准执行什么动作去测试？"></textarea></div>
-        
-        <div class="field"><label>4. 结论（结果闭环）</label><textarea id="exec-conclusion" style="min-height:60px;" placeholder="冰冷的结果是什么？成或败？"></textarea></div>
-        
-        <div class="field"><label>5. 反馈（系统更新）</label><textarea id="exec-feedback" style="min-height:60px;" placeholder="如何修正？沉淀了什么经验？"></textarea></div>
-        
-        <div class="field" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 16px; background: #f5f5f7; padding: 12px; border-radius: 8px;">
-            <input type="checkbox" id="exec-status-closed" style="width:20px; height:20px;">
-            <label for="exec-status-closed" style="margin-bottom:0; cursor:pointer;">标记为已闭环（结案）</label>
+<!-- 执行系统 V2 弹窗 -->
+<div class="modal-overlay" id="ex-kr-modal">
+    <div class="modal-box">
+        <div class="modal-title" id="ex-kr-title">➕ 添加关键结果</div>
+        <div class="field"><label>关键结果（可量化）</label><input type="text" id="ex-kr-text" placeholder="例如：雅思总分 7.0"></div>
+        <div class="grid-3">
+            <div class="field"><label>当前值</label><input type="number" id="ex-kr-current" step="any"></div>
+            <div class="field"><label>目标值</label><input type="number" id="ex-kr-target" step="any"></div>
+            <div class="field"><label>单位</label><input type="text" id="ex-kr-unit" placeholder="分/次/%"></div>
         </div>
-        
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
-            <button class="btn btn-secondary" id="exec-cancel-btn">取消</button>
-            <button class="btn btn-primary" id="exec-save-btn" style="background:#1c1c1e;">保存并执行</button>
+        <div class="grid-2">
+            <div class="field"><label>截止日期</label><input type="date" id="ex-kr-deadline"></div>
+            <div class="field"><label>所属领域</label><select id="ex-kr-domain"></select></div>
+        </div>
+        <div class="field"><label>状态</label><select id="ex-kr-status"><option value="active">进行中</option><option value="done">已达成</option><option value="dropped">已放弃</option></select></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="ex-kr-del" style="display:none;">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="ex-kr-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="ex-kr-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="ex-domain-modal">
+    <div class="modal-box">
+        <div class="modal-title" id="ex-domain-title">➕ 添加领域</div>
+        <div class="grid-2">
+            <div class="field"><label>图标（emoji）</label><input type="text" id="ex-domain-icon" maxlength="4" placeholder="📚"></div>
+            <div class="field"><label>名称</label><input type="text" id="ex-domain-name" placeholder="例如：雅思"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="ex-domain-del" style="display:none;">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="ex-domain-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="ex-domain-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="ex-action-modal">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+        <div class="modal-title" id="ex-action-title">➕ 添加行动</div>
+        <div class="field"><label>行动（一句话，可执行）</label><input type="text" id="ex-action-text" placeholder="例如：完成数学第三章习题"></div>
+        <div class="field"><label>备注</label><textarea id="ex-action-note" style="min-height:50px;" placeholder="选填"></textarea></div>
+        <div class="grid-2">
+            <div class="field"><label>所属领域</label><select id="ex-action-domain"></select></div>
+            <div class="field"><label>关联关键结果</label><select id="ex-action-kr"></select></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label>优先级</label><select id="ex-action-priority"><option value="high">高</option><option value="mid" selected>中</option><option value="low">低</option></select></div>
+            <div class="field"><label>精力需求</label><select id="ex-action-energy"><option value="any" selected>任意</option><option value="low">🔋 低电量可做</option><option value="high">⚡ 高精力</option></select></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label>场景</label><select id="ex-action-scene"><option value="任意">任意</option><option value="办公室">办公室</option><option value="宿舍">宿舍</option><option value="周末">周末</option><option value="外出">外出</option></select></div>
+            <div class="field"><label>预估时长（分钟）</label><input type="number" id="ex-action-est" min="1" placeholder="选填"></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label>截止日期</label><input type="date" id="ex-action-deadline"></div>
+            <div class="field"><label>状态</label><select id="ex-action-status"><option value="next">下一步</option><option value="doing">进行中</option><option value="someday">搁置</option><option value="done">已完成</option></select></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="ex-action-del" style="display:none;">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="ex-action-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="ex-action-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="ex-review-modal">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+        <div class="modal-title" id="ex-review-title">📋 周复盘</div>
+        <div class="ex-stats" id="ex-review-stats"></div>
+        <div class="field"><label>① 本周完成了什么？（已自动列出，可补充）</label><textarea id="ex-review-done" style="min-height:70px;"></textarea></div>
+        <div class="field"><label>② 什么没完成？为什么？</label><textarea id="ex-review-fail" style="min-height:70px;"></textarea></div>
+        <div class="field"><label>③ 下周的三个调整（过程优化）</label><textarea id="ex-review-adjust" style="min-height:70px;"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+            <button class="btn btn-secondary btn-sm" id="ex-review-cancel">取消</button>
+            <button class="btn btn-primary btn-sm" id="ex-review-save">保存复盘</button>
         </div>
     </div>
 </div>
@@ -1008,7 +1141,7 @@ async function deleteHealthRecord(id) {
 }
 
 /* 配置类记录的云端 id 引用 */
-const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null } };
+const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, exec: { _cloudId: null } };
 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
@@ -1218,7 +1351,6 @@ function loadRhythmNodesLocal() {
 }
 
 /* ================= 数据 ================= */
-let executionData = [];
 let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
 let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
 let newsData = { items: [], summaries: [], briefings: [] };
@@ -1248,7 +1380,7 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: executionData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: execData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -1262,7 +1394,7 @@ function loadCache() {
         newsData = d.news || newsData;
         if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
         rhythmDaily = d.rhythm || rhythmDaily;
-        executionData = d.exec || executionData;
+        if (d.exec) { execData = { ...defaultExecData(), ...d.exec }; execData.keyResults = execData.keyResults || []; execData.domains = execData.domains || []; execData.actions = execData.actions || []; execData.reviews = execData.reviews || []; execData.today = execData.today || { date: todayStr(), actionIds: [] }; }
         if (d.wardrobe) { wardrobeData = { items: [], outfits: [], wishlist: [], config: wardrobeData.config, ...d.wardrobe }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
         wardrobeLog = d.wardrobeLog || wardrobeLog;
         return true;
@@ -1327,7 +1459,7 @@ async function loadAllFromCloud(silent = false) {
 
         healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
         newsData = { items: [], summaries: [], briefings: [] };
-        executionData = [];
+        execData = defaultExecData();
         rhythmDaily = [];
         wardrobeLog = [];
         let cloudFeeds = null;
@@ -1338,7 +1470,7 @@ async function loadAllFromCloud(silent = false) {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
 
-            if (r.type === 'execution') { executionData.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'exec_config') { cloudConfigRefs.exec._cloudId = r.id; execData = { ...defaultExecData(), ...d }; execData.keyResults = execData.keyResults || []; execData.domains = execData.domains || []; execData.actions = execData.actions || []; execData.reviews = execData.reviews || []; execData.today = execData.today || { date: todayStr(), actionIds: [] }; return; }
             if (r.type === 'ai_config') { cloudConfigRefs.ai._cloudId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
             if (r.type === 'habits_config') { cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
             if (r.type === 'rhythm_config') { cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
@@ -1414,125 +1546,475 @@ function setupRealtime() {
         .subscribe();
 }
 
-/* ================= 执行系统 ================= */
-let currentEditingExecId = null;
+/* ================= 执行系统 V2（北极星 + 关键结果 + 领域 + 行动 + 周复盘） ================= */
+const EX_SCENES = ['任意', '办公室', '宿舍', '周末', '外出'];
+const EX_STATUS = { next: '下一步', doing: '进行中', done: '已完成', someday: '搁置' };
+const EX_PRIORITY = { high: '高', mid: '中', low: '低' };
 
-function renderExecution() {
-    const el = $('execution-list');
-    if (!executionData.length) { el.innerHTML = '<div class="empty-hint">还没有执行闭环，点击上方开启</div>'; return; }
-    
-    // 排序：未闭环的在前，然后按更新时间倒序
-    const sorted = [...executionData].sort((a, b) => {
-        if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
-        return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
-    });
+function defaultExecData() {
+    return {
+        northStar: '2028 年考入北航 VR 学硕',
+        keyResults: [
+            { id: 'xr_seed_ielts', text: '雅思总分 7.0', target: 7, current: 0, unit: '分', deadline: '2027-06-30', domainId: 'xd_seed_ielts', status: 'active', createdAt: 0 },
+            { id: 'xr_seed_kaoyan', text: '考研初试过线进入复试', target: 1, current: 0, unit: '次', deadline: '2027-12-25', domainId: 'xd_seed_kaoyan', status: 'active', createdAt: 0 }
+        ],
+        domains: [
+            { id: 'xd_seed_ielts', name: '雅思', icon: '📚', archived: false },
+            { id: 'xd_seed_kaoyan', name: '考研', icon: '🎓', archived: false },
+            { id: 'xd_seed_work', name: '基层工作', icon: '🏢', archived: false },
+            { id: 'xd_seed_health', name: '健康', icon: '🌿', archived: false }
+        ],
+        actions: [],
+        reviews: [],
+        today: { date: todayStr(), actionIds: [] },
+        updatedAt: 0
+    };
+}
+let execData = defaultExecData();
+let exEditingKrId = null, exEditingDomainId = null, exEditingActionId = null;
+let exFilter = { status: 'open', domain: 'all', energy: 'all' };
 
-    let html = '';
-    sorted.forEach(item => {
-        const isClosed = item.status === 'closed';
-        html += `
-            <div class="exec-card ${isClosed ? 'closed' : ''}">
-                <div class="exec-header">
-                    <div class="exec-title-text">${isClosed ? '✅ ' : '⏳ '}${esc(item.title || '未命名闭环')}</div>
-                    <div style="display:flex;gap:6px;">
-                        <button class="btn btn-secondary btn-sm" data-action="exec-edit" data-id="${item.id}">编辑</button>
-                        <button class="btn btn-danger btn-sm" data-action="exec-delete" data-id="${item.id}">✕</button>
-                    </div>
-                </div>
-                <div>
-                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">💡 直觉假设</span><div class="exec-step-content">${esc(item.hypothesis || '未填写')}</div></div>
-                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">👁 观察记录</span><div class="exec-step-content">${esc(item.observe || '未填写')}</div></div>
-                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">⚙️ 验证行动</span><div class="exec-step-content">${esc(item.verify || '未填写')}</div></div>
-                    <div class="exec-step ${isClosed?'closed-step':''}"><span class="exec-step-label">🎯 冷酷结论</span><div class="exec-step-content">${esc(item.conclusion || '未填写')}</div></div>
-                    ${item.feedback ? `<div class="exec-step" style="background:#e8f2ee;border:1px solid #a8cec0;"><span class="exec-step-label" style="color:var(--accent);">🔄 反馈沉淀</span><div class="exec-step-content">${esc(item.feedback)}</div></div>` : ''}
+async function saveExecCloud() {
+    if (!currentUser) return;
+    execData.updatedAt = Date.now();
+    await syncRecord('exec_config', todayStr(), execData, cloudConfigRefs.exec, { silent: true });
+    saveCache();
+}
+function getTodayExec() {
+    if (!execData.today || execData.today.date !== todayStr()) { execData.today = { date: todayStr(), actionIds: [] }; }
+    return execData.today;
+}
+
+/* ---------- 周与复盘辅助 ---------- */
+function execWeekKey(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay() || 7;
+    const mon = new Date(d); mon.setDate(d.getDate() - day + 1);
+    return fmtDay(mon);
+}
+function execWeekStats(wk) {
+    const start = wk, end = addDays(wk, 6);
+    const inRange = (d) => d >= start && d <= end;
+    const doneList = execData.actions.filter(a => a.doneAt && inRange(a.doneAt));
+    const openList = execData.actions.filter(a => a.status !== 'done' && a.status !== 'someday');
+    const habitsDone = habits.reduce((s, h) => s + (h.dates || []).filter(inRange).length, 0);
+    const sleepDays = healthData.sleep.filter(r => inRange(r.date)).length;
+    const exerciseCount = healthData.exercise.filter(r => inRange(r.date)).length;
+    const rhythmDays = rhythmDaily.filter(r => inRange(r.date) && r.done && r.done.length).length;
+    return { weekKey: wk, rangeText: shortDay(start) + ' ~ ' + shortDay(end), doneList, openList, habitsDone, sleepDays, exerciseCount, rhythmDays, doneCount: doneList.length, openCount: openList.length };
+}
+function execNeedReview() {
+    const today = todayStr();
+    const day = new Date(today + 'T00:00:00').getDay();
+    if (day === 0) {
+        const wk = execWeekKey(today);
+        return execData.reviews.some(r => r.weekKey === wk) ? null : { kind: 'sunday', text: '周日了，花 5 分钟做本周复盘，下周才能跑得更稳。' };
+    }
+    if (day === 1) {
+        const lastWk = execWeekKey(addDays(today, -1));
+        return execData.reviews.some(r => r.weekKey === lastWk) ? null : { kind: 'monday', text: '上周的复盘还没做，趁记忆还在补一下？' };
+    }
+    return null;
+}
+
+/* ---------- 北极星 / 关键结果 / 领域 ---------- */
+async function saveExecNorthStar() {
+    const el = $('ex-north-star-text');
+    if (!el) return;
+    execData.northStar = el.value.trim();
+    await saveExecCloud();
+    alert('北极星已保存');
+    RenderBus.emit('execution');
+}
+function exDomainLabel(id) {
+    const d = execData.domains.find(x => x.id === id);
+    return d ? ((d.icon || '📁') + ' ' + d.name) : '未分类';
+}
+function exCountdown(deadline) {
+    if (!deadline) return '';
+    const days = Math.round((new Date(deadline + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000);
+    if (days < 0) return `<span class="tag tag-bad">已过期 ${-days} 天</span>`;
+    return `<span class="tag tag-warn">剩 ${days} 天</span>`;
+}
+function openExecKrModal(id) {
+    exEditingKrId = id || null;
+    const kr = id ? execData.keyResults.find(x => x.id === id) : null;
+    $('ex-kr-title').textContent = kr ? '✏️ 编辑关键结果' : '➕ 添加关键结果';
+    $('ex-kr-text').value = kr ? kr.text : '';
+    $('ex-kr-current').value = kr ? kr.current : 0;
+    $('ex-kr-target').value = kr ? kr.target : '';
+    $('ex-kr-unit').value = kr ? kr.unit : '分';
+    $('ex-kr-deadline').value = kr ? (kr.deadline || '') : '';
+    $('ex-kr-status').value = kr ? kr.status : 'active';
+    const sel = $('ex-kr-domain');
+    sel.innerHTML = '<option value="">— 不绑定领域 —</option>' + execData.domains.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+    sel.value = kr ? (kr.domainId || '') : '';
+    $('ex-kr-del').style.display = kr ? '' : 'none';
+    $('ex-kr-modal').classList.add('active');
+}
+async function saveExecKr() {
+    const text = $('ex-kr-text').value.trim();
+    if (!text) return alert('请填写关键结果');
+    const data = {
+        id: exEditingKrId || ('xr_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        text,
+        current: parseFloat($('ex-kr-current').value) || 0,
+        target: parseFloat($('ex-kr-target').value) || 1,
+        unit: $('ex-kr-unit').value.trim() || '次',
+        deadline: $('ex-kr-deadline').value || null,
+        domainId: $('ex-kr-domain').value || null,
+        status: $('ex-kr-status').value,
+        createdAt: exEditingKrId ? (execData.keyResults.find(x => x.id === exEditingKrId) || {}).createdAt : Date.now()
+    };
+    if (exEditingKrId) execData.keyResults = execData.keyResults.map(x => x.id === exEditingKrId ? data : x);
+    else execData.keyResults.push(data);
+    await saveExecCloud();
+    $('ex-kr-modal').classList.remove('active');
+    exEditingKrId = null;
+    RenderBus.emit('execution');
+}
+async function deleteExecKr(id) {
+    if (!confirm('删除这个关键结果？关联的行动不受影响。')) return;
+    execData.keyResults = execData.keyResults.filter(x => x.id !== id);
+    await saveExecCloud();
+    RenderBus.emit('execution');
+}
+async function exCycleKr(id) {
+    const kr = execData.keyResults.find(x => x.id === id);
+    if (!kr) return;
+    kr.status = kr.status === 'active' ? 'done' : kr.status === 'done' ? 'dropped' : 'active';
+    await saveExecCloud();
+    RenderBus.emit('execution');
+}
+function openExecDomainModal(id) {
+    exEditingDomainId = id || null;
+    const d = id ? execData.domains.find(x => x.id === id) : null;
+    $('ex-domain-title').textContent = d ? '✏️ 编辑领域' : '➕ 添加领域';
+    $('ex-domain-name').value = d ? d.name : '';
+    $('ex-domain-icon').value = d ? d.icon : '📁';
+    $('ex-domain-del').style.display = d ? '' : 'none';
+    $('ex-domain-modal').classList.add('active');
+}
+async function saveExecDomain() {
+    const name = $('ex-domain-name').value.trim();
+    if (!name) return alert('请填写领域名称');
+    const data = {
+        id: exEditingDomainId || ('xd_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        name,
+        icon: $('ex-domain-icon').value.trim() || '📁',
+        archived: exEditingDomainId ? (execData.domains.find(x => x.id === exEditingDomainId) || {}).archived : false
+    };
+    if (exEditingDomainId) execData.domains = execData.domains.map(x => x.id === exEditingDomainId ? data : x);
+    else execData.domains.push(data);
+    await saveExecCloud();
+    $('ex-domain-modal').classList.remove('active');
+    exEditingDomainId = null;
+    RenderBus.emit('execution');
+}
+async function deleteExecDomain(id) {
+    if (!confirm('删除这个领域？它的行动会归为「未分类」。')) return;
+    execData.domains = execData.domains.filter(x => x.id !== id);
+    await saveExecCloud();
+    RenderBus.emit('execution');
+}
+async function exToggleDomainArchived(id) {
+    const d = execData.domains.find(x => x.id === id);
+    if (!d) return;
+    d.archived = !d.archived;
+    await saveExecCloud();
+    RenderBus.emit('execution');
+}
+
+/* ---------- 行动 ---------- */
+function openExecActionModal(id) {
+    exEditingActionId = id || null;
+    const a = id ? execData.actions.find(x => x.id === id) : null;
+    $('ex-action-title').textContent = a ? '✏️ 编辑行动' : '➕ 添加行动';
+    $('ex-action-text').value = a ? a.title : '';
+    $('ex-action-note').value = a ? (a.note || '') : '';
+    $('ex-action-domain').innerHTML = execData.domains.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('');
+    $('ex-action-domain').value = a ? (a.domainId || execData.domains[0].id) : execData.domains[0].id;
+    $('ex-action-kr').innerHTML = '<option value="">— 不关联 —</option>' + execData.keyResults.map(k => `<option value="${k.id}">${esc(k.text)}</option>`).join('');
+    $('ex-action-kr').value = a ? (a.krId || '') : '';
+    $('ex-action-priority').value = a ? a.priority : 'mid';
+    $('ex-action-energy').value = a ? a.energy : 'any';
+    $('ex-action-scene').value = a ? (a.scene || '任意') : '任意';
+    $('ex-action-est').value = a && a.estMinutes ? a.estMinutes : '';
+    $('ex-action-deadline').value = a ? (a.deadline || '') : '';
+    $('ex-action-status').value = a ? a.status : 'next';
+    $('ex-action-del').style.display = a ? '' : 'none';
+    $('ex-action-modal').classList.add('active');
+}
+async function saveExecAction() {
+    const title = $('ex-action-text').value.trim();
+    if (!title) return alert('请填写行动内容');
+    const old = exEditingActionId ? execData.actions.find(x => x.id === exEditingActionId) : null;
+    const status = $('ex-action-status').value || 'next';
+    const data = {
+        id: exEditingActionId || ('xa_' + Date.now() + Math.random().toString(36).slice(2, 6)),
+        title,
+        note: $('ex-action-note').value.trim(),
+        domainId: $('ex-action-domain').value || (execData.domains[0] ? execData.domains[0].id : null),
+        krId: $('ex-action-kr').value || null,
+        priority: $('ex-action-priority').value,
+        energy: $('ex-action-energy').value,
+        scene: $('ex-action-scene').value,
+        estMinutes: $('ex-action-est').value === '' ? null : parseInt($('ex-action-est').value, 10),
+        deadline: $('ex-action-deadline').value || null,
+        status,
+        doneAt: (status === 'done') ? (old && old.doneAt ? old.doneAt : todayStr()) : null,
+        createdAt: old ? old.createdAt : Date.now()
+    };
+    if (exEditingActionId) execData.actions = execData.actions.map(x => x.id === exEditingActionId ? data : x);
+    else execData.actions.push(data);
+    await saveExecCloud();
+    $('ex-action-modal').classList.remove('active');
+    exEditingActionId = null;
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+async function deleteExecAction(id) {
+    if (!confirm('删除这个行动？')) return;
+    execData.actions = execData.actions.filter(x => x.id !== id);
+    const t = getTodayExec();
+    t.actionIds = t.actionIds.filter(x => x !== id);
+    await saveExecCloud();
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+async function exToggleDone(id) {
+    const a = execData.actions.find(x => x.id === id);
+    if (!a) return;
+    if (a.status === 'done') { a.status = 'doing'; a.doneAt = null; }
+    else { a.status = 'done'; a.doneAt = todayStr(); }
+    await saveExecCloud();
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+async function exToggleSomeday(id) {
+    const a = execData.actions.find(x => x.id === id);
+    if (!a) return;
+    a.status = a.status === 'someday' ? 'next' : 'someday';
+    if (a.status === 'someday') { const t = getTodayExec(); t.actionIds = t.actionIds.filter(x => x !== id); }
+    await saveExecCloud();
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+async function exTodayAdd(id) {
+    const t = getTodayExec();
+    if (t.actionIds.length >= 3) return alert('今日最多 3 件，先完成或移除一件');
+    if (!t.actionIds.includes(id)) t.actionIds.push(id);
+    await saveExecCloud();
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+async function exTodayRemove(id) {
+    const t = getTodayExec();
+    t.actionIds = t.actionIds.filter(x => x !== id);
+    await saveExecCloud();
+    RenderBus.emitAll(['execution', 'rhythm']);
+}
+
+/* ---------- 周复盘 ---------- */
+let exReviewWeek = null;
+function openExecReviewModal() {
+    const need = execNeedReview();
+    exReviewWeek = (need && need.kind === 'monday') ? execWeekKey(addDays(todayStr(), -1)) : execWeekKey(todayStr());
+    const stats = execWeekStats(exReviewWeek);
+    const existing = execData.reviews.find(r => r.weekKey === exReviewWeek);
+    $('ex-review-title').textContent = existing ? ('📋 周复盘 · ' + stats.rangeText + '（可修改）') : ('📋 周复盘 · ' + stats.rangeText);
+    $('ex-review-stats').innerHTML = '<b>本周数据</b>：完成行动 <b>' + stats.doneCount + '</b> 件 · 进行中 ' + stats.openCount + ' 件<br>习惯打卡 <b>' + stats.habitsDone + '</b> 次 · 睡眠记录 ' + stats.sleepDays + ' 天 · 运动 ' + stats.exerciseCount + ' 次 · 节律打卡 ' + stats.rhythmDays + ' 天<br><b>完成清单</b>：' + (stats.doneList.length ? stats.doneList.map(a => esc(a.title)).join('、') : '（本周还没有完成记录）') + '<br><b>仍未完成</b>：' + (stats.openList.length ? stats.openList.slice(0, 10).map(a => esc(a.title)).join('、') : '（无进行中的行动）');
+    $('ex-review-done').value = existing ? existing.answers.done : '';
+    $('ex-review-fail').value = existing ? existing.answers.fail : '';
+    $('ex-review-adjust').value = existing ? existing.answers.adjust : '';
+    $('ex-review-modal').classList.add('active');
+}
+async function saveExecReview() {
+    const stats = execWeekStats(exReviewWeek);
+    const answers = {
+        done: $('ex-review-done').value.trim(),
+        fail: $('ex-review-fail').value.trim(),
+        adjust: $('ex-review-adjust').value.trim()
+    };
+    const existing = execData.reviews.find(r => r.weekKey === exReviewWeek);
+    if (existing) { existing.answers = answers; existing.stats = stats; existing.updatedAt = Date.now(); }
+    else execData.reviews.push({ weekKey: exReviewWeek, rangeText: stats.rangeText, answers, stats, createdAt: Date.now() });
+    await saveExecCloud();
+    $('ex-review-modal').classList.remove('active');
+    exReviewWeek = null;
+    RenderBus.emit('execution');
+    alert('复盘已保存 ✓ 下周继续跑。');
+}
+
+/* ---------- 渲染 ---------- */
+function renderExecReviewBanner() {
+    const el = $('ex-review-banner');
+    if (!el) return;
+    const need = execNeedReview();
+    el.innerHTML = need ? `<div class="ex-banner"><span>📋 ${esc(need.text)}</span><button class="btn btn-primary btn-sm" data-action="ex-review-start">开始复盘</button></div>` : '';
+}
+function renderExecNorthStar() {
+    const el = $('ex-north-star-text');
+    if (el) el.value = execData.northStar || '';
+}
+function renderExecKeyResults() {
+    const el = $('ex-kr-list');
+    if (!el) return;
+    if (!execData.keyResults.length) { el.innerHTML = '<div class="empty-hint">还没有关键结果——把北极星拆成可量化的年度成果</div>'; return; }
+    el.innerHTML = execData.keyResults.map(kr => {
+        const pct = kr.target > 0 ? Math.min(100, Math.round(kr.current / kr.target * 100)) : 0;
+        const stTag = kr.status === 'done' ? '<span class="tag tag-good">已达成</span>' : kr.status === 'dropped' ? '<span class="tag tag-neutral">已放弃</span>' : '';
+        const dm = kr.domainId ? `<span class="wd-mini-tag">${esc(exDomainLabel(kr.domainId))}</span>` : '';
+        return `<div class="ex-kr">
+            <div class="ex-kr-head">
+                <div><div class="ex-kr-title">${esc(kr.text)} ${stTag}</div>
+                <div class="meta" style="margin-top:2px;">${kr.current} / ${kr.target} ${esc(kr.unit)} · ${dm} ${exCountdown(kr.deadline)}</div></div>
+                <div style="display:flex;gap:4px;flex-shrink:0;">
+                    <button class="btn btn-secondary btn-sm" data-action="ex-kr-cycle" data-id="${kr.id}">${kr.status === 'active' ? '✅ 达成' : kr.status === 'done' ? '📦 放弃' : '🔄 重启'}</button>
+                    <button class="btn btn-secondary btn-sm" data-action="ex-kr-edit" data-id="${kr.id}">✏️</button>
+                    <button class="btn btn-danger btn-sm" data-action="ex-kr-del" data-id="${kr.id}">✕</button>
                 </div>
             </div>
-        `;
+            <div class="ex-progress"><div class="ex-progress-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('');
+}
+function renderExecDomains() {
+    const el = $('ex-domain-list');
+    if (!el) return;
+    if (!execData.domains.length) { el.innerHTML = '<div class="empty-hint">还没有领域</div>'; return; }
+    el.innerHTML = execData.domains.map(d => {
+        const openCount = execData.actions.filter(a => a.domainId === d.id && a.status !== 'done' && a.status !== 'someday').length;
+        return `<span class="ex-domain ${d.archived ? 'archived' : ''}">${esc(d.icon)} ${esc(d.name)} <span class="wd-mini-tag">${openCount} 进行中</span>
+            <button class="btn btn-secondary btn-sm" data-action="ex-domain-arch" data-id="${d.id}">${d.archived ? '恢复' : '归档'}</button>
+            <button class="btn btn-secondary btn-sm" data-action="ex-domain-edit" data-id="${d.id}">✏️</button>
+            <button class="btn btn-danger btn-sm" data-action="ex-domain-del" data-id="${d.id}">✕</button>
+        </span>`;
+    }).join('');
+}
+function exActionPassFilter(a) {
+    if (exFilter.domain !== 'all' && a.domainId !== exFilter.domain) return false;
+    if (exFilter.energy !== 'all' && a.energy !== exFilter.energy) return false;
+    if (exFilter.status === 'open') return a.status === 'next' || a.status === 'doing';
+    return a.status === exFilter.status;
+}
+function renderExecActions() {
+    const el = $('ex-action-list');
+    if (!el) return;
+    const sel = $('ex-filter-domain');
+    if (sel) {
+        const cur = sel.value || 'all';
+        sel.innerHTML = '<option value="all">全部领域</option>' + execData.domains.filter(d => !d.archived).map(d => `<option value="${d.id}">${esc(d.icon)} ${esc(d.name)}</option>`).join('');
+        sel.value = execData.domains.some(d => d.id === cur) || cur === 'all' ? cur : 'all';
+        exFilter.domain = sel.value;
+    }
+    const statusEl = $('ex-filter-status');
+    if (statusEl) {
+        const items = [['open', '下一步/进行中'], ['done', '已完成'], ['someday', '搁置'], ['all', '全部']];
+        statusEl.innerHTML = items.map(([k, l]) => `<span class="chip ${exFilter.status === k ? 'active' : ''}" data-f-status="${k}">${l}</span>`).join('');
+    }
+    const filtered = execData.actions.filter(exActionPassFilter).sort((a, b) => {
+        const order = { doing: 0, next: 1, done: 2, someday: 2 };
+        if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+        const p = { high: 0, mid: 1, low: 2 };
+        if ((p[a.priority] || 1) !== (p[b.priority] || 1)) return (p[a.priority] || 1) - (p[b.priority] || 1);
+        if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+        if (a.deadline) return -1; if (b.deadline) return 1;
+        return (a.createdAt || 0) - (b.createdAt || 0);
     });
-    el.innerHTML = html;
+    if (!filtered.length) { el.innerHTML = '<div class="empty-hint">这个筛选下没有行动</div>'; return; }
+    el.innerHTML = filtered.map(a => {
+        const inToday = getTodayExec().actionIds.includes(a.id);
+        const tags = [
+            `<span class="tag ${a.priority === 'high' ? 'tag-bad' : a.priority === 'low' ? 'tag-neutral' : 'tag-warn'}">${EX_PRIORITY[a.priority]}</span>`,
+            a.energy === 'low' ? '<span class="tag tag-good">🔋 低电量</span>' : a.energy === 'high' ? '<span class="tag tag-neutral">⚡ 高精力</span>' : '',
+            a.scene && a.scene !== '任意' ? `<span class="wd-mini-tag">${esc(a.scene)}</span>` : '',
+            `<span class="wd-mini-tag">${esc(exDomainLabel(a.domainId))}</span>`,
+            a.deadline ? `<span class="wd-mini-tag">截止 ${shortDay(a.deadline)}</span>` : '',
+            a.estMinutes ? `<span class="wd-mini-tag">约 ${a.estMinutes} 分钟</span>` : ''
+        ].join('');
+        return `<div class="ex-action ${a.status === 'done' ? 'done' : ''}">
+            <div style="min-width:0;flex:1;">
+                <div class="ex-action-title">${esc(a.title)}</div>
+                ${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}
+                <div class="ex-action-meta">${tags}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+                <button class="btn ${a.status === 'done' ? 'btn-secondary' : 'btn-primary'} btn-sm" data-action="ex-action-done" data-id="${a.id}">${a.status === 'done' ? '↩ 撤销' : '✅ 完成'}</button>
+                <button class="btn btn-secondary btn-sm" data-action="ex-action-someday" data-id="${a.id}">${a.status === 'someday' ? '恢复' : '📦 搁置'}</button>
+                ${inToday ? '' : `<button class="btn btn-secondary btn-sm" data-action="ex-action-today" data-id="${a.id}">＋今日</button>`}
+                <button class="btn btn-secondary btn-sm" data-action="ex-action-edit" data-id="${a.id}">✏️</button>
+                <button class="btn btn-danger btn-sm" data-action="ex-action-del" data-id="${a.id}">✕</button>
+            </div>
+        </div>`;
+    }).join('');
 }
-
-function openExecModal(id) {
-    currentEditingExecId = id || null;
-    const titleEl = $('exec-modal-title');
-    const titleInput = $('exec-title-input');
-    const hyp = $('exec-hypothesis');
-    const obs = $('exec-observe');
-    const ver = $('exec-verify');
-    const con = $('exec-conclusion');
-    const fb = $('exec-feedback');
-    const statusCb = $('exec-status-closed');
-
-    if (id) {
-        titleEl.textContent = '✏️ 编辑执行闭环';
-        const item = executionData.find(x => x.id === id);
-        if (item) {
-            titleInput.value = item.title || '';
-            hyp.value = item.hypothesis || '';
-            obs.value = item.observe || '';
-            ver.value = item.verify || '';
-            con.value = item.conclusion || '';
-            fb.value = item.feedback || '';
-            statusCb.checked = item.status === 'closed';
-        }
-    } else {
-        titleEl.textContent = '🚀 开启执行闭环';
-        titleInput.value = '';
-        hyp.value = '';
-        obs.value = '';
-        ver.value = '';
-        con.value = '';
-        fb.value = '';
-        statusCb.checked = false;
+function renderExecToday() {
+    const el = $('ex-today-list');
+    if (!el) return;
+    const t = getTodayExec();
+    const actions = t.actionIds.map(id => execData.actions.find(a => a.id === id)).filter(Boolean);
+    if (!actions.length) { el.innerHTML = '<div class="empty-hint">今天还没有挑选行动——在「行动清单」点 ＋今日，或从下方下拉添加</div>'; }
+    else {
+        el.innerHTML = actions.map(a => `<div class="ex-today-item ${a.status === 'done' ? 'done' : ''}">
+            <div class="ex-today-check" data-action="ex-today-check" data-id="${a.id}">✓</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:500;">${esc(a.title)}</div>
+                <div class="meta">${esc(exDomainLabel(a.domainId))}${a.energy === 'low' ? ' · 🔋 低电量' : a.energy === 'high' ? ' · ⚡ 高精力' : ''}</div>
+            </div>
+            <button class="btn btn-danger btn-sm" data-action="ex-today-rm" data-id="${a.id}">✕</button>
+        </div>`).join('');
     }
-    $('exec-modal').classList.add('active');
+    const wrap = $('ex-today-add-wrap');
+    if (wrap) {
+        if (actions.length >= 3) { wrap.innerHTML = '<div style="font-size:12px;color:var(--text2);margin-top:10px;">已满 3 件。完成或移除后再加。</div>'; return; }
+        const open = execData.actions.filter(a => (a.status === 'next' || a.status === 'doing') && !t.actionIds.includes(a.id));
+        if (!open.length) { wrap.innerHTML = '<div style="font-size:12px;color:var(--text2);margin-top:10px;">没有可添加的行动了，去行动清单新建。</div>'; return; }
+        wrap.innerHTML = `<select id="ex-today-add" style="margin-top:10px;"><option value="">＋ 添加今日行动（已选 ${actions.length}/3）</option>` + open.map(a => `<option value="${a.id}">${esc(a.title)}</option>`).join('') + '</select>';
+    }
 }
-
-async function saveExec() {
-    const title = $('exec-title-input').value.trim();
-    if (!title) return alert('请填写目标/事件标题');
-
-    const dataObj = {
-        id: currentEditingExecId || 'ex_' + Date.now() + Math.random().toString(36).slice(2,6),
-        title,
-        hypothesis: $('exec-hypothesis').value.trim(),
-        observe: $('exec-observe').value.trim(),
-        verify: $('exec-verify').value.trim(),
-        conclusion: $('exec-conclusion').value.trim(),
-        feedback: $('exec-feedback').value.trim(),
-        status: $('exec-status-closed').checked ? 'closed' : 'open',
-        updatedAt: Date.now()
-    };
-
-    if (currentEditingExecId) {
-        const idx = executionData.findIndex(x => x.id === currentEditingExecId);
-        if (idx > -1) {
-            const old = executionData[idx];
-            dataObj.createdAt = old.createdAt || Date.now();
-            dataObj._cloudId = old._cloudId || null;
-            executionData[idx] = dataObj;
-            await syncRecord('execution', todayStr(), dataObj, dataObj);
-        }
-    } else {
-        dataObj.createdAt = Date.now();
-        executionData.push(dataObj);
-        await syncRecord('execution', todayStr(), dataObj, dataObj);
+function renderExecTodayStrip() {
+    const el = $('exec-today-strip');
+    if (!el) return;
+    const t = getTodayExec();
+    const actions = t.actionIds.map(id => execData.actions.find(a => a.id === id)).filter(Boolean);
+    const isLow = getTodayRhythm().mode === 'low';
+    if (!actions.length) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:8px;"><span>还没有挑选今日行动</span><button class="btn btn-secondary btn-sm" data-action="ex-goto-exec">去挑选 →</button></div>';
+        return;
     }
-
-    saveCache();
-    RenderBus.emit('execution');
-    $('exec-modal').classList.remove('active');
-    currentEditingExecId = null;
+    el.innerHTML = actions.map(a => {
+        const lowDim = isLow && a.energy === 'high';
+        return `<div class="ex-today-item ${a.status === 'done' ? 'done' : ''} ${lowDim ? 'lowdim' : ''}">
+            <div class="ex-today-check" data-action="ex-today-check" data-id="${a.id}">✓</div>
+            <div style="flex:1;min-width:0;font-size:14px;">${esc(a.title)}${lowDim ? ' <span style="font-size:11px;color:var(--text3);">（高精力，低电量模式建议改期）</span>' : ''}</div>
+        </div>`;
+    }).join('');
 }
-
-async function deleteExec(id) {
-    if (!confirm('确定删除这个执行闭环吗？')) return;
-    const item = executionData.find(x => x.id === id);
-    if (item && item._cloudId) {
-        await deleteHealthRecord(item._cloudId);
-    }
-    executionData = executionData.filter(x => x.id !== id);
-    saveCache(); RenderBus.emit('execution');
+function renderExecTrend() {
+    const el = $('ex-trend');
+    if (!el) return;
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) weeks.push(execWeekKey(addDays(todayStr(), -i * 7)));
+    const data = weeks.map(wk => ({ wk, count: execData.actions.filter(a => a.doneAt && a.doneAt >= wk && a.doneAt <= addDays(wk, 6)).length }));
+    const max = Math.max(1, ...data.map(d => d.count));
+    el.innerHTML = '<div class="habit-section-title" style="margin:12px 0 0;">近 8 周完成行动数</div><div class="ex-trend">' + data.map(d => {
+        const h = Math.round(d.count / max * 100);
+        return `<div class="ex-trend-bar" title="${d.wk}：${d.count} 件"><span class="ex-trend-count">${d.count}</span><div class="ex-trend-fill ${d.count === 0 ? 'zero' : ''}" style="height:${Math.max(d.count === 0 ? 2 : h, 2)}%"></div><span class="ex-trend-label">${d.wk.slice(5).replace('-', '/')}</span></div>`;
+    }).join('') + '</div>';
+}
+function renderExecReviewHistory() {
+    const el = $('ex-review-history');
+    if (!el) return;
+    const list = [...execData.reviews].sort((a, b) => b.weekKey.localeCompare(a.weekKey)).slice(0, 10);
+    if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有复盘记录</div>'; return; }
+    el.innerHTML = '<div class="habit-section-title" style="margin-top:14px;">复盘历史</div>' + list.map(r => `<details class="ex-review-item"><summary style="cursor:pointer;font-weight:600;">${esc(r.rangeText)} · 完成 ${r.stats ? r.stats.doneCount : '-'} 件</summary><div style="margin-top:8px;font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;"><b>完成了什么</b>：${esc(r.answers.done || '—')}<br><b>没完成及原因</b>：${esc(r.answers.fail || '—')}<br><b>下周调整</b>：${esc(r.answers.adjust || '—')}</div></details>`).join('');
+}
+function renderExecution() {
+    renderExecReviewBanner();
+    renderExecNorthStar();
+    renderExecKeyResults();
+    renderExecDomains();
+    renderExecActions();
+    renderExecToday();
+    renderExecTrend();
+    renderExecReviewHistory();
+    renderExecTodayStrip();
 }
 
 /* ================= 节律 ================= */
@@ -3778,6 +4260,7 @@ function renderAll() {
 RenderBus.on('execution', renderExecution);
 RenderBus.on('accounts', renderAccounts);
 RenderBus.on('rhythm', renderRhythm);
+RenderBus.on('rhythm', renderExecTodayStrip);
 RenderBus.on('health', renderHealthAll);
 RenderBus.on('habits', renderHabits);
 RenderBus.on('news', renderNews);
@@ -3835,12 +4318,41 @@ bindEvent('#register-btn', 'click', async () => {
 });
 bindEvent('#logout-btn', 'click', signOut);
 
-// 执行系统（静态按钮 + 列表内 data-action 委托）
-bindEvent('#add-exec-btn', 'click', () => openExecModal(null));
-bindEvent('#exec-cancel-btn', 'click', () => { const m = $('exec-modal'); if (m) m.classList.remove('active'); currentEditingExecId = null; });
-bindEvent('#exec-save-btn', 'click', saveExec);
-bindEvent('[data-action="exec-edit"]', 'click', (e, el) => openExecModal(el.dataset.id));
-bindEvent('[data-action="exec-delete"]', 'click', (e, el) => deleteExec(el.dataset.id));
+// 执行系统 V2
+bindEvent('#ex-north-save', 'click', saveExecNorthStar);
+bindEvent('[data-action="ex-kr-add"]', 'click', () => openExecKrModal(null));
+bindEvent('[data-action="ex-kr-edit"]', 'click', (e, el) => openExecKrModal(el.dataset.id));
+bindEvent('[data-action="ex-kr-cycle"]', 'click', (e, el) => exCycleKr(el.dataset.id));
+bindEvent('[data-action="ex-kr-del"]', 'click', (e, el) => deleteExecKr(el.dataset.id));
+bindEvent('#ex-kr-save', 'click', saveExecKr);
+bindEvent('#ex-kr-cancel', 'click', () => { const m = $('ex-kr-modal'); if (m) m.classList.remove('active'); exEditingKrId = null; });
+bindEvent('#ex-kr-del', 'click', () => { const id = exEditingKrId; const m = $('ex-kr-modal'); if (m) m.classList.remove('active'); exEditingKrId = null; if (id) deleteExecKr(id); });
+bindEvent('[data-action="ex-domain-add"]', 'click', () => openExecDomainModal(null));
+bindEvent('[data-action="ex-domain-edit"]', 'click', (e, el) => openExecDomainModal(el.dataset.id));
+bindEvent('[data-action="ex-domain-del"]', 'click', (e, el) => deleteExecDomain(el.dataset.id));
+bindEvent('[data-action="ex-domain-arch"]', 'click', (e, el) => exToggleDomainArchived(el.dataset.id));
+bindEvent('#ex-domain-save', 'click', saveExecDomain);
+bindEvent('#ex-domain-cancel', 'click', () => { const m = $('ex-domain-modal'); if (m) m.classList.remove('active'); exEditingDomainId = null; });
+bindEvent('#ex-domain-del', 'click', () => { const id = exEditingDomainId; const m = $('ex-domain-modal'); if (m) m.classList.remove('active'); exEditingDomainId = null; if (id) deleteExecDomain(id); });
+bindEvent('[data-action="ex-action-add"]', 'click', () => openExecActionModal(null));
+bindEvent('[data-action="ex-action-edit"]', 'click', (e, el) => openExecActionModal(el.dataset.id));
+bindEvent('[data-action="ex-action-del"]', 'click', (e, el) => deleteExecAction(el.dataset.id));
+bindEvent('[data-action="ex-action-done"]', 'click', (e, el) => exToggleDone(el.dataset.id));
+bindEvent('[data-action="ex-action-someday"]', 'click', (e, el) => exToggleSomeday(el.dataset.id));
+bindEvent('[data-action="ex-action-today"]', 'click', (e, el) => exTodayAdd(el.dataset.id));
+bindEvent('#ex-action-save', 'click', saveExecAction);
+bindEvent('#ex-action-cancel', 'click', () => { const m = $('ex-action-modal'); if (m) m.classList.remove('active'); exEditingActionId = null; });
+bindEvent('#ex-action-del', 'click', () => { const id = exEditingActionId; const m = $('ex-action-modal'); if (m) m.classList.remove('active'); exEditingActionId = null; if (id) deleteExecAction(id); });
+bindEvent('[data-action="ex-today-check"]', 'click', (e, el) => exToggleDone(el.dataset.id));
+bindEvent('[data-action="ex-today-rm"]', 'click', (e, el) => exTodayRemove(el.dataset.id));
+bindEvent('#ex-today-add', 'change', async (e, el) => { if (el.value) { await exTodayAdd(el.value); el.value = ''; } });
+bindEvent('[data-action="ex-goto-exec"]', 'click', () => switchTab('execution'));
+bindEvent('#ex-filter-status .chip', 'click', (e, el) => { exFilter.status = el.dataset.fStatus; RenderBus.emit('execution'); });
+bindEvent('#ex-filter-domain', 'change', (e, el) => { exFilter.domain = el.value; RenderBus.emit('execution'); });
+bindEvent('#ex-filter-energy', 'change', (e, el) => { exFilter.energy = el.value; RenderBus.emit('execution'); });
+bindEvent('[data-action="ex-review-start"]', 'click', openExecReviewModal);
+bindEvent('#ex-review-save', 'click', saveExecReview);
+bindEvent('#ex-review-cancel', 'click', () => { const m = $('ex-review-modal'); if (m) m.classList.remove('active'); exReviewWeek = null; });
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
