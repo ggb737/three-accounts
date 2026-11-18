@@ -339,6 +339,14 @@ tr{scroll-margin-top:20px}
 .gate-item .g-check{width:22px;height:22px;border-radius:50%;border:2px solid #d4e3dd;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px;flex-shrink:0}
 .gate-item.selected .g-check{background:var(--accent);border-color:var(--accent);color:#fff}
 
+/* 简洁模式：折叠细节 */
+.goal-kr-fold{background:#fafcfb;border-radius:10px;margin-top:8px;padding:2px 12px 8px}
+.goal-kr-fold summary{cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;padding:8px 0;outline:none;user-select:none;list-style:none}
+.goal-kr-fold summary::-webkit-details-marker{display:none}
+.goal-kr-fold summary::after{content:'▾';float:right;color:var(--text3);font-size:10px}
+.goal-kr-fold[open] summary::after{content:'▴'}
+.goal-kr-fold .goal-kr-row{padding:5px 0}
+
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
@@ -369,11 +377,7 @@ tr{scroll-margin-top:20px}
 
     <!-- ========== 主页 ========== -->
     <div id="tab-execution" class="tab-content active">
-        <div class="exec-hero">
-            <h1>主页</h1>
-            <div class="quote">直觉选方向（<span class="quote-highlight">战略上的绝对信任</span>）<br>理性自律去执行（<span class="quote-highlight">战术上的绝对冷酷</span>）<br>达到目标取得成果（<span class="quote-highlight">结果的绝对闭环</span>）</div>
-            <div class="quote" style="border-left-color:transparent;padding-left:0;margin-top:12px;font-style:italic;">"我足够敏锐，足够有韧性，必将抵达我的旷野。"</div>
-        </div>
+        <div class="card" style="padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--text2);text-align:center;">直觉选方向 · 理性自律去执行 · 结果的绝对闭环</div>
 
         <div id="gate-bar"></div>
 
@@ -2315,14 +2319,16 @@ function renderGoalOverview() {
     el.innerHTML = active.map(g => {
         const pct = goalPct(g);
         const track = GOAL_TRACK[g.track] || GOAL_TRACK.long;
-        const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="flex:0 0 auto;max-width:55%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + ' · ' + krPct(k) + '%</span></div>').join('');
+        const trackShort = g.track === 'long' ? '🛤️ 长期' : '⚡ 快速';
+        const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="flex:0 0 auto;max-width:52%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + ' · ' + krPct(k) + '%</span></div>').join('');
         const todayPlans = goalTodayPlans().filter(p => p.goalId === g.id);
-        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + ((goalData.gate && goalData.gate.picked.includes(p.id)) ? ' <span class="tag tag-warn">⭐ 门禁</span>' : '') + '</div></div>').join('') : '<div class="empty-hint" style="padding:8px 0;">今天没有安排执行点</div>';
-        return '<div class="goal-card"><div class="goal-card-head"><div style="min-width:0;flex:1;"><span class="goal-title">' + esc(g.title) + '</span><span class="track-tag ' + track.cls + '">' + track.tag + '</span></div><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" data-action="goal-edit" data-id="' + g.id + '">✏️</button><button class="btn btn-secondary btn-sm" data-action="goto-goals">管理 →</button></div></div>' +
-            (g.why ? '<div class="goal-why">💭 ' + esc(g.why) + '</div>' : '') +
-            '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);"><span>路线图进度</span><b style="color:var(--accent);">' + pct + '%</b></div><div class="goal-big-bar"><div class="goal-big-fill" style="width:' + pct + '%"></div></div>' +
-            '<div class="habit-section-title" style="margin-top:10px;">🎯 关键结果（如何衡量实现？）</div>' + (krHtml || '<div class="empty-hint">暂无 KR</div>') +
-            '<div class="goal-today"><div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:6px;">✅ 今日需要完成的事</div>' + todayHtml + '</div></div>';
+        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + ((goalData.gate && goalData.gate.picked.includes(p.id)) ? ' <span class="tag tag-warn">⭐</span>' : '') + '</div></div>').join('') : '<div class="empty-hint" style="padding:6px 0;">今天没有安排</div>';
+        return '<div class="goal-card" style="padding:16px;">' +
+            '<div class="goal-card-head"><div style="min-width:0;flex:1;"><span class="goal-title" style="font-size:16px;">' + esc(g.title) + '</span><span class="track-tag ' + track.cls + '">' + trackShort + '</span></div>' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><b style="color:var(--accent);font-size:15px;">' + pct + '%</b><button class="btn btn-secondary btn-sm" data-action="goto-goals">管理</button></div></div>' +
+            '<div class="goal-big-bar"><div class="goal-big-fill" style="width:' + pct + '%"></div></div>' +
+            '<details class="goal-kr-fold"><summary>🎯 关键结果 ' + g.krs.length + ' 条（如何衡量实现？）</summary>' + (krHtml || '<div class="empty-hint">暂无 KR</div>') + '</details>' +
+            '<div class="goal-today"><div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px;">✅ 今日</div>' + todayHtml + '</div></div>';
     }).join('');
 }
 function renderIdeas() {
@@ -2339,23 +2345,22 @@ function gpRowHtml(g, p) {
     const txt = (field, label, ph) => {
         const parts = field.split('.');
         const val = (p[parts[0]] && p[parts[0]][parts[1]]) || '';
-        return '<div class="field"><label>' + label + '</label><textarea data-dept-field="' + field + '" style="min-height:36px;" placeholder="' + ph + '">' + esc(val) + '</textarea></div>';
+        return '<div class="field"><label>' + label + '</label><textarea data-dept-field="' + field + '" style="min-height:34px;" placeholder="' + ph + '">' + esc(val) + '</textarea></div>';
     };
-    return '<details class="fold" data-plan-block="' + p.id + '" style="margin:8px 0;">' +
-        '<summary style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;">' +
+    const dept = (icon, title, fields) => '<details class="goal-kr-fold"><summary>' + icon + ' ' + title + '</summary>' + fields + '</details>';
+    return '<div data-plan-block="' + p.id + '" style="border-bottom:1px solid var(--border);padding:6px 0;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
         '<div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div>' +
-        '<div style="flex:1;min-width:140px;"><div class="gp-work" style="' + doneStyle + '">' + esc(p.work) + '</div><div class="gp-meta"><span class="wd-mini-tag">' + GOAL_PERIODS[p.period] + '</span>' + (p.due ? '<span class="wd-mini-tag" style="' + (overdue ? 'background:#fdeaea;color:#c0392b;' : '') + '">截止 ' + shortDay(p.due) + (overdue ? ' · 已逾期' : '') + '</span>' : '') + (p.reward ? '<span class="wd-mini-tag">🎁 ' + esc(p.reward) + '</span>' : '') + (p.punish ? '<span class="wd-mini-tag">⚠️ ' + esc(p.punish) + '</span>' : '') + '</div></div>' +
-        '<div style="display:flex;gap:4px;">' +
-        '<button class="btn btn-secondary btn-sm" data-action="gp-someday" data-id="' + p.id + '">' + (p.status === 'someday' ? '恢复' : '📦 搁置') + '</button>' +
+        '<div style="flex:1;min-width:0;"><div class="gp-work" style="' + doneStyle + '">' + esc(p.work) + (p.status === 'someday' ? ' <span class="wd-mini-tag">搁置</span>' : '') + '</div>' +
+        '<div class="gp-meta"><span class="wd-mini-tag">' + GOAL_PERIODS[p.period] + '</span>' + (p.due ? '<span class="wd-mini-tag" style="' + (overdue ? 'background:#fdeaea;color:#c0392b;' : '') + '">' + shortDay(p.due) + (overdue ? ' 逾期' : '') + '</span>' : '') + (p.reward ? '<span class="wd-mini-tag" title="奖励：' + esc(p.reward) + '">🎁</span>' : '') + (p.punish ? '<span class="wd-mini-tag" title="惩罚：' + esc(p.punish) + '">⚠️</span>' : '') + '</div></div>' +
         '<button class="btn btn-secondary btn-sm" data-action="goal-plan-edit" data-goal="' + g.id + '" data-id="' + p.id + '">✏️</button>' +
-        '<button class="btn btn-danger btn-sm" data-action="goal-plan-del" data-goal="' + g.id + '" data-id="' + p.id + '">✕</button>' +
-        '</div></summary><div class="fold-body">' +
-        '<div class="dept-block"><div class="dept-title">🛡️ 风险管理部</div>' + txt('risk.buffer', '弹性时间（预留缓冲）', '例如：预留 30% 缓冲时间') + txt('risk.precontrol', '风险预控', '例如：提前三天开始') + txt('risk.plan', '应对预案', '例如：忙不过来的替代方案') + txt('risk.rebuild', '重建计划（失败后的重启路径）', '例如：中断后如何重启') + '</div>' +
-        '<div class="dept-block"><div class="dept-title">📦 资源管理部</div>' + txt('resource.current', '盘点现有资源', '例如：已有教材/时间/人脉') + txt('resource.match', '精准匹配资源', '例如：哪段时间配哪个任务') + txt('resource.supplement', '计划补充资源', '例如：还需购买/借用什么') + '</div>' +
-        '<div class="dept-block"><div class="dept-title">🔁 反馈部（保存后自动流入当日复盘）</div>' + txt('feedback.resistance', '执行阻力', '例如：背单词时总走神') + txt('feedback.results', '反馈结果与问题', '例如：正确率 70%，听力最弱') + '</div>' +
-        '<div class="dept-block"><div class="dept-title">🔧 优化部</div>' + txt('optimize.root', '分析根源', '例如：走神是因为睡前刷手机') + txt('optimize.solution', '制定方案', '例如：手机放客厅') + txt('optimize.effect', '跟踪效果', '例如：观察 3 天正确率变化') + '</div>' +
-        '<button class="btn btn-primary btn-full" data-action="gp-dept-save" data-id="' + p.id + '" style="margin-top:10px;">保存四部门</button>' +
-        '</div></details>';
+        '</div>' +
+        dept('🛡️', '风险管理部', txt('risk.buffer', '弹性时间（预留缓冲）', '例如：预留 30% 缓冲时间') + txt('risk.precontrol', '风险预控', '例如：提前三天开始') + txt('risk.plan', '应对预案', '例如：忙不过来的替代方案') + txt('risk.rebuild', '重建计划（失败后的重启路径）', '例如：中断后如何重启')) +
+        dept('📦', '资源管理部', txt('resource.current', '盘点现有资源', '例如：已有教材/时间/人脉') + txt('resource.match', '精准匹配资源', '例如：哪段时间配哪个任务') + txt('resource.supplement', '计划补充资源', '例如：还需购买/借用什么')) +
+        dept('🔁', '反馈部（自动流入当日复盘）', txt('feedback.resistance', '执行阻力', '例如：背单词时总走神') + txt('feedback.results', '反馈结果与问题', '例如：正确率 70%，听力最弱')) +
+        dept('🔧', '优化部', txt('optimize.root', '分析根源', '例如：走神是因为睡前刷手机') + txt('optimize.solution', '制定方案', '例如：手机放客厅') + txt('optimize.effect', '跟踪效果', '例如：观察 3 天正确率变化')) +
+        '<button class="btn btn-primary btn-full" data-action="gp-dept-save" data-id="' + p.id + '" style="margin-top:6px;">保存四部门</button>' +
+        '</div>';
 }
 function renderGoalManageList() {
     const el = $('goal-manage-list');
@@ -2364,19 +2369,20 @@ function renderGoalManageList() {
     el.innerHTML = goalData.goals.map(g => {
         const pct = goalPct(g);
         const track = GOAL_TRACK[g.track] || GOAL_TRACK.long;
-        const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="max-width:50%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + (k.deadline ? ' · 截止' + shortDay(k.deadline) : '') + '</span><button class="btn btn-secondary btn-sm" data-action="goal-kr-edit" data-goal="' + g.id + '" data-id="' + k.id + '">✏️</button></div>').join('');
+        const trackShort = g.track === 'long' ? '🛤️ 长期' : '⚡ 快速';
+        const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="max-width:48%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + (k.deadline ? ' · ' + shortDay(k.deadline) : '') + '</span><button class="btn btn-secondary btn-sm" data-action="goal-kr-edit" data-goal="' + g.id + '" data-id="' + k.id + '">✏️</button></div>').join('');
         const plansHtml = ['day', 'week', 'month', 'quarter', 'year'].map(pd => {
             const list = g.plans.filter(p => p.period === pd);
             if (!list.length) return '';
-            return '<div class="habit-section-title" style="margin-top:10px;">' + GOAL_PERIODS[pd] + '执行点（' + list.length + '）</div>' + list.map(p => gpRowHtml(g, p)).join('');
+            return '<details class="goal-kr-fold" ' + (pd === 'day' ? 'open' : '') + '><summary>' + GOAL_PERIODS[pd] + '执行点（' + list.length + '）</summary>' + list.map(p => gpRowHtml(g, p)).join('') + '</details>';
         }).join('');
         return '<details class="fold" style="margin-bottom:10px;">' +
-            '<summary style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span><b>' + esc(g.title) + '</b> <span class="track-tag ' + track.cls + '">' + track.tag + '</span>' + (g.status !== 'active' ? ' <span class="tag tag-neutral">' + (g.status === 'paused' ? '已暂停' : '已达成') + '</span>' : '') + '</span><span style="font-size:12px;color:var(--accent);">' + pct + '%</span></summary>' +
-            '<div class="fold-body" style="padding-top:14px;">' +
-            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"><button class="btn btn-secondary btn-sm" data-action="goal-edit" data-id="' + g.id + '">✏️ 编辑目标</button><button class="btn btn-primary btn-sm" data-action="goal-kr-add" data-goal="' + g.id + '">＋ KR</button><button class="btn btn-primary btn-sm" data-action="goal-plan-add" data-goal="' + g.id + '">＋ 执行点</button><button class="btn btn-danger btn-sm" data-action="goal-del" data-id="' + g.id + '">删除目标</button></div>' +
+            '<summary style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span><b>' + esc(g.title) + '</b> <span class="track-tag ' + track.cls + '">' + trackShort + '</span></span><span style="font-size:12px;color:var(--accent);">' + pct + '%' + (g.status !== 'active' ? ' · ' + (g.status === 'paused' ? '暂停' : '达成') : '') + '</span></summary>' +
+            '<div class="fold-body" style="padding-top:12px;">' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;"><button class="btn btn-secondary btn-sm" data-action="goal-edit" data-id="' + g.id + '">✏️</button><button class="btn btn-primary btn-sm" data-action="goal-kr-add" data-goal="' + g.id + '">＋KR</button><button class="btn btn-primary btn-sm" data-action="goal-plan-add" data-goal="' + g.id + '">＋执行点</button><button class="btn btn-danger btn-sm" data-action="goal-del" data-id="' + g.id + '">删除</button></div>' +
             '<div class="goal-big-bar"><div class="goal-big-fill" style="width:' + pct + '%"></div></div>' +
             (g.why ? '<div class="goal-why">💭 ' + esc(g.why) + '</div>' : '') +
-            '<div class="habit-section-title" style="margin-top:10px;">🎯 关键结果（含外部反馈）</div>' + (krHtml || '<div class="empty-hint">暂无 KR</div>') +
+            '<details class="goal-kr-fold"><summary>🎯 关键结果 ' + g.krs.length + ' 条（含外部反馈）</summary>' + (krHtml || '<div class="empty-hint">暂无 KR</div>') + '</details>' +
             (plansHtml || '<div class="empty-hint">暂无执行点</div>') +
             '</div></details>';
     }).join('');
