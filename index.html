@@ -867,6 +867,8 @@ tr{scroll-margin-top:20px}
             <div class="field"><label>① 想法记录：我想实现什么？（定性的、鼓舞人心的方向）</label><textarea id="gw-text" style="min-height:70px;" placeholder="例如：2028 年考入北航 VR 学硕"></textarea></div>
             <div class="field"><label>为什么想做？（动机）</label><textarea id="gw-why" style="min-height:50px;" placeholder="选填"></textarea></div>
             <div class="field"><label>期望在多长时间内实现？</label><input type="date" id="gw-deadline-hint"></div>
+            <button class="btn btn-primary btn-full" data-action="gw-auto" id="gw-auto-btn" style="margin-top:14px;">⚡ 一键自动生成全部</button>
+            <div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.6;">只填上面三样，点它：系统自动完成 SMART 分析 → 筛选 → 轨道分类 → KR 拆解 → 年/季/月/周/日规划，直接建好目标，之后随时可改。想自己把控就点「下一步」。</div>
         </div>
 
         <div class="wizard-step" id="gw-step-2">
@@ -2058,6 +2060,8 @@ function gwRender() {
     $('gw-deadline-hint').value = gw.deadlineHint;
     $('gw-kr-ai-btn').style.display = aiConfig.apiKey ? '' : 'none';
     $('gw-plans-ai-btn').style.display = aiConfig.apiKey ? '' : 'none';
+    const autoBtn = $('gw-auto-btn');
+    if (autoBtn && !autoBtn.disabled) autoBtn.textContent = aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）';
     $$('.track-option').forEach(o => o.classList.toggle('selected', gw.track === o.dataset.track));
     gwRenderSmart();
     gwRenderKrs();
@@ -2183,11 +2187,10 @@ function gwCollectKrs() {
         };
     });
 }
-async function gwAiKrs() {
-    gwCollectKrs();
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+async function gwAiKrsGenerate() {
+    if (!aiConfig.apiKey) return false;
     const statusEl = $('gw-kr-ai-status');
-    if (statusEl) statusEl.innerHTML = '⏳ AI 拆解中…';
+    if (statusEl) statusEl.innerHTML = '⏳ AI 拆解 KR 中…';
     try {
         const prompt = '你是一名目标规划教练。用户背景：西部计划基层志愿者，两年后考研（目标北航 VR 学硕），同时备考雅思。\n请把下面的总目标拆解为 2-4 个可量化、可验证的关键结果（KR）。\n总目标：' + gw.text + '\n为什么想做：' + (gw.why || '未填写') + '\n回报轨道：' + (gw.track === 'long' ? '长期回报（杠杆+不可逆）' : '快速回报（快速改善生活）') + '\n要求：1) 每个 KR 必须量化（目标值+单位+建议截止日期 YYYY-MM-DD，从现在约半年到两年内）；2) 必须给出可引入外部反馈的验证方式（如模考分数、导师回复、公开成果、官方公示）。\n输出严格 JSON，不要 Markdown 代码块：{"krs":[{"text":"...","target":7,"unit":"分","deadline":"2027-06-30","feedback":"..."}]}';
         const content = await callDeepSeekRaw([{ role: 'system', content: '你是严谨的目标规划教练，只输出严格 JSON。' }, { role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 1500, jsonMode: true });
@@ -2195,12 +2198,37 @@ async function gwAiKrs() {
         const arr = parsed.krs || [];
         if (!arr.length) throw new Error('AI 未返回有效 KR');
         gw.krs = arr.map(k => ({ id: 'gkw_' + Date.now() + Math.random().toString(36).slice(2, 6), text: String(k.text || '').trim(), target: parseFloat(k.target) || 1, current: 0, unit: String(k.unit || '次'), deadline: String(k.deadline || ''), feedback: String(k.feedback || '') }));
-        if (statusEl) statusEl.innerHTML = '✅ AI 已生成 ' + gw.krs.length + ' 条 KR，请检查修改';
-        gwRender();
+        if (statusEl) statusEl.innerHTML = '✅ AI 已生成 ' + gw.krs.length + ' 条 KR';
+        return true;
     } catch (err) {
         console.error(err);
-        if (statusEl) statusEl.innerHTML = '❌ AI 拆解失败：' + esc(err.message);
+        if (statusEl) statusEl.innerHTML = '❌ AI 拆解失败，将改用模板：' + esc(err.message);
+        return false;
     }
+}
+async function gwAiKrs() {
+    gwCollectKrs();
+    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    await gwAiKrsGenerate();
+    gwRender();
+}
+function gwGuessTrack() {
+    const text = (gw.text + ' ' + (gw.why || '')).toLowerCase();
+    const horizon = gw.deadlineHint ? (new Date(gw.deadlineHint + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000 : 0;
+    if (horizon > 540) return 'long';
+    if (/考研|学历|读博|博士|转型|习惯|长期|事业|技能|专业|沉淀|积累|储蓄|攒/.test(text)) return 'long';
+    return 'quick';
+}
+function gwTemplateKrs() {
+    gw.krs = [{
+        id: 'gkw_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        text: '达成目标：' + gw.text,
+        target: 1,
+        current: 0,
+        unit: '次',
+        deadline: gw.deadlineHint || addDays(todayStr(), 365),
+        feedback: '请补充外部验证方式（记录 / 照片 / 成绩单等）'
+    }];
 }
 function gwTemplatePlans() {
     gwCollectKrs();
@@ -2222,9 +2250,8 @@ function gwTemplatePlans() {
     gw.plans = plans;
     gwRender();
 }
-async function gwAiPlans() {
-    gwCollectKrs();
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+async function gwAiPlansGenerate() {
+    if (!aiConfig.apiKey) return false;
     const statusEl = $('gw-plans-preview');
     if (statusEl) statusEl.innerHTML = '⏳ AI 生成规划中…';
     try {
@@ -2235,11 +2262,19 @@ async function gwAiPlans() {
         const arr = (parsed.plans || []).filter(p => gw.krs[p.krIndex]);
         if (!arr.length) throw new Error('AI 未返回有效规划');
         gw.plans = arr.map(p => ({ krIndex: p.krIndex, period: ['year', 'quarter', 'month', 'week', 'day'].includes(p.period) ? p.period : 'month', work: String(p.work || '').trim(), due: String(p.due || ''), reward: String(p.reward || ''), punish: String(p.punish || '') }));
-        gwRender();
+        if (statusEl) statusEl.innerHTML = '✅ AI 已生成 ' + gw.plans.length + ' 个执行点';
+        return true;
     } catch (err) {
         console.error(err);
-        if (statusEl) statusEl.innerHTML = '❌ AI 生成失败：' + esc(err.message);
+        if (statusEl) statusEl.innerHTML = '❌ AI 规划失败，将改用模板：' + esc(err.message);
+        return false;
     }
+}
+async function gwAiPlans() {
+    gwCollectKrs();
+    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    await gwAiPlansGenerate();
+    gwRender();
 }
 function gwRenderPlansPreview() {
     const el = $('gw-plans-preview');
@@ -2291,6 +2326,43 @@ async function gwFinish() {
     gwClose();
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
     alert('✅ 目标「' + title + '」已建立\n共 ' + goal.krs.length + ' 条 KR、' + goal.plans.length + ' 个执行点。\n按流程执行，你一定能抵达它。');
+}
+
+/* ---------- 一键自动生成（懒人模式） ---------- */
+async function gwAutoRun() {
+    if (!gw) return;
+    const text = $('gw-text').value.trim();
+    if (!text) return alert('请先写下你的想法');
+    gw.text = text;
+    gw.why = $('gw-why').value.trim();
+    gw.deadlineHint = $('gw-deadline-hint').value;
+    if (!gw.ideaId) {
+        const idea = { id: 'gi_' + Date.now() + Math.random().toString(36).slice(2, 6), text: gw.text, why: gw.why, deadlineHint: gw.deadlineHint, status: 'pending', createdAt: Date.now(), goalId: null };
+        goalData.ideas.push(idea);
+        gw.ideaId = idea.id;
+        await saveGoalsCloud();
+    }
+    const btn = $('gw-auto-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 自动生成中…'; }
+    try {
+        gwSmartChecks();
+        gw.track = gw.track || gwGuessTrack();
+        gw.step = 6;
+        gwRender();
+        if (aiConfig.apiKey) {
+            const krOk = await gwAiKrsGenerate();
+            if (!krOk || !gw.krs.length) gwTemplateKrs();
+            const plOk = await gwAiPlansGenerate();
+            if (!plOk || !gw.plans.length) gwTemplatePlans();
+        } else {
+            gwTemplateKrs();
+            gwTemplatePlans();
+        }
+        gwRender();
+        await gwFinish();
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）'; }
+    }
 }
 
 /* ---------- 渲染 ---------- */
@@ -4781,6 +4853,7 @@ bindEvent('[data-action="gw-kr-ai"]', 'click', gwAiKrs);
 bindEvent('[data-action="gw-plans-template"]', 'click', gwTemplatePlans);
 bindEvent('[data-action="gw-plans-ai"]', 'click', gwAiPlans);
 bindEvent('[data-action="gw-plans-clear"]', 'click', () => { if (gw) { gw.plans = []; gwRender(); } });
+bindEvent('[data-action="gw-auto"]', 'click', gwAutoRun);
 bindEvent('.mark-read-label', 'click', (e) => e.preventDefault());
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
