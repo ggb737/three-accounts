@@ -398,7 +398,6 @@ tr{scroll-margin-top:20px}
         <details class="fold">
             <summary>💡 想法库（记录后科学筛选）</summary>
             <div class="fold-body">
-                <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">所有想法先在这里落脚，经 SMART 分析后：采纳 → 分类轨道 → 拆解 KR → 时间规划。</div>
                 <button class="btn btn-primary btn-full" data-action="idea-add">＋ 记录新想法</button>
                 <div id="idea-list" style="margin-top:12px;"></div>
             </div>
@@ -849,8 +848,7 @@ tr{scroll-margin-top:20px}
 <!-- 目标系统 V3 弹窗 -->
 <div class="modal-overlay" id="gate-modal">
     <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
-        <div class="modal-title">🌅 今日门禁 · 选 3 个「最重要但最不想做」的任务</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">勾选 3 个之后点击确认，系统才会被激活。直面最难的，剩下的一天都会变轻松。</div>
+        <div class="modal-title">🌅 今日门禁 · 勾选后确认，系统才会激活</div>
         <div id="gate-list"></div>
         <div id="gate-count" style="font-size:13px;font-weight:600;color:var(--accent);margin:10px 0;"></div>
         <button class="btn btn-primary btn-full" id="gate-confirm" disabled>✅ 确认，激活今日系统</button>
@@ -868,7 +866,6 @@ tr{scroll-margin-top:20px}
             <div class="field"><label>为什么想做？（动机）</label><textarea id="gw-why" style="min-height:50px;" placeholder="选填"></textarea></div>
             <div class="field"><label>期望在多长时间内实现？</label><input type="date" id="gw-deadline-hint"></div>
             <button class="btn btn-primary btn-full" data-action="gw-auto" id="gw-auto-btn" style="margin-top:14px;">⚡ 一键自动生成全部</button>
-            <div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.6;">只填上面三样，点它：系统自动完成 SMART 分析 → 筛选 → 轨道分类 → KR 拆解 → 年/季/月/周/日规划，直接建好目标，之后随时可改。想自己把控就点「下一步」。</div>
         </div>
 
         <div class="wizard-step" id="gw-step-2">
@@ -1004,9 +1001,23 @@ tr{scroll-margin-top:20px}
     </div>
 </div>
 
+<div class="modal-overlay" id="guide-modal">
+    <div class="modal-box">
+        <div id="guide-icon" style="font-size:42px;text-align:center;margin-bottom:8px;">🏠</div>
+        <div class="modal-title" id="guide-title" style="text-align:center;">主页</div>
+        <div id="guide-text" style="font-size:13px;color:var(--text2);line-height:1.9;text-align:center;margin-bottom:14px;"></div>
+        <div id="guide-dots" style="display:flex;justify-content:center;gap:6px;margin-bottom:16px;"></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-secondary" id="guide-skip" style="flex:0 0 auto;">跳过</button>
+            <button class="btn btn-secondary" id="guide-prev" style="flex:0 0 auto;">←</button>
+            <button class="btn btn-primary" id="guide-next" style="flex:1;">知道了</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
-        <div class="modal-title">⚙️ API 配置</div>
+        <div class="modal-title">⚙️ 设置</div>
         <div class="field"><label>API Key</label><input type="password" id="ai-api-key" placeholder="sk-..."></div>
         <div class="field"><label>API 地址</label><input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions"></div>
         <div class="field"><label>模型</label><input type="text" id="ai-model" value="deepseek-chat"></div>
@@ -1014,6 +1025,13 @@ tr{scroll-margin-top:20px}
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
             <button class="btn btn-secondary" id="close-settings-btn">取消</button>
             <button class="btn btn-primary" id="ai-save-config">保存</button>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📖 操作说明</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="guide-enable" style="width:18px;height:18px;cursor:pointer;"> 启用新手引导（登录后自动按步骤介绍功能）
+            </label>
+            <button class="btn btn-secondary btn-full" id="guide-start-btn" style="margin-top:10px;">📖 现在查看操作说明</button>
         </div>
     </div>
 </div>
@@ -1600,6 +1618,7 @@ async function loadAllFromCloud(silent = false) {
         showMainUI();
         renderAll();
         maybeOpenDailyGate();
+        if (gateDoneToday()) maybeAutoGuide();
     } catch (err) {
         console.error('❌ 加载数据异常:', err);
         if (!silent) alert('加载云端失败，已展示本地缓存数据。\n错误信息：' + err.message);
@@ -1707,7 +1726,7 @@ function goalPct(g) {
     }
     return Math.round(g.krs.reduce((s, k) => s + krPct(k), 0) / g.krs.length);
 }
-function gateDoneToday() { return !!(goalData.gate && goalData.gate.date === todayStr() && (goalData.gate.skipped || (goalData.gate.picked && goalData.gate.picked.length === 3))); }
+function gateDoneToday() { return !!(goalData.gate && goalData.gate.date === todayStr()); }
 
 /* ---------- 今日执行点与门禁 ---------- */
 function goalTodayPlans() {
@@ -1758,26 +1777,33 @@ function renderGateModal() {
     const el = $('gate-list');
     if (!el) return;
     const list = goalGateList();
-    if (!list.length) { el.innerHTML = '<div class="empty-hint">今天还没有执行点——先去「目标」页建立目标或添加计划。</div>'; }
+    if (!list.length) { el.innerHTML = '<div class="empty-hint">今天还没有执行点——可以先去「目标」页规划，或直接激活系统。</div>'; }
     else {
         el.innerHTML = list.map(p => {
             const overdue = p.due && p.due < todayStr();
             return '<div class="gate-item ' + (gwGatePicked.has(p.id) ? 'selected' : '') + '" data-action="gate-pick" data-id="' + p.id + '"><div class="g-check">✓</div><div style="flex:1;min-width:0;"><div>' + esc(p.work) + '</div><div class="meta">' + esc(p.goalTitle) + ' · ' + (p.due ? shortDay(p.due) : '无期限') + (overdue ? '（已逾期）' : '') + '</div></div></div>';
         }).join('');
     }
+    const need = Math.min(3, list.length);
     const cnt = $('gate-count');
-    if (cnt) cnt.textContent = '已选 ' + gwGatePicked.size + ' / 3';
+    if (cnt) cnt.textContent = list.length ? ('已选 ' + gwGatePicked.size + ' / ' + need) : '今天没有任务，可直接激活';
     const btn = $('gate-confirm');
-    if (btn) btn.disabled = gwGatePicked.size !== 3;
+    if (btn) {
+        if (!list.length) { btn.disabled = false; btn.textContent = '✅ 直接激活系统'; }
+        else { btn.disabled = gwGatePicked.size !== need; btn.textContent = need < 3 ? ('✅ 确认（全选 ' + need + ' 个）') : '✅ 确认，激活今日系统'; }
+    }
 }
 async function saveGate() {
-    if (gwGatePicked.size !== 3) return alert('请选择 3 个任务');
+    const list = goalGateList();
+    const need = Math.min(3, list.length);
+    if (gwGatePicked.size < need) return alert(list.length ? ('请勾选 ' + need + ' 个任务') : '请点击「直接激活系统」');
     goalData.gate = { date: todayStr(), picked: Array.from(gwGatePicked), skipped: false };
     await saveGoalsCloud();
     const m = $('gate-modal');
     if (m) m.classList.remove('active');
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
-    alert('✅ 今日系统已激活。先去啃最硬的那块。');
+    alert(goalData.gate.picked.length ? '✅ 今日系统已激活。先去啃最硬的那块。' : '✅ 今日系统已激活。今天没有任务，好好休息。');
+    maybeAutoGuide();
 }
 async function skipGate() {
     goalData.gate = { date: todayStr(), picked: [], skipped: true };
@@ -1786,6 +1812,7 @@ async function skipGate() {
     if (m) m.classList.remove('active');
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
     alert('😴 今日门禁已跳过。允许休息，明天再来。');
+    maybeAutoGuide();
 }
 
 /* ---------- 执行点状态与四部门 ---------- */
@@ -2373,10 +2400,13 @@ function renderGateBar() {
         if (goalData.gate.skipped) {
             el.className = 'gate-bar';
             el.innerHTML = '<span>😴 今日门禁已跳过（最低电量，允许休息）。明天见。</span>';
-        } else {
+        } else if (goalData.gate.picked && goalData.gate.picked.length) {
             const picked = goalData.gate.picked.map(id => planLocate(id)).filter(Boolean);
             el.className = 'gate-bar active';
             el.innerHTML = '<span>✅ 今日系统已激活：' + picked.map(x => esc(x.plan.work)).join('、') + '</span>';
+        } else {
+            el.className = 'gate-bar active';
+            el.innerHTML = '<span>✅ 今日系统已激活（今天没有安排任务，休息或去「目标」页规划）。</span>';
         }
     } else {
         el.className = 'gate-bar';
@@ -4734,6 +4764,79 @@ function renderWardrobe() {
     renderWdLogs();
 }
 
+/* ================= 操作说明（新手引导，分步介绍） ================= */
+const GUIDE_KEY = 'guide_settings_v1';
+const GUIDE_STEPS = [
+    { icon: '🏠', title: '主页：一眼看清全局', text: '主页只展示四样：各目标的总目标、可量化的关键结果（KR）、100% 路线图进度条、今日要完成的事。点「管理」进入目标页。' },
+    { icon: '🌅', title: '每日门禁', text: '每天第一次登录会弹出今日清单，勾选最不想做但最重要的任务（最多 3 个，不足 3 个全选即可）并确认，系统才会激活。想休息就点「😴 跳过」。' },
+    { icon: '💡', title: '想法库：念头先落脚', text: '在「目标」页把任何想法先记下来，不会丢。经 SMART 分析后可采纳、暂存或放弃。' },
+    { icon: '🎯', title: '科学添加目标（6 步）', text: '想法记录 → SMART 可行性分析 → 筛选 → 轨道分类（🛤️长期回报：杠杆+不可逆 / ⚡快速回报：快速改善生活）→ KR 拆解（定量可验证，必须引入外部反馈）→ 年/季/月/周/日时间规划（含工作内容、计划完成时间、奖励惩罚）。' },
+    { icon: '⚡', title: '一键自动生成（懒人模式）', text: '只写想法，点「一键自动生成全部」，系统自动完成 SMART→轨道→KR→时间规划并建好目标。配了 API Key 用 AI 生成，没配或 AI 失败自动用模板。' },
+    { icon: '🏢', title: '执行点四部门', text: '每个执行点都配了四个部门：🛡️风险管理部（弹性时间/风险预控/应对预案/重建计划）、📦资源管理部（盘点/匹配/补充）、🔁反馈部（执行阻力与反馈，保存后自动流入当日复盘）、🔧优化部（分析根源/制定方案/跟踪效果）。' },
+    { icon: '📋', title: '每日复盘', text: '每晚 3 分钟：系统自动汇总今日完成的执行点、习惯打卡、睡眠、运动数据，反馈部内容自动流入。回答三个问题（完成/未完成/明日调整）即闭环。' },
+    { icon: '⏱️', title: '节律与健康', text: '「节律」按弹性时间轴打卡，支持一键切换最低电量模式；「健康」记录睡眠、能量、饮食、运动等，数据会进入复盘与 AI 分析。' },
+    { icon: '💰', title: '账户与衣橱', text: '「账户」用生存/稳定/发展三账户记账（55/25/20 分配）；「衣橱」自动按天气生成今日穿搭，购买衣物可一键记支出并入库。' },
+    { icon: '📰', title: '世事与习惯', text: '「世事」抓取 RSS 并用四层 AI 管线生成高信噪比简报；「习惯」分类打卡并统计连续天数。' },
+    { icon: '✅', title: '开始使用', text: '引导结束。建议现在去「目标」页建立第一个目标——写下想法，点一键自动生成，明天起系统每天为你安排。' }
+];
+let guideEnabled = false;
+let guideCompleted = false;
+let guideStep = 0;
+function loadGuidePrefs() {
+    try {
+        const r = JSON.parse(localStorage.getItem(GUIDE_KEY) || '{}');
+        guideEnabled = r.enabled === true;
+        guideCompleted = r.completed === true;
+    } catch (e) { guideEnabled = false; guideCompleted = false; }
+}
+function saveGuidePrefs() {
+    try { localStorage.setItem(GUIDE_KEY, JSON.stringify({ enabled: guideEnabled, completed: guideCompleted })); } catch (e) {}
+}
+function openGuide(step) {
+    guideStep = step || 0;
+    renderGuide();
+    const m = $('guide-modal');
+    if (m) m.classList.add('active');
+}
+function renderGuide() {
+    const s = GUIDE_STEPS[guideStep] || GUIDE_STEPS[0];
+    const iconEl = $('guide-icon');
+    if (iconEl) iconEl.textContent = s.icon;
+    const tEl = $('guide-title');
+    if (tEl) tEl.textContent = s.title;
+    const xEl = $('guide-text');
+    if (xEl) xEl.textContent = s.text;
+    const dots = $('guide-dots');
+    if (dots) dots.innerHTML = GUIDE_STEPS.map((x, i) => '<span style="width:8px;height:8px;border-radius:50%;background:' + (i === guideStep ? 'var(--accent)' : '#d8dce4') + ';display:inline-block;"></span>').join('');
+    const nextBtn = $('guide-next');
+    if (nextBtn) nextBtn.textContent = guideStep >= GUIDE_STEPS.length - 1 ? '✅ 开始使用' : '知道了';
+    const prevBtn = $('guide-prev');
+    if (prevBtn) prevBtn.style.display = guideStep === 0 ? 'none' : '';
+}
+function guideNext() {
+    if (guideStep >= GUIDE_STEPS.length - 1) {
+        guideCompleted = true;
+        saveGuidePrefs();
+        const m = $('guide-modal');
+        if (m) m.classList.remove('active');
+        const cb = $('guide-enable');
+        if (cb) cb.checked = guideEnabled;
+        return;
+    }
+    guideStep++;
+    renderGuide();
+}
+function guideSkip() {
+    guideCompleted = true;
+    saveGuidePrefs();
+    const m = $('guide-modal');
+    if (m) m.classList.remove('active');
+}
+function maybeAutoGuide() {
+    if (!guideEnabled || guideCompleted) return;
+    openGuide(0);
+}
+
 /* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
     renderSleep(); renderEnergy(); renderCharge();
@@ -4778,7 +4881,7 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
-bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.add('active'); });
+bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; if (m) m.classList.add('active'); });
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
     aiConfig.apiKey = $('ai-api-key').value.trim();
@@ -4855,6 +4958,13 @@ bindEvent('[data-action="gw-plans-ai"]', 'click', gwAiPlans);
 bindEvent('[data-action="gw-plans-clear"]', 'click', () => { if (gw) { gw.plans = []; gwRender(); } });
 bindEvent('[data-action="gw-auto"]', 'click', gwAutoRun);
 bindEvent('.mark-read-label', 'click', (e) => e.preventDefault());
+
+// 操作说明（新手引导）
+bindEvent('#guide-start-btn', 'click', () => openGuide(0));
+bindEvent('#guide-next', 'click', guideNext);
+bindEvent('#guide-prev', 'click', () => { if (guideStep > 0) { guideStep--; renderGuide(); } });
+bindEvent('#guide-skip', 'click', guideSkip);
+bindEvent('#guide-enable', 'change', (e, el) => { guideEnabled = el.checked; saveGuidePrefs(); });
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
@@ -5101,6 +5211,7 @@ bindEvent('[data-action="wd-del-log"]', 'click', (e, el) => wdDeleteLog(el.datas
 /* ================= 启动 ================= */
 document.addEventListener('DOMContentLoaded', async () => {
     buildNav();
+    loadGuidePrefs();
 
     $('expense-date').value = todayStr();
     $('income-date').value = todayStr();
@@ -5144,7 +5255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (res.error) throw res.error;
         if (res.data.session) {
             currentUser = res.data.session.user;
-            if (loadCache()) { console.log('🚀 使用本地缓存渲染'); showMainUI(); renderAll(); maybeOpenDailyGate(); }
+            if (loadCache()) { console.log('🚀 使用本地缓存渲染'); showMainUI(); renderAll(); maybeOpenDailyGate(); if (gateDoneToday()) maybeAutoGuide(); }
             else { showLoadingUI(); }
             await loadAllFromCloud(true);
             setupRealtime();
