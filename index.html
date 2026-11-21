@@ -347,6 +347,47 @@ tr{scroll-margin-top:20px}
 .goal-kr-fold[open] summary::after{content:'▴'}
 .goal-kr-fold .goal-kr-row{padding:5px 0}
 
+/* 只读模式：模块只展示结果，录入全部走秘书（财务除外） */
+body.readonly #tab-health .field,
+body.readonly #tab-health .score-row,
+body.readonly #tab-health .chip-row,
+body.readonly #tab-health .btn-primary,
+body.readonly #tab-habits #habit-add-fold,
+body.readonly #tab-habits .habit-action-btn,
+body.readonly #tab-goals [data-action="idea-add"],
+body.readonly #tab-goals [data-action="goal-add"],
+body.readonly #tab-goals [data-action="goal-edit"],
+body.readonly #tab-goals [data-action="goal-kr-add"],
+body.readonly #tab-goals [data-action="goal-kr-edit"],
+body.readonly #tab-goals [data-action="goal-plan-add"],
+body.readonly #tab-goals [data-action="goal-plan-edit"],
+body.readonly #tab-goals [data-action="goal-plan-del"],
+body.readonly #tab-goals [data-action="goal-del"],
+body.readonly #tab-goals [data-action="gp-dept-save"],
+body.readonly #tab-goals .dept-block,
+body.readonly #tab-schedule #sch-add-card,
+body.readonly #tab-schedule [data-action="sch-edit"],
+body.readonly #tab-wardrobe [data-action="wd-add-item"],
+body.readonly #tab-wardrobe [data-action="wd-edit-item"],
+body.readonly #tab-wardrobe [data-action="wd-del-item"],
+body.readonly #tab-wardrobe [data-action="wd-status-toggle"],
+body.readonly #tab-wardrobe [data-action="wd-idle-item"],
+body.readonly #tab-wardrobe [data-action="wd-add-outfit"],
+body.readonly #tab-wardrobe [data-action="wd-edit-outfit"],
+body.readonly #tab-wardrobe [data-action="wd-del-outfit"],
+body.readonly #tab-wardrobe [data-action="wd-add-wish"],
+body.readonly #tab-wardrobe [data-action="wd-edit-wish"],
+body.readonly #tab-wardrobe [data-action="wd-del-wish"],
+body.readonly #tab-news .field,
+body.readonly #tab-news #news-save,
+body.readonly #tab-news #news-summary-save,
+body.readonly #tab-rhythm .rhythm-edit-btn,
+body.readonly #tab-rhythm #rhythm-edit-toggle-btn,
+body.readonly #tab-rhythm #rhythm-add-node-btn,
+body.readonly #tab-rhythm #rhythm-reset-nodes-btn,
+body.readonly #tab-rhythm #rhythm-note-input,
+body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
+
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
@@ -411,7 +452,7 @@ tr{scroll-margin-top:20px}
     <div id="tab-schedule" class="tab-content">
         <h1 class="page-title">日程</h1>
 
-        <div class="card">
+        <div class="card" id="sch-add-card">
             <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">＋ 快速安排</h2>
             <div class="field"><input type="text" id="sch-title" placeholder="例如：明天上午看百度世界大会 / 周五前交周报"></div>
             <div class="grid-2">
@@ -726,7 +767,7 @@ tr{scroll-margin-top:20px}
             <div id="habit-list"></div>
         </div>
 
-        <details class="fold">
+        <details class="fold" id="habit-add-fold">
             <summary>添加 / 导入习惯</summary>
             <div class="fold-body">
                 <div class="add-habit-row">
@@ -1102,6 +1143,21 @@ tr{scroll-margin-top:20px}
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
             <button class="btn btn-secondary" id="close-settings-btn">取消</button>
             <button class="btn btn-primary" id="ai-save-config">保存</button>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">🔒 只读模式</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="ui-readonly" style="width:18px;height:18px;cursor:pointer;"> 模块只读：所有新增/修改都通过与秘书对话完成（财务除外）
+            </label>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📐 录入标准（秘书按此要求你补充细节）</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">创建「目标」时必须确认的细节：</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;"><input type="checkbox" id="std-goal-deadline" style="width:16px;height:16px;cursor:pointer;"> 必须确认时限</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-top:6px;"><input type="checkbox" id="std-goal-why" style="width:16px;height:16px;cursor:pointer;"> 必须确认动机</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-top:6px;"><input type="checkbox" id="std-goal-track" style="width:16px;height:16px;cursor:pointer;"> 必须确认回报轨道</label>
+            <div class="field" style="margin-top:8px;"><label style="font-size:12px;">自定义追问话术（可选，用于补充细节）</label><textarea id="std-goal-ask" style="min-height:40px;" placeholder="例如：这个目标对你 3 年后意味着什么？"></textarea></div>
+            <button class="btn btn-secondary btn-sm" id="std-save">保存标准</button>
         </div>
         <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
             <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📖 操作说明</div>
@@ -5112,10 +5168,34 @@ function renderSchedule() {
     renderSchAll();
 }
 
+/* ================= 只读模式与录入标准 ================= */
+const UI_READONLY_KEY = 'ui_readonly_v1';
+const STD_KEY = 'sec_standards_v1';
+let uiReadonly = true;
+let secStandards = { goal: { requireDeadline: true, requireWhy: false, requireTrack: true, ask: '' } };
+function loadUiPrefs() { try { uiReadonly = localStorage.getItem(UI_READONLY_KEY) !== '0'; } catch (e) { uiReadonly = true; } }
+function applyUiPrefs() {
+    document.body.classList.toggle('readonly', uiReadonly);
+    const cb = $('ui-readonly');
+    if (cb) cb.checked = uiReadonly;
+}
+function loadStdPrefs() { try { const s = JSON.parse(localStorage.getItem(STD_KEY) || '{}'); secStandards = { goal: { ...secStandards.goal, ...(s.goal || {}) } }; } catch (e) {} }
+function saveStdPrefs() { try { localStorage.setItem(STD_KEY, JSON.stringify(secStandards)); } catch (e) {} }
+function stdSyncUI() {
+    const d = $('std-goal-deadline'); if (d) d.checked = secStandards.goal.requireDeadline;
+    const w = $('std-goal-why'); if (w) w.checked = secStandards.goal.requireWhy;
+    const t = $('std-goal-track'); if (t) t.checked = secStandards.goal.requireTrack;
+    const a = $('std-goal-ask'); if (a) a.value = secStandards.goal.ask || '';
+}
+
 /* ================= 秘书（对话式入口：记录分发 + 主动提醒 + 关键点请示） ================= */
 let secretaryChat = [];
+let secGoalDraft = null;
+let secPending = {};
+const SEC_SYSTEM_PROMPT = '你是「个人管理系统」的 AI 秘书。用户是西部计划基层志愿者（工资微薄，备考北航 VR 考研与雅思）。你的职责：把用户口语化的请求转成结构化动作或追问。规则：1) 只能依据用户原话提取信息，绝不能编造数字、日期、金额；2) 信息不足时必须用 ask 动作追问，一次最多 2 个问题；3) 创建目标必须用 create_goal_draft 动作输出已提取字段，不要用其他动作建目标；4) 每次用一两句话汇报。输出严格 JSON：{"actions":[...],"reply":"..."}。';
 const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：' +
-    '{"action":"record_expense","amount":15,"account":"survival|stable|develop","subCategory":"rigid|emotional|once(仅生存账户)","desc":"用途"}' +
+    '{"action":"create_goal_draft","title":"目标","why":"动机","deadline":"YYYY-MM-DD","track":"long|quick"}（只填写用户明确给出的字段，未知留空字符串）' +
+    ' / {"action":"record_expense","amount":15,"account":"survival|stable|develop","subCategory":"rigid|emotional|once(仅生存账户)","desc":"用途"}' +
     ' / {"action":"record_income","amount":100}' +
     ' / {"action":"record_sleep","start":"23:00","end":"07:00","feeling":"refreshed|ok|tired|groggy","note":"..."}' +
     ' / {"action":"record_exercise","type":"walk|run|cycling|strength|yoga|ball|swim|other","duration":30,"note":"..."}' +
@@ -5126,7 +5206,7 @@ const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：'
     ' / {"action":"update_kr","goalKeyword":"目标关键词","krKeyword":"KR关键词","current":数字}' +
     ' / {"action":"add_feedback","planKeyword":"执行点关键词","resistance":"阻力","results":"反馈结果"}' +
     ' / {"action":"save_review","done":"...","fail":"...","adjust":"..."}' +
-    ' / {"action":"add_task","title":"任务内容","date":"YYYY-MM-DD","time":"HH:MM"}（安排日程，date/time 可空，空 date 默认今天；支持「明天上午…」这类说法）' +
+    ' / {"action":"add_task","title":"任务内容","date":"YYYY-MM-DD","time":"HH:MM"}（安排日程，date/time 可空，空 date 默认今天）' +
     ' / {"action":"complete_task","keyword":"日程任务关键词"}' +
     ' / {"action":"set_gate","keywords":["执行点关键词1","关键词2","关键词3"]}（最多3个）' +
     ' / {"action":"toggle_low_mode"}' +
@@ -5175,11 +5255,15 @@ function secretaryGreetingText() {
     lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 明天上午看百度世界大会 / 这周花了多少。');
     return lines.join('\n');
 }
+function secPush(m) {
+    secretaryChat.push(m);
+    renderSecretary();
+}
 function renderSecretary() {
     const el = $('secretary-chat');
     if (!el) return;
     if (!secretaryChat.length) secretaryChat.push({ role: 'sys', text: secretaryGreetingText() });
-    el.innerHTML = secretaryChat.map(m => '<div class="ip-msg ' + (m.role === 'user' ? 'user' : 'sys') + '"><div class="ip-bubble">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>').join('');
+    el.innerHTML = secretaryChat.map(m => '<div class="ip-msg ' + (m.role === 'user' ? 'user' : 'sys') + '"><div class="ip-bubble">' + (m.html ? m.text : esc(m.text).replace(/\n/g, '<br>')) + '</div></div>').join('');
     el.scrollTop = el.scrollHeight;
     const flow = $('sec-flow-bar');
     if (flow) {
@@ -5201,6 +5285,7 @@ function renderSecretary() {
 /* 规则版问答（无 API Key 也能用的提醒与查询） */
 function secretaryRuleAnswer(text) {
     const t = String(text || '').trim();
+    if (/新增|创建|建立|设定|制定|想要|想学|想考|想练|加一个|建一个|安排一|帮我.*目标|定一个目标/.test(t)) return null; // 创建类意图交给 AI 对话处理
     const f = secretaryFacts();
     if (/安排|今天做|今日/.test(t)) {
         const lines = [];
@@ -5360,6 +5445,112 @@ async function secretaryExecuteActions(actions) {
     }
     return results;
 }
+async function secCallWithRetry(prompt) {
+    const sys = { role: 'system', content: SEC_SYSTEM_PROMPT + SECRETARY_ACTIONS_SPEC };
+    let content;
+    try {
+        content = await callDeepSeekRaw([sys, { role: 'user', content: prompt }], { temperature: 0.2, max_tokens: 1200, jsonMode: true });
+    } catch (e) {
+        throw new Error('网络或 API 错误：' + (e.message || e));
+    }
+    try {
+        return parseJsonSafe(content);
+    } catch (e1) {
+        try {
+            content = await callDeepSeekRaw([sys, { role: 'user', content: prompt + '\n\n注意：你上一次的输出不是合法 JSON。请重新输出严格 JSON，只包含 {"actions":[...],"reply":"..."} 两个字段。' }], { temperature: 0.1, max_tokens: 1200, jsonMode: true });
+            return parseJsonSafe(content);
+        } catch (e2) {
+            throw new Error('AI 返回无法解析，请换个说法再试');
+        }
+    }
+}
+function handleGoalDraft(a) {
+    secGoalDraft = secGoalDraft || { title: '', why: '', deadline: '', track: '' };
+    if (a.title) secGoalDraft.title = a.title;
+    if (a.why) secGoalDraft.why = a.why;
+    if (a.deadline) secGoalDraft.deadline = a.deadline;
+    if (a.track) secGoalDraft.track = a.track;
+    const st = secStandards.goal;
+    const missing = [];
+    if (!secGoalDraft.title.trim()) missing.push(st.ask || '目标是什么？一句话告诉我');
+    if (st.requireDeadline && !secGoalDraft.deadline) missing.push('希望多久达成？（例如：2027-06-30）');
+    if (st.requireWhy && !secGoalDraft.why.trim()) missing.push('为什么想做它？');
+    if (st.requireTrack && !secGoalDraft.track) missing.push('归入哪个轨道？🛤️长期回报（杠杆+不可逆）还是 ⚡快速回报（快速改善当下）');
+    if (missing.length) return ['待补充：' + missing.join(' / ')];
+    const id = 'pg_' + Date.now();
+    secPending[id] = { type: 'goal', payload: { ...secGoalDraft } };
+    secGoalDraft = null;
+    const p = secPending[id].payload;
+    const card = '📋 即将创建目标：<br>· 总目标：<b>' + esc(p.title) + '</b><br>· 动机：' + (esc(p.why) || '未填写') + '<br>· 时限：' + (esc(p.deadline) || '未定') + '<br>· 轨道：' + (p.track === 'quick' ? '⚡ 快速回报' : '🛤️ 长期回报') + '<br><div style="margin-top:8px;"><button class="btn btn-primary btn-sm" data-action="sec-confirm" data-id="' + id + '">✅ 确认创建</button> <button class="btn btn-secondary btn-sm" data-action="sec-cancel" data-id="' + id + '">❌ 取消</button></div>';
+    secPush({ role: 'sys', text: card, html: true });
+    return ['确认卡片已生成，请点「✅ 确认创建」或「❌ 取消」'];
+}
+async function secAiKrs(title, why, track) {
+    const prompt = '你是一名目标规划教练。用户背景：西部计划基层志愿者，两年后考研（目标北航 VR 学硕），同时备考雅思。\n请把下面的总目标拆解为 2-4 个可量化、可验证的关键结果（KR）。\n总目标：' + title + '\n为什么想做：' + (why || '未填写') + '\n回报轨道：' + (track === 'long' ? '长期回报（杠杆+不可逆）' : '快速回报（快速改善生活）') + '\n要求：1) 每个 KR 必须量化（目标值+单位+建议截止日期 YYYY-MM-DD）；2) 必须给出可引入外部反馈的验证方式。\n输出严格 JSON：{"krs":[{"text":"...","target":7,"unit":"分","deadline":"2027-06-30","feedback":"..."}]}';
+    const content = await callDeepSeekRaw([{ role: 'system', content: '你是严谨的目标规划教练，只输出严格 JSON。' }, { role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 1500, jsonMode: true });
+    const parsed = parseJsonSafe(content);
+    return (parsed.krs || []).map(k => ({ id: 'gkr_' + Date.now() + Math.random().toString(36).slice(2, 6), text: String(k.text || '').trim(), target: parseFloat(k.target) || 1, current: 0, unit: String(k.unit || '次'), deadline: String(k.deadline || ''), feedback: String(k.feedback || '') })).filter(k => k.text);
+}
+function secTemplateKrs(title, deadline) {
+    return [{ id: 'gkr_' + Date.now() + Math.random().toString(36).slice(2, 6), text: '达成目标：' + title, target: 1, current: 0, unit: '次', deadline: deadline, feedback: '请补充外部验证方式（记录 / 照片 / 成绩单等）' }];
+}
+function secTemplatePlans(krs, deadline) {
+    const plans = [];
+    const today = todayStr();
+    krs.forEach((kr, i) => {
+        if (!(kr.text || '').trim()) return;
+        const due = kr.deadline || deadline || addDays(today, 365);
+        plans.push({ krIndex: i, period: 'year', work: '年度成果：' + kr.text, due: due, reward: '给自己一次小庆祝', punish: '复盘并重新规划' });
+        let q = new Date(today + 'T00:00:00');
+        let qn = 0;
+        while (qn < 4) { q = new Date(q); q.setMonth(q.getMonth() + 3); if (fmtDay(q) > due) break; plans.push({ krIndex: i, period: 'quarter', work: '季度检查点：' + kr.text + '（外部反馈：' + (kr.feedback || '自查') + '）', due: fmtDay(q), reward: '奖励一次喜欢的活动', punish: '下季度加码 20%' }); qn++; }
+        let md = new Date(today + 'T00:00:00');
+        let mn = 0;
+        while (mn < 6) { md = new Date(md); md.setMonth(md.getMonth() + 1); if (fmtDay(md) > due) break; plans.push({ krIndex: i, period: 'month', work: '月度推进：' + kr.text, due: fmtDay(md), reward: '完成即享一次小确幸', punish: '周末补进度' }); mn++; }
+        plans.push({ krIndex: i, period: 'week', work: '本周推进：' + kr.text + '（至少 3 次）', due: addDays(today, 7), reward: '周末放松半天', punish: '下周加一次' });
+        plans.push({ krIndex: i, period: 'day', work: '今日最小一步：' + kr.text, due: today, reward: '完成即打卡', punish: '明早优先补' });
+    });
+    return plans;
+}
+async function secCreateGoalExecute(p) {
+    const title = (p.title || '').trim();
+    const deadline = p.deadline || addDays(todayStr(), 540);
+    const track = p.track === 'quick' ? 'quick' : 'long';
+    let krs = [];
+    if (aiConfig.apiKey) {
+        try { krs = await secAiKrs(title, p.why || '', track); } catch (e) { console.warn('[秘书] AI 拆解 KR 失败，用模板', e); }
+    }
+    if (!krs.length) krs = secTemplateKrs(title, deadline);
+    const plansRaw = secTemplatePlans(krs, deadline);
+    const goal = {
+        id: 'gl_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        title: title,
+        why: p.why || '',
+        track: track,
+        status: 'active',
+        createdAt: Date.now(),
+        krs: krs,
+        plans: plansRaw.map((x, idx) => ({
+            id: 'gp_' + Date.now() + '_' + idx + Math.random().toString(36).slice(2, 4),
+            krId: krs[x.krIndex] ? krs[x.krIndex].id : krs[0].id,
+            period: x.period,
+            work: x.work,
+            due: x.due,
+            reward: x.reward || '',
+            punish: x.punish || '',
+            status: 'next',
+            doneAt: null,
+            risk: { buffer: '', precontrol: '', plan: '', rebuild: '' },
+            resource: { current: '', match: '', supplement: '' },
+            feedback: { resistance: '', results: '' },
+            optimize: { root: '', solution: '', effect: '' }
+        }))
+    };
+    goalData.goals.push(goal);
+    await saveGoalsCloud();
+    RenderBus.emitAll(['execution', 'goals', 'secretary']);
+    return '✅ 目标「' + title + '」已建立：' + krs.length + ' 条 KR、' + goal.plans.length + ' 个执行点（' + (track === 'long' ? '🛤️ 长期回报轨道' : '⚡ 快速回报轨道') + '）。\n去主页看进度，或对我说「目标进度」。';
+}
 async function secretaryAsk(text) {
     if (!text || !text.trim()) return;
     secretaryChat.push({ role: 'user', text: text.trim() });
@@ -5371,7 +5562,9 @@ async function secretaryAsk(text) {
         return;
     }
     if (!aiConfig.apiKey) {
-        secretaryChat.push({ role: 'sys', text: '🤖 完整对话能力需要配置 DeepSeek API Key（右上角 ⚙️ 设置）。\n没配 Key 时，我支持这些指令：\n· 今天有什么安排 / 有什么逾期没做的\n· 本周花了多少钱（也可问「本月」）\n· 目标进度怎么样\n· 写复盘 / 切低电量模式' });
+        let hint = '🤖 完整对话能力需要配置 DeepSeek API Key（右上角 ⚙️ 设置）。\n没配 Key 时，我支持这些指令：\n· 今天有什么安排 / 有什么逾期没做的\n· 本周花了多少钱（也可问「本月」）\n· 目标进度怎么样\n· 写复盘 / 切低电量模式';
+        if (/目标|goal/.test(text)) hint = '🤖 对话式创建目标需要 AI 提取细节，请先在设置配置 API Key；或临时关掉「只读模式」去目标页用向导。';
+        secretaryChat.push({ role: 'sys', text: hint });
         renderSecretary();
         return;
     }
@@ -5386,21 +5579,31 @@ async function secretaryAsk(text) {
             overdue: f.overdue.slice(0, 8),
             goals: goalData.goals.filter(g => g.status === 'active').map(g => ({ title: g.title, pct: goalPct(g), krs: g.krs.map(k => ({ text: k.text, current: k.current, target: k.target, unit: k.unit })) })),
             plans: goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => p.status === 'next' || p.status === 'doing').slice(0, 15).map(p => ({ id: p.id, goal: g.title, work: p.work, due: p.due }))),
+            schedules: scheduleData.tasks.filter(t => t.status === 'todo').slice(0, 10).map(t => ({ title: t.title, date: t.date, time: t.time })),
             balances: accountsData.balances
         };
-        const history = secretaryChat.slice(-6).map(m => m.role + '：' + m.text).join('\n');
+        const history = secretaryChat.slice(-6).map(m => m.role + '：' + (m.text || '').replace(/<[^>]*>/g, ' ')).join('\n');
         const prompt = '【今日事实】' + JSON.stringify(context) + '\n【最近对话】\n' + history + '\n【用户说】' + text.trim() + '\n请输出严格 JSON：{"actions":[...],"reply":"你的回复"}';
-        const content = await callDeepSeekRaw([{ role: 'system', content: '你是个人管理系统的 AI 秘书。用户是西部计划基层志愿者，工资微薄，备考北航 VR 考研与雅思。你务实、简洁、像秘书：主动提醒、关键点请示、执行后汇报。' + SECRETARY_ACTIONS_SPEC }, { role: 'user', content: prompt }], { temperature: 0.3, max_tokens: 1200, jsonMode: true });
-        const parsed = parseJsonSafe(content);
+        const parsed = await secCallWithRetry(prompt);
         const reply = String(parsed.reply || '收到。');
-        const results = await secretaryExecuteActions(parsed.actions);
-        RenderBus.emitAll(['execution', 'goals', 'accounts', 'health', 'rhythm']);
+        const actions = Array.isArray(parsed.actions) ? parsed.actions : [];
+        const results = [];
+        for (const a of actions) {
+            if (a.action === 'create_goal_draft') {
+                results.push(...handleGoalDraft(a));
+            } else if (a.action === 'ask') {
+                results.push('请你确认：' + (a.questions || []).join('；'));
+            } else {
+                results.push(...await secretaryExecuteActions([a]));
+            }
+        }
+        RenderBus.emitAll(['execution', 'goals', 'accounts', 'health', 'rhythm', 'schedule']);
         let msg = reply;
-        if (results.length) msg += '\n\n' + results.map(r => '✅ ' + r).join('\n');
+        if (results.length) msg += '\n\n' + results.map(r => '· ' + r).join('\n');
         secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: msg };
     } catch (err) {
         console.error('[秘书] AI 失败', err);
-        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: '⚠️ 我这边出错了：' + esc(err.message) + '。换个说法试试，或去对应页面手动操作。' };
+        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: '⚠️ ' + esc(err.message || err) + '\n换个说法试试；创建目标类请求我会先补齐细节再请你确认。' };
     }
     renderSecretary();
 }
@@ -5647,7 +5850,7 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
-bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; secSyncSettingsUI(); if (m) m.classList.add('active'); });
+bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; secSyncSettingsUI(); applyUiPrefs(); stdSyncUI(); if (m) m.classList.add('active'); });
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
     aiConfig.apiKey = $('ai-api-key').value.trim();
@@ -5765,6 +5968,33 @@ bindEvent('[data-action="sch-edit"]', 'click', (e, el) => openSchModal(el.datase
 bindEvent('#sch-save', 'click', saveSchModal);
 bindEvent('#sch-cancel', 'click', () => { const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; });
 bindEvent('#sch-del', 'click', () => { const id = schEditingId; const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; if (id) schDelete(id); });
+
+// 只读模式与录入标准
+bindEvent('#ui-readonly', 'change', (e, el) => { uiReadonly = el.checked; try { localStorage.setItem(UI_READONLY_KEY, uiReadonly ? '1' : '0'); } catch (err) {} applyUiPrefs(); });
+bindEvent('#std-save', 'click', () => {
+    secStandards.goal.requireDeadline = $('std-goal-deadline').checked;
+    secStandards.goal.requireWhy = $('std-goal-why').checked;
+    secStandards.goal.requireTrack = $('std-goal-track').checked;
+    secStandards.goal.ask = $('std-goal-ask').value.trim();
+    saveStdPrefs();
+    alert('录入标准已保存 ✓ 秘书会按此要求你补充细节');
+});
+
+// 秘书确认卡片
+bindEvent('[data-action="sec-confirm"]', 'click', async (e, el) => {
+    const id = el.dataset.id;
+    const p = secPending[id];
+    delete secPending[id];
+    if (!p) return;
+    if (p.type === 'goal') {
+        const r = await secCreateGoalExecute(p.payload);
+        secPush({ role: 'sys', text: r });
+    }
+});
+bindEvent('[data-action="sec-cancel"]', 'click', (e, el) => {
+    delete secPending[el.dataset.id];
+    secPush({ role: 'sys', text: '已取消创建，需要时说一声。' });
+});
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
@@ -6013,6 +6243,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     buildNav();
     loadGuidePrefs();
     loadSecPrefs();
+    loadUiPrefs();
+    loadStdPrefs();
+    applyUiPrefs();
 
     $('expense-date').value = todayStr();
     $('income-date').value = todayStr();
