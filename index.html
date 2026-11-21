@@ -395,6 +395,8 @@ tr{scroll-margin-top:20px}
 
         <div id="gate-bar"></div>
 
+        <div id="home-schedule"></div>
+
         <div id="goal-overview-list"></div>
 
         <div class="card">
@@ -402,6 +404,36 @@ tr{scroll-margin-top:20px}
             <button class="btn btn-primary btn-full" data-action="daily-review-start">📝 今日复盘（约 3 分钟）</button>
             <div id="daily-trend"></div>
             <div id="daily-review-history"></div>
+        </div>
+    </div>
+
+    <!-- ========== 日程（SMART 快速安排） ========== -->
+    <div id="tab-schedule" class="tab-content">
+        <h1 class="page-title">日程</h1>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">＋ 快速安排</h2>
+            <div class="field"><input type="text" id="sch-title" placeholder="例如：明天上午看百度世界大会 / 周五前交周报"></div>
+            <div class="grid-2">
+                <div class="field"><label>日期</label><input type="date" id="sch-date"></div>
+                <div class="field"><label>时间</label><input type="time" id="sch-time"></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label>优先级</label><select id="sch-priority"><option value="high">高</option><option value="mid" selected>中</option><option value="low">低</option></select></div>
+                <div class="field"><label>备注</label><input type="text" id="sch-note" placeholder="选填"></div>
+            </div>
+            <div id="sch-smart" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <button class="btn btn-primary btn-full" data-action="sch-add">＋ 添加任务</button>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">📅 今日</h2>
+            <div id="sch-today"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🗂️ 全部任务</h2>
+            <div id="sch-all"></div>
         </div>
     </div>
 
@@ -1015,6 +1047,29 @@ tr{scroll-margin-top:20px}
     </div>
 </div>
 
+<div class="modal-overlay" id="sch-modal">
+    <div class="modal-box">
+        <div class="modal-title">✏️ 编辑日程</div>
+        <div class="field"><label>任务内容</label><input type="text" id="sch-edit-title"></div>
+        <div class="grid-2">
+            <div class="field"><label>日期</label><input type="date" id="sch-edit-date"></div>
+            <div class="field"><label>时间</label><input type="time" id="sch-edit-time"></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label>优先级</label><select id="sch-edit-priority"><option value="high">高</option><option value="mid">中</option><option value="low">低</option></select></div>
+            <div class="field"><label>状态</label><select id="sch-edit-status"><option value="todo">待办</option><option value="done">已完成</option><option value="someday">搁置</option></select></div>
+        </div>
+        <div class="field"><label>备注</label><input type="text" id="sch-edit-note"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <button class="btn btn-danger btn-sm" id="sch-del">删除</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="sch-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="sch-save">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="guide-modal">
     <div class="modal-box">
         <div id="guide-icon" style="font-size:42px;text-align:center;margin-bottom:8px;">🏠</div>
@@ -1294,12 +1349,13 @@ async function deleteHealthRecord(id) {
 }
 
 /* 配置类记录的云端 id 引用 */
-const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, goals: { _cloudId: null } };
+const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, goals: { _cloudId: null }, schedule: { _cloudId: null } };
 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
     { id: 'secretary', icon: '💬', label: '秘书', renders: ['secretary'] },
     { id: 'execution', icon: '🏠', label: '主页', renders: ['execution'] },
+    { id: 'schedule', icon: '📅', label: '日程', renders: ['schedule'] },
     { id: 'goals', icon: '🎯', label: '目标', renders: ['goals'] },
     { id: 'accounts', icon: '💰', label: '账户', renders: ['accounts'] },
     { id: 'rhythm', icon: '⏱️', label: '节律', renders: ['rhythm'] },
@@ -1535,7 +1591,7 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: goalData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: goalData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog, schedule: scheduleData }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -1552,6 +1608,7 @@ function loadCache() {
         if (d.exec) { goalData = { ...defaultGoalData(), ...d.exec }; goalData.goals = goalData.goals || []; goalData.ideas = goalData.ideas || []; goalData.dailyReviews = goalData.dailyReviews || []; goalData.gate = goalData.gate || { date: '', picked: [] }; }
         if (d.wardrobe) { wardrobeData = { items: [], outfits: [], wishlist: [], config: wardrobeData.config, ...d.wardrobe }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
         wardrobeLog = d.wardrobeLog || wardrobeLog;
+        if (d.schedule) { scheduleData = { tasks: [], ...d.schedule }; scheduleData.tasks = scheduleData.tasks || []; }
         return true;
     } catch (e) { return false; }
 }
@@ -1617,6 +1674,7 @@ async function loadAllFromCloud(silent = false) {
         goalData = defaultGoalData();
         rhythmDaily = [];
         wardrobeLog = [];
+        scheduleData = { tasks: [] };
         let cloudFeeds = null;
         Object.values(cloudConfigRefs).forEach(ref => ref._cloudId = null);
         loadHabitsLocal();
@@ -1626,6 +1684,7 @@ async function loadAllFromCloud(silent = false) {
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
 
             if (r.type === 'goals') { cloudConfigRefs.goals._cloudId = r.id; goalData = { ...defaultGoalData(), ...d }; goalData.goals = goalData.goals || []; goalData.ideas = goalData.ideas || []; goalData.dailyReviews = goalData.dailyReviews || []; goalData.gate = goalData.gate || { date: '', picked: [] }; return; }
+            if (r.type === 'schedule') { cloudConfigRefs.schedule._cloudId = r.id; scheduleData = { tasks: [], ...d }; scheduleData.tasks = scheduleData.tasks || []; return; }
             if (r.type === 'ai_config') { cloudConfigRefs.ai._cloudId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
             if (r.type === 'habits_config') { cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
             if (r.type === 'rhythm_config') { cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
@@ -2557,6 +2616,7 @@ function renderExecTodayStrip() {
 }
 function renderHome() {
     renderGateBar();
+    renderHomeSchedule();
     renderGoalOverview();
     renderDailyTrend();
     renderDailyReviewHistory();
@@ -4802,6 +4862,7 @@ function renderWardrobe() {
 const GUIDE_KEY = 'guide_settings_v1';
 const GUIDE_STEPS = [
     { icon: '💬', title: '秘书：说人话就能管理', text: '这是系统的对话式入口。对它说「午饭 15 块」「跑了 3 公里」「背完单词」，它会自动记到对应模块并汇报；问「本周花了多少」「有什么逾期」它会回答；关键信息不确定时会向你请示。配了 API Key 用 AI 对话，没配也支持提醒类指令。' },
+    { icon: '📅', title: '日程：一句话安排任务', text: '在「日程」页输入「明天上午看百度世界大会」，系统自动识别日期和时间并做 SMART 即时校验；工作上的琐事也能排进来。到了设定时间，秘书会弹窗提醒。也可以直接对秘书说「明天上午看百度世界大会」。' },
     { icon: '🏠', title: '主页：一眼看清全局', text: '主页只展示四样：各目标的总目标、可量化的关键结果（KR）、100% 路线图进度条、今日要完成的事。点「管理」进入目标页。' },
     { icon: '🌅', title: '每日门禁', text: '每天第一次登录会弹出今日清单，勾选最不想做但最重要的任务（最多 3 个，不足 3 个全选即可）并确认，系统才会激活。想休息就点「😴 跳过」。' },
     { icon: '💡', title: '想法库：念头先落脚', text: '在「目标」页把任何想法先记下来，不会丢。经 SMART 分析后可采纳、暂存或放弃。' },
@@ -4872,6 +4933,185 @@ function maybeAutoGuide() {
     openGuide(0);
 }
 
+/* ================= 日程模块（SMART 快速任务安排，工作琐事也进每日流程） ================= */
+let scheduleData = { tasks: [] };
+let schEditingId = null;
+function schParseTitle(t) {
+    let clean = (t || '').trim();
+    let offset = 0;
+    if (/明天/.test(clean)) { offset = 1; clean = clean.replace(/明天/, ''); }
+    else if (/后天/.test(clean)) { offset = 2; clean = clean.replace(/后天/, ''); }
+    else if (/大后天/.test(clean)) { offset = 3; clean = clean.replace(/大后天/, ''); }
+    else if (/今天|今日/.test(clean)) { clean = clean.replace(/今天|今日/, ''); }
+    let period = '';
+    let time = '';
+    if (/上午/.test(clean)) { period = '上午'; time = '09:00'; clean = clean.replace(/上午/, ''); }
+    else if (/中午/.test(clean)) { period = '中午'; time = '12:00'; clean = clean.replace(/中午/, ''); }
+    else if (/下午/.test(clean)) { period = '下午'; time = '14:00'; clean = clean.replace(/下午/, ''); }
+    else if (/晚上|傍晚/.test(clean)) { period = '晚上'; time = '19:00'; clean = clean.replace(/晚上|傍晚/, ''); }
+    clean = clean.replace(/^[\s的,，、.。:：-]+/, '');
+    return { clean: clean.trim(), offset, period, time };
+}
+function schSmart(t, date, time) {
+    const title = (t || '').trim();
+    return {
+        s: title.length >= 4,
+        m: /\d|次|个|篇|页|套|完成|看完|读完|写完|交|提交/.test(title),
+        a: true,
+        r: true,
+        t: !!(date || time)
+    };
+}
+function schSmartScore(s) { return ['s', 'm', 'a', 'r', 't'].filter(k => s[k]).length; }
+async function saveScheduleCloud() {
+    if (!currentUser) return;
+    await syncRecord('schedule', todayStr(), scheduleData, cloudConfigRefs.schedule, { silent: true });
+    saveCache();
+}
+function schAutoFill() {
+    const t = $('sch-title');
+    const d = $('sch-date');
+    const tm = $('sch-time');
+    if (!t) return;
+    const parsed = schParseTitle(t.value);
+    if (parsed.offset && d && !d.value) d.value = addDays(todayStr(), parsed.offset);
+    if (parsed.time && tm && !tm.value) tm.value = parsed.time;
+    renderSchSmart();
+}
+function renderSchSmart() {
+    const el = $('sch-smart');
+    if (!el) return;
+    const t = $('sch-title');
+    const d = $('sch-date');
+    const tm = $('sch-time');
+    const smart = schSmart(t ? t.value : '', d ? d.value : '', tm ? tm.value : '');
+    const items = [['s', '具体'], ['m', '可衡量'], ['a', '可实现'], ['r', '相关'], ['t', '时限']];
+    el.innerHTML = items.map(x => '<span class="wd-mini-tag" style="' + (smart[x[0]] ? 'background:#e8f2ee;color:#2d7d5a;' : 'background:#fdeaea;color:#c0392b;') + '">' + (smart[x[0]] ? '✓' : '✗') + ' ' + x[1] + '</span>').join('') + '<span style="font-size:11px;color:var(--text2);align-self:center;">SMART ' + schSmartScore(smart) + '/5</span>';
+}
+async function schAdd() {
+    const titleEl = $('sch-title');
+    const title = titleEl ? titleEl.value.trim() : '';
+    if (!title) return alert('请填写任务内容');
+    const parsed = schParseTitle(title);
+    const dateEl = $('sch-date');
+    const timeEl = $('sch-time');
+    const date = (dateEl && dateEl.value) ? dateEl.value : (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
+    const time = (timeEl && timeEl.value) ? timeEl.value : parsed.time;
+    const noteEl = $('sch-note');
+    scheduleData.tasks.push({
+        id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        title: parsed.clean || title,
+        date: date,
+        time: time || '',
+        period: parsed.period,
+        note: noteEl ? noteEl.value.trim() : '',
+        priority: $('sch-priority').value,
+        status: 'todo',
+        doneAt: null,
+        smart: schSmart(title, date, time),
+        createdAt: Date.now()
+    });
+    await saveScheduleCloud();
+    if (titleEl) titleEl.value = '';
+    if (dateEl) dateEl.value = '';
+    if (timeEl) timeEl.value = '';
+    if (noteEl) noteEl.value = '';
+    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
+    renderSchSmart();
+}
+async function schToggleDone(id) {
+    const t = scheduleData.tasks.find(x => x.id === id);
+    if (!t) return;
+    if (t.status === 'done') { t.status = 'todo'; t.doneAt = null; }
+    else { t.status = 'done'; t.doneAt = todayStr(); }
+    await saveScheduleCloud();
+    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
+}
+async function schDelete(id) {
+    if (!confirm('删除这个日程？')) return;
+    scheduleData.tasks = scheduleData.tasks.filter(x => x.id !== id);
+    await saveScheduleCloud();
+    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
+}
+function openSchModal(id) {
+    const t = scheduleData.tasks.find(x => x.id === id);
+    if (!t) return;
+    schEditingId = id;
+    $('sch-edit-title').value = t.title;
+    $('sch-edit-date').value = t.date || '';
+    $('sch-edit-time').value = t.time || '';
+    $('sch-edit-priority').value = t.priority || 'mid';
+    $('sch-edit-status').value = t.status;
+    $('sch-edit-note').value = t.note || '';
+    $('sch-modal').classList.add('active');
+}
+async function saveSchModal() {
+    const t = scheduleData.tasks.find(x => x.id === schEditingId);
+    if (!t) return;
+    const title = $('sch-edit-title').value.trim();
+    if (!title) return alert('请填写任务内容');
+    const status = $('sch-edit-status').value;
+    t.title = title;
+    t.date = $('sch-edit-date').value || todayStr();
+    t.time = $('sch-edit-time').value || '';
+    t.priority = $('sch-edit-priority').value;
+    t.status = status;
+    t.doneAt = status === 'done' ? (t.doneAt || todayStr()) : null;
+    t.note = $('sch-edit-note').value.trim();
+    await saveScheduleCloud();
+    $('sch-modal').classList.remove('active');
+    schEditingId = null;
+    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
+}
+function schRow(t) {
+    const overdue = t.date < todayStr() && t.status === 'todo';
+    return '<div class="gp-row ' + (t.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="sch-done" data-id="' + t.id + '">✓</div><div class="gp-work">' + esc(t.title) + (t.note ? ' <span class="meta">' + esc(t.note) + '</span>' : '') + '</div><div class="gp-meta">' + (t.time ? '<span class="wd-mini-tag">' + t.time + '</span>' : '') + (overdue ? '<span class="wd-mini-tag" style="background:#fdeaea;color:#c0392b;">逾期</span>' : '') + (t.priority === 'high' ? '<span class="wd-mini-tag" style="background:#fdeaea;color:#c0392b;">高</span>' : '') + '</div><button class="btn btn-secondary btn-sm" data-action="sch-edit" data-id="' + t.id + '">✏️</button></div>';
+}
+function renderSchToday() {
+    const el = $('sch-today');
+    if (!el) return;
+    const today = todayStr();
+    const overdue = scheduleData.tasks.filter(t => t.status === 'todo' && t.date < today);
+    const todayList = scheduleData.tasks.filter(t => t.date === today).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    if (!overdue.length && !todayList.length) { el.innerHTML = '<div class="empty-hint">今天没有安排——上方一句话就能加，例如「明天上午看百度世界大会」</div>'; return; }
+    let html = '';
+    if (overdue.length) html += '<div class="habit-section-title">⚠️ 逾期（' + overdue.length + '）</div>' + overdue.map(schRow).join('');
+    if (todayList.length) html += '<div class="habit-section-title">今日（' + todayList.length + '）</div>' + todayList.map(schRow).join('');
+    el.innerHTML = html;
+}
+function renderSchAll() {
+    const el = $('sch-all');
+    if (!el) return;
+    if (!scheduleData.tasks.length) { el.innerHTML = '<div class="empty-hint">还没有任务</div>'; return; }
+    const today = todayStr();
+    const groups = [
+        ['todo_today', '今天', t => t.date === today && t.status === 'todo'],
+        ['todo_future', '未来', t => t.date > today && t.status === 'todo'],
+        ['todo_over', '逾期', t => t.date < today && t.status === 'todo'],
+        ['done', '已完成', t => t.status === 'done'],
+        ['someday', '搁置', t => t.status === 'someday']
+    ];
+    el.innerHTML = groups.map(g => {
+        const list = scheduleData.tasks.filter(g[2]).sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '99:99').localeCompare(b.time || '99:99'));
+        if (!list.length) return '';
+        return '<details class="goal-kr-fold" ' + (g[0] === 'todo_today' ? 'open' : '') + '><summary>' + g[1] + '（' + list.length + '）</summary>' + list.map(schRow).join('') + '</details>';
+    }).join('');
+}
+function renderHomeSchedule() {
+    const el = $('home-schedule');
+    if (!el) return;
+    const today = todayStr();
+    const list = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo').sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    if (!list.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = '';
+    el.innerHTML = '<div class="card" style="padding:14px;"><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px;">📅 今日日程（' + list.length + '）</div>' + list.map(t => '<div class="gp-row ' + (t.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="sch-done" data-id="' + t.id + '">✓</div><div class="gp-work">' + (t.time ? '<b style="font-size:12px;color:var(--text2);">' + t.time + '</b> ' : '') + esc(t.title) + '</div></div>').join('') + '</div>';
+}
+function renderSchedule() {
+    renderSchSmart();
+    renderSchToday();
+    renderSchAll();
+}
+
 /* ================= 秘书（对话式入口：记录分发 + 主动提醒 + 关键点请示） ================= */
 let secretaryChat = [];
 const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：' +
@@ -4886,6 +5126,8 @@ const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：'
     ' / {"action":"update_kr","goalKeyword":"目标关键词","krKeyword":"KR关键词","current":数字}' +
     ' / {"action":"add_feedback","planKeyword":"执行点关键词","resistance":"阻力","results":"反馈结果"}' +
     ' / {"action":"save_review","done":"...","fail":"...","adjust":"..."}' +
+    ' / {"action":"add_task","title":"任务内容","date":"YYYY-MM-DD","time":"HH:MM"}（安排日程，date/time 可空，空 date 默认今天；支持「明天上午…」这类说法）' +
+    ' / {"action":"complete_task","keyword":"日程任务关键词"}' +
     ' / {"action":"set_gate","keywords":["执行点关键词1","关键词2","关键词3"]}（最多3个）' +
     ' / {"action":"toggle_low_mode"}' +
     ' / {"action":"ask","questions":["需要你确认的问题"]}。' +
@@ -4928,7 +5170,9 @@ function secretaryGreetingText() {
     if (!f.reviewDone) lines.push('· 今日复盘还没写，晚上对我说「写复盘」');
     if (f.sleepRecs >= 2 && f.sleepShort >= 2) lines.push('· 💤 近 3 天有 ' + f.sleepShort + ' 天睡眠不足 7 小时，考虑让我「切最低电量模式」');
     if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === todayStr()) lines.push('· 天气：' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭方案在「衣橱」页');
-    lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 这周花了多少 / 目标进度怎么样。');
+    const schToday = scheduleData.tasks.filter(t => t.date === todayStr() && t.status === 'todo');
+    if (schToday.length) lines.push('· 📅 今日日程 ' + schToday.length + ' 件：' + schToday.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
+    lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 明天上午看百度世界大会 / 这周花了多少。');
     return lines.join('\n');
 }
 function renderSecretary() {
@@ -5074,6 +5318,21 @@ async function secretaryExecuteActions(actions) {
                 r.answers.adjust = a.adjust || '';
                 await saveGoalsCloud();
                 results.push('今日复盘已保存 ✓');
+            } else if (a.action === 'add_task') {
+                if (!a.title) { results.push('请说明任务内容'); continue; }
+                const parsed = schParseTitle(a.title);
+                const date = a.date || (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
+                const time = a.time || parsed.time || '';
+                scheduleData.tasks.push({ id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6), title: a.title, date: date, time: time, period: parsed.period, note: '', priority: 'mid', status: 'todo', doneAt: null, smart: schSmart(a.title, date, time), createdAt: Date.now() });
+                await saveScheduleCloud();
+                results.push('已安排日程：' + a.title + '（' + shortDay(date) + (time ? ' ' + time : '') + '）');
+            } else if (a.action === 'complete_task') {
+                const kw = String(a.keyword || '').trim();
+                const t = scheduleData.tasks.find(x => x.status === 'todo' && x.title.indexOf(kw) >= 0);
+                if (!t) { results.push('没找到日程「' + kw + '」'); continue; }
+                t.status = 'done'; t.doneAt = todayStr();
+                await saveScheduleCloud();
+                results.push('日程「' + t.title + '」已完成 ✓');
             } else if (a.action === 'set_gate') {
                 const kws = (a.keywords || []).map(String);
                 const picked = [];
@@ -5207,6 +5466,8 @@ function secMessageFor(slot) {
         if (f.openToday.length) lines.push('· 今日待完成：' + f.openToday.map(p => p.work).join('、'));
         if (f.overdue.length) lines.push('· ⚠️ 逾期：' + f.overdue.slice(0, 3).map(o => o.work).join('、'));
         if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === today) lines.push('· 天气 ' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭去「衣橱」确认');
+        const schToday = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
+        if (schToday.length) lines.push('· 📅 今日日程：' + schToday.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
         lines.push('· 记昨晚睡眠、早晨习惯打卡，我会分别在 7:15 / 7:30 提醒');
         return lines.join('\n');
     }
@@ -5231,6 +5492,8 @@ function secMessageFor(slot) {
         const lines = ['午间提醒：'];
         if (f.openToday.length) lines.push('· 今日还剩 ' + f.openToday.length + ' 件：' + f.openToday.map(p => p.work).join('、'));
         else lines.push('· 今日执行点已全部完成，干得漂亮');
+        const schLeft = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
+        if (schLeft.length) lines.push('· 今日日程还剩 ' + schLeft.length + ' 件：' + schLeft.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
         lines.push('· 记午饭：对我说「午饭 XX 块」即可');
         if (!f.reviewDone) lines.push('· 晚上别忘写复盘');
         return lines.join('\n');
@@ -5307,7 +5570,34 @@ function secTick() {
             fireSecSlot(s);
         }
     });
+    if (secTickTasks()) fired = true;
     if (fired) saveSecFired();
+}
+function secTickTasks() {
+    const today = todayStr();
+    secFired.sch = secFired.sch || {};
+    const now = new Date();
+    const hhmm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    let fired = false;
+    scheduleData.tasks.forEach(t => {
+        if (t.status !== 'todo' || t.date !== today || !t.time) return;
+        if (hhmm >= t.time && !secFired.sch[t.id]) {
+            secFired.sch[t.id] = true;
+            fired = true;
+            fireSecTask(t);
+        }
+    });
+    return fired;
+}
+function fireSecTask(t) {
+    const text = '⏰ 日程提醒（' + t.time + '）：' + t.title + (t.note ? '\n备注：' + t.note : '');
+    secretaryChat.push({ role: 'sys', text: text });
+    renderSecretary();
+    secAlertQueue.push({ title: '⏰ 日程提醒', body: text });
+    showSecAlert();
+    if (secSchedule.notify && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try { new Notification('秘书 · 日程提醒', { body: text.slice(0, 120) }); } catch (e) {}
+    }
 }
 setInterval(secTick, 30000);
 
@@ -5323,6 +5613,7 @@ function renderAll() {
 RenderBus.on('execution', renderHome);
 RenderBus.on('goals', renderGoals);
 RenderBus.on('secretary', renderSecretary);
+RenderBus.on('schedule', renderSchedule);
 RenderBus.on('accounts', renderAccounts);
 RenderBus.on('rhythm', renderRhythm);
 RenderBus.on('rhythm', renderExecTodayStrip);
@@ -5463,6 +5754,17 @@ bindEvent('#sec-alert-ok', 'click', () => {
     if (secAlertQueue.length) showSecAlert();
     else { const m = $('sec-alert-modal'); if (m) m.classList.remove('active'); }
 });
+
+// 日程模块
+bindEvent('[data-action="sch-add"]', 'click', schAdd);
+bindEvent('#sch-title', 'input', schAutoFill);
+bindEvent('#sch-date', 'change', renderSchSmart);
+bindEvent('#sch-time', 'change', renderSchSmart);
+bindEvent('[data-action="sch-done"]', 'click', (e, el) => schToggleDone(el.dataset.id));
+bindEvent('[data-action="sch-edit"]', 'click', (e, el) => openSchModal(el.dataset.id));
+bindEvent('#sch-save', 'click', saveSchModal);
+bindEvent('#sch-cancel', 'click', () => { const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; });
+bindEvent('#sch-del', 'click', () => { const id = schEditingId; const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; if (id) schDelete(id); });
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
