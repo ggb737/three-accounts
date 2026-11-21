@@ -375,8 +375,21 @@ tr{scroll-margin-top:20px}
 
     <div class="seg" id="nav-seg"><!-- 导航按钮由 JS 的 MODULES 注册表自动生成，新增模块无需改这里 --></div>
 
+    <!-- ========== 秘书（对话式入口） ========== -->
+    <div id="tab-secretary" class="tab-content active">
+        <h1 class="page-title">秘书</h1>
+        <div class="card" style="padding:14px;">
+            <div id="secretary-chat" class="ip-chat-container" style="max-height:56vh;"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <input type="text" id="secretary-input" placeholder="说人话：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 这周花了多少…">
+                <button class="btn btn-primary" id="secretary-send" style="flex:0 0 auto;">发送</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;" id="secretary-quick"></div>
+        </div>
+    </div>
+
     <!-- ========== 主页 ========== -->
-    <div id="tab-execution" class="tab-content active">
+    <div id="tab-execution" class="tab-content">
         <div class="card" style="padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--text2);text-align:center;">直觉选方向 · 理性自律去执行 · 结果的绝对闭环</div>
 
         <div id="gate-bar"></div>
@@ -1265,6 +1278,7 @@ const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rh
 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
+    { id: 'secretary', icon: '💬', label: '秘书', renders: ['secretary'] },
     { id: 'execution', icon: '🏠', label: '主页', renders: ['execution'] },
     { id: 'goals', icon: '🎯', label: '目标', renders: ['goals'] },
     { id: 'accounts', icon: '💰', label: '账户', renders: ['accounts'] },
@@ -4767,6 +4781,7 @@ function renderWardrobe() {
 /* ================= 操作说明（新手引导，分步介绍） ================= */
 const GUIDE_KEY = 'guide_settings_v1';
 const GUIDE_STEPS = [
+    { icon: '💬', title: '秘书：说人话就能管理', text: '这是系统的对话式入口。对它说「午饭 15 块」「跑了 3 公里」「背完单词」，它会自动记到对应模块并汇报；问「本周花了多少」「有什么逾期」它会回答；关键信息不确定时会向你请示。配了 API Key 用 AI 对话，没配也支持提醒类指令。' },
     { icon: '🏠', title: '主页：一眼看清全局', text: '主页只展示四样：各目标的总目标、可量化的关键结果（KR）、100% 路线图进度条、今日要完成的事。点「管理」进入目标页。' },
     { icon: '🌅', title: '每日门禁', text: '每天第一次登录会弹出今日清单，勾选最不想做但最重要的任务（最多 3 个，不足 3 个全选即可）并确认，系统才会激活。想休息就点「😴 跳过」。' },
     { icon: '💡', title: '想法库：念头先落脚', text: '在「目标」页把任何想法先记下来，不会丢。经 SMART 分析后可采纳、暂存或放弃。' },
@@ -4837,6 +4852,269 @@ function maybeAutoGuide() {
     openGuide(0);
 }
 
+/* ================= 秘书（对话式入口：记录分发 + 主动提醒 + 关键点请示） ================= */
+let secretaryChat = [];
+const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：' +
+    '{"action":"record_expense","amount":15,"account":"survival|stable|develop","subCategory":"rigid|emotional|once(仅生存账户)","desc":"用途"}' +
+    ' / {"action":"record_income","amount":100}' +
+    ' / {"action":"record_sleep","start":"23:00","end":"07:00","feeling":"refreshed|ok|tired|groggy","note":"..."}' +
+    ' / {"action":"record_exercise","type":"walk|run|cycling|strength|yoga|ball|swim|other","duration":30,"note":"..."}' +
+    ' / {"action":"record_meal","breakfast":"...","lunch":"...","dinner":"...","snack":"...","water":6}' +
+    ' / {"action":"record_charge","type":"rest|nature|social|hobby|exercise|food|other","delta":2,"note":"..."}' +
+    ' / {"action":"complete_plan","keyword":"执行点名称关键词"}' +
+    ' / {"action":"add_plan","goalKeyword":"目标关键词","period":"day|week|month","work":"具体内容","due":"YYYY-MM-DD","reward":"...","punish":"..."}' +
+    ' / {"action":"update_kr","goalKeyword":"目标关键词","krKeyword":"KR关键词","current":数字}' +
+    ' / {"action":"add_feedback","planKeyword":"执行点关键词","resistance":"阻力","results":"反馈结果"}' +
+    ' / {"action":"save_review","done":"...","fail":"...","adjust":"..."}' +
+    ' / {"action":"set_gate","keywords":["执行点关键词1","关键词2","关键词3"]}（最多3个）' +
+    ' / {"action":"toggle_low_mode"}' +
+    ' / {"action":"ask","questions":["需要你确认的问题"]}。' +
+    '规则：金额、时间等数字只能来自用户原话，绝不能编造；关键信息缺失或含糊时必须用 ask 请示用户；没有合适动作时 actions 为空数组；每次执行后在 reply 中用一两句话向用户汇报结果。';
+
+function secretaryFacts() {
+    const today = todayStr();
+    const gateOk = gateDoneToday();
+    const todayPlans = goalTodayPlans();
+    const openToday = todayPlans.filter(p => p.status !== 'done');
+    const overdue = [];
+    goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) overdue.push({ work: p.work, goal: g.title, due: p.due }); }); });
+    const reviewDone = goalData.dailyReviews.some(r => r.date === today);
+    const last3 = [addDays(today, -1), addDays(today, -2), addDays(today, -3)];
+    let sleepShort = 0, sleepRecs = 0;
+    healthData.sleep.forEach(r => {
+        if (last3.includes(r.date) && r.start_time && r.end_time) {
+            sleepRecs++;
+            const [sh, sm] = r.start_time.split(':').map(Number);
+            const [eh, em] = r.end_time.split(':').map(Number);
+            let mins = (eh * 60 + em) - (sh * 60 + sm);
+            if (mins < 0) mins += 24 * 60;
+            if (mins < 7 * 60) sleepShort++;
+        }
+    });
+    return { gateOk, gate: goalData.gate, todayPlans, openToday, overdue, reviewDone, sleepShort, sleepRecs };
+}
+function secretaryGreetingText() {
+    const f = secretaryFacts();
+    const lines = ['我是你的秘书，先汇报今天的情况：'];
+    if (f.gateOk) {
+        if (f.gate.skipped) lines.push('· 门禁：今天你选择了跳过（允许休息）');
+        else if (f.gate.picked && f.gate.picked.length) {
+            const names = f.gate.picked.map(id => { const l = planLocate(id); return l ? l.plan.work : ''; }).filter(Boolean).join('、');
+            lines.push('· 门禁已通过，今日三件事：' + names);
+        } else lines.push('· 门禁已通过（今天没有安排任务）');
+    } else lines.push('· ⚠️ 今日门禁还没通过——去主页点「去选择」，或直接对我说「帮我选 3 件事」');
+    if (f.openToday.length) lines.push('· 今日待完成 ' + f.openToday.length + ' 件：' + f.openToday.slice(0, 3).map(p => p.work).join('、'));
+    if (f.overdue.length) lines.push('· ⚠️ 逾期未完成 ' + f.overdue.length + ' 件，最早的是：「' + f.overdue[0].work + '」（' + shortDay(f.overdue[0].due) + '）');
+    if (!f.reviewDone) lines.push('· 今日复盘还没写，晚上对我说「写复盘」');
+    if (f.sleepRecs >= 2 && f.sleepShort >= 2) lines.push('· 💤 近 3 天有 ' + f.sleepShort + ' 天睡眠不足 7 小时，考虑让我「切最低电量模式」');
+    if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === todayStr()) lines.push('· 天气：' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭方案在「衣橱」页');
+    lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 这周花了多少 / 目标进度怎么样。');
+    return lines.join('\n');
+}
+function renderSecretary() {
+    const el = $('secretary-chat');
+    if (!el) return;
+    if (!secretaryChat.length) secretaryChat.push({ role: 'sys', text: secretaryGreetingText() });
+    el.innerHTML = secretaryChat.map(m => '<div class="ip-msg ' + (m.role === 'user' ? 'user' : 'sys') + '"><div class="ip-bubble">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>').join('');
+    el.scrollTop = el.scrollHeight;
+    const quick = $('secretary-quick');
+    if (quick && quick.dataset.ready !== '1') {
+        quick.dataset.ready = '1';
+        quick.innerHTML = ['今天有什么安排', '有什么逾期没做的', '本周花了多少钱', '目标进度怎么样'].map(q => '<span class="chip" data-action="sec-quick" data-q="' + q + '">' + q + '</span>').join('');
+    }
+}
+/* 规则版问答（无 API Key 也能用的提醒与查询） */
+function secretaryRuleAnswer(text) {
+    const t = String(text || '').trim();
+    const f = secretaryFacts();
+    if (/安排|今天做|今日/.test(t)) {
+        const lines = [];
+        lines.push(f.gateOk && f.gate.picked && f.gate.picked.length ? '今日三件事：' + f.gate.picked.map(id => { const l = planLocate(id); return l ? l.plan.work : ''; }).filter(Boolean).join('、') : '门禁未通过，去主页选 3 件事。');
+        lines.push('今日待完成 ' + f.openToday.length + ' 件' + (f.openToday.length ? '：' + f.openToday.map(p => p.work).join('、') : ''));
+        return lines.join('\n');
+    }
+    if (/逾期|没做|未完成/.test(t)) {
+        if (!f.overdue.length) return '没有逾期任务，干得漂亮。';
+        return '逾期 ' + f.overdue.length + ' 件：\n' + f.overdue.slice(0, 8).map(o => '· ' + o.work + '（' + shortDay(o.due) + '）').join('\n');
+    }
+    if (/花|支出|账/.test(t)) {
+        const today = todayStr();
+        const week = [];
+        for (let i = 0; i < 7; i++) week.push(addDays(today, -i));
+        const wk = week;
+        const isWeek = /本周|这周|一周/.test(t);
+        const list = accountsData.expenses.filter(e => isWeek ? wk.includes(recordDay(e)) : recordMonth(e) === today.slice(0, 7));
+        const sum = list.reduce((s, e) => s + e.amount, 0);
+        return (isWeek ? '本周' : '本月') + '支出 ¥' + sum.toFixed(2) + '（' + list.length + ' 笔）' + (list.length ? '\n最近：' + list.slice(0, 3).map(e => e.desc + ' ¥' + e.amount.toFixed(2)).join('、') : '');
+    }
+    if (/进度|目标|K[Rr]/.test(t)) {
+        const gs = goalData.goals.filter(g => g.status === 'active');
+        if (!gs.length) return '还没有进行中的目标，去「目标」页建一个。';
+        return gs.map(g => '· ' + g.title + '：' + goalPct(g) + '%').join('\n');
+    }
+    if (/复盘/.test(t)) {
+        openDailyReviewModal();
+        return '已为你打开每日复盘弹窗 ✓';
+    }
+    if (/低电量/.test(t)) {
+        const r = getTodayRhythm();
+        r.mode = r.mode === 'low' ? 'normal' : 'low';
+        saveRhythmCloud();
+        RenderBus.emit('rhythm');
+        return r.mode === 'low' ? '已切换为 🔋 最低电量模式，任务降级，允许自己累。' : '已切回正常模式。';
+    }
+    return null;
+}
+async function secretaryExecuteActions(actions) {
+    const results = [];
+    for (const a of actions || []) {
+        try {
+            if (a.action === 'record_expense') {
+                const amount = parseFloat(a.amount);
+                if (!(amount > 0)) { results.push('支出金额无效，请再确认'); continue; }
+                const ok = await addExpense(amount, ['survival', 'stable', 'develop'].includes(a.account) ? a.account : 'survival', a.desc || '秘书记录', todayStr(), a.subCategory || null);
+                results.push(ok ? ('已记支出 ¥' + amount + '（' + ACCOUNT_LABEL[a.account || 'survival'] + '）') : '支出记录失败（可能余额不足）');
+            } else if (a.action === 'record_income') {
+                const amount = parseFloat(a.amount);
+                if (!(amount > 0)) { results.push('收入金额无效'); continue; }
+                const ok = await addIncome(amount, todayStr());
+                results.push(ok ? ('已记收入 ¥' + amount) : '收入记录失败');
+            } else if (a.action === 'record_sleep') {
+                if (!a.start || !a.end) { results.push('睡眠时间不完整，请告诉我几点睡几点起'); continue; }
+                const rec = { date: todayStr(), ts: Date.now(), start_time: a.start, end_time: a.end, feeling: a.feeling || 'ok', note: a.note || '' };
+                const item = await syncRecord('sleep', todayStr(), rec, rec);
+                if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记睡眠 ' + a.start + '→' + a.end); } else results.push('睡眠记录失败');
+            } else if (a.action === 'record_exercise') {
+                const dur = parseInt(a.duration, 10);
+                if (!(dur > 0)) { results.push('运动时长无效'); continue; }
+                const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', duration: dur, note: a.note || '' };
+                const item = await syncRecord('exercise', todayStr(), rec, rec);
+                if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记运动 ' + (a.type || '其他') + ' ' + dur + ' 分钟'); } else results.push('运动记录失败');
+            } else if (a.action === 'record_meal') {
+                const rec = { date: todayStr(), ts: Date.now(), breakfast: a.breakfast || '', lunch: a.lunch || '', dinner: a.dinner || '', snack: a.snack || '', water: parseInt(a.water, 10) || 0 };
+                if (!rec.breakfast && !rec.lunch && !rec.dinner && !rec.snack) { results.push('饮食内容为空'); continue; }
+                const item = await syncRecord('meal', todayStr(), rec, rec);
+                if (item) { healthData.meal.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记饮食'); } else results.push('饮食记录失败');
+            } else if (a.action === 'record_charge') {
+                const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', delta: parseInt(a.delta, 10) || 0, note: a.note || '' };
+                const item = await syncRecord('charge', todayStr(), rec, rec);
+                if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记充电（能量' + (rec.delta > 0 ? '+' : '') + rec.delta + '）'); } else results.push('充电记录失败');
+            } else if (a.action === 'complete_plan') {
+                const kw = String(a.keyword || '').trim();
+                let found = null;
+                for (const g of goalData.goals) { const p = g.plans.find(x => (x.status === 'next' || x.status === 'doing') && x.work.indexOf(kw) >= 0); if (p) { found = p; break; } }
+                if (!found) { results.push('没找到「' + kw + '」对应的执行点，请换个说法'); continue; }
+                found.status = 'done'; found.doneAt = todayStr();
+                await saveGoalsCloud();
+                results.push('已完成执行点「' + found.work + '」✅');
+            } else if (a.action === 'add_plan') {
+                const gkw = String(a.goalKeyword || '').trim();
+                const goal = goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0) || goalData.goals.find(g => g.status === 'active');
+                if (!goal) { results.push('没有进行中的目标可添加执行点'); continue; }
+                if (!a.work) { results.push('请说明执行点内容'); continue; }
+                goal.plans.push({ id: 'gp_' + Date.now() + Math.random().toString(36).slice(2, 6), krId: goal.krs[0] ? goal.krs[0].id : null, period: ['day', 'week', 'month'].includes(a.period) ? a.period : 'day', work: a.work, due: a.due || todayStr(), reward: a.reward || '', punish: a.punish || '', status: 'next', doneAt: null, risk: {}, resource: {}, feedback: {}, optimize: {} });
+                await saveGoalsCloud();
+                results.push('已为「' + goal.title + '」添加执行点：' + a.work);
+            } else if (a.action === 'update_kr') {
+                const gkw = String(a.goalKeyword || '').trim();
+                const goal = goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0);
+                if (!goal) { results.push('没找到目标「' + gkw + '」'); continue; }
+                const kr = goal.krs.find(k => k.text.indexOf(String(a.krKeyword || '')) >= 0);
+                if (!kr) { results.push('没找到 KR「' + a.krKeyword + '」'); continue; }
+                kr.current = parseFloat(a.current) || 0;
+                await saveGoalsCloud();
+                results.push('KR「' + kr.text + '」进度已更新为 ' + kr.current + '/' + kr.target);
+            } else if (a.action === 'add_feedback') {
+                const kw = String(a.planKeyword || '').trim();
+                let loc = null;
+                for (const g of goalData.goals) { const p = g.plans.find(x => x.work.indexOf(kw) >= 0); if (p) { loc = { goal: g, plan: p }; break; } }
+                if (!loc) { results.push('没找到执行点「' + kw + '」'); continue; }
+                loc.plan.feedback = loc.plan.feedback || {};
+                loc.plan.feedback.resistance = a.resistance || loc.plan.feedback.resistance || '';
+                loc.plan.feedback.results = a.results || loc.plan.feedback.results || '';
+                const text = [a.resistance ? '阻力：' + a.resistance : '', a.results ? '反馈：' + a.results : ''].filter(Boolean).join('；');
+                if (text) todayDailyReview().autoFeed.push({ time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), goal: loc.goal.title, plan: loc.plan.work, text: text });
+                await saveGoalsCloud();
+                results.push('反馈已记录并自动流入今日复盘');
+            } else if (a.action === 'save_review') {
+                const r = todayDailyReview();
+                r.answers.done = a.done || '';
+                r.answers.fail = a.fail || '';
+                r.answers.adjust = a.adjust || '';
+                await saveGoalsCloud();
+                results.push('今日复盘已保存 ✓');
+            } else if (a.action === 'set_gate') {
+                const kws = (a.keywords || []).map(String);
+                const picked = [];
+                for (const kw of kws) {
+                    const l = planLocate(goalGateList().find(x => x.work.indexOf(kw) >= 0) ? goalGateList().find(x => x.work.indexOf(kw) >= 0).id : null);
+                    if (l) picked.push(l.plan.id);
+                }
+                if (!picked.length) { results.push('没匹配到今天可选的执行点'); continue; }
+                goalData.gate = { date: todayStr(), picked: picked.slice(0, 3), skipped: false };
+                await saveGoalsCloud();
+                results.push('门禁已激活，今日三件事已定');
+            } else if (a.action === 'toggle_low_mode') {
+                const r = getTodayRhythm();
+                r.mode = r.mode === 'low' ? 'normal' : 'low';
+                await saveRhythmCloud();
+                RenderBus.emit('rhythm');
+                results.push(r.mode === 'low' ? '已切换最低电量模式' : '已切回正常模式');
+            } else {
+                results.push('动作不支持：' + a.action);
+            }
+        } catch (err) {
+            console.error('[秘书] 动作执行失败', a, err);
+            results.push('「' + (a.action || '') + '」执行出错：' + (err.message || err));
+        }
+    }
+    return results;
+}
+async function secretaryAsk(text) {
+    if (!text || !text.trim()) return;
+    secretaryChat.push({ role: 'user', text: text.trim() });
+    renderSecretary();
+    const rule = secretaryRuleAnswer(text);
+    if (rule !== null) {
+        secretaryChat.push({ role: 'sys', text: rule });
+        renderSecretary();
+        return;
+    }
+    if (!aiConfig.apiKey) {
+        secretaryChat.push({ role: 'sys', text: '🤖 完整对话能力需要配置 DeepSeek API Key（右上角 ⚙️ 设置）。\n没配 Key 时，我支持这些指令：\n· 今天有什么安排 / 有什么逾期没做的\n· 本周花了多少钱（也可问「本月」）\n· 目标进度怎么样\n· 写复盘 / 切低电量模式' });
+        renderSecretary();
+        return;
+    }
+    secretaryChat.push({ role: 'sys', text: '⏳ 处理中…' });
+    renderSecretary();
+    try {
+        const f = secretaryFacts();
+        const context = {
+            gateOk: f.gateOk,
+            gatePicked: f.gate ? f.gate.picked : [],
+            openToday: f.openToday.slice(0, 8).map(p => ({ id: p.id, work: p.work })),
+            overdue: f.overdue.slice(0, 8),
+            goals: goalData.goals.filter(g => g.status === 'active').map(g => ({ title: g.title, pct: goalPct(g), krs: g.krs.map(k => ({ text: k.text, current: k.current, target: k.target, unit: k.unit })) })),
+            plans: goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => p.status === 'next' || p.status === 'doing').slice(0, 15).map(p => ({ id: p.id, goal: g.title, work: p.work, due: p.due }))),
+            balances: accountsData.balances
+        };
+        const history = secretaryChat.slice(-6).map(m => m.role + '：' + m.text).join('\n');
+        const prompt = '【今日事实】' + JSON.stringify(context) + '\n【最近对话】\n' + history + '\n【用户说】' + text.trim() + '\n请输出严格 JSON：{"actions":[...],"reply":"你的回复"}';
+        const content = await callDeepSeekRaw([{ role: 'system', content: '你是个人管理系统的 AI 秘书。用户是西部计划基层志愿者，工资微薄，备考北航 VR 考研与雅思。你务实、简洁、像秘书：主动提醒、关键点请示、执行后汇报。' + SECRETARY_ACTIONS_SPEC }, { role: 'user', content: prompt }], { temperature: 0.3, max_tokens: 1200, jsonMode: true });
+        const parsed = parseJsonSafe(content);
+        const reply = String(parsed.reply || '收到。');
+        const results = await secretaryExecuteActions(parsed.actions);
+        RenderBus.emitAll(['execution', 'goals', 'accounts', 'health', 'rhythm']);
+        let msg = reply;
+        if (results.length) msg += '\n\n' + results.map(r => '✅ ' + r).join('\n');
+        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: msg };
+    } catch (err) {
+        console.error('[秘书] AI 失败', err);
+        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: '⚠️ 我这边出错了：' + esc(err.message) + '。换个说法试试，或去对应页面手动操作。' };
+    }
+    renderSecretary();
+}
+
 /* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
     renderSleep(); renderEnergy(); renderCharge();
@@ -4848,6 +5126,7 @@ function renderAll() {
 }
 RenderBus.on('execution', renderHome);
 RenderBus.on('goals', renderGoals);
+RenderBus.on('secretary', renderSecretary);
 RenderBus.on('accounts', renderAccounts);
 RenderBus.on('rhythm', renderRhythm);
 RenderBus.on('rhythm', renderExecTodayStrip);
@@ -4965,6 +5244,11 @@ bindEvent('#guide-next', 'click', guideNext);
 bindEvent('#guide-prev', 'click', () => { if (guideStep > 0) { guideStep--; renderGuide(); } });
 bindEvent('#guide-skip', 'click', guideSkip);
 bindEvent('#guide-enable', 'change', (e, el) => { guideEnabled = el.checked; saveGuidePrefs(); });
+
+// 秘书
+bindEvent('#secretary-send', 'click', () => { const inp = $('secretary-input'); const v = inp ? inp.value : ''; if (!v.trim()) return; inp.value = ''; secretaryAsk(v); });
+bindEvent('#secretary-input', 'keydown', (e) => { if (e.key === 'Enter') { const v = $('secretary-input').value; if (v.trim()) { $('secretary-input').value = ''; secretaryAsk(v); } } });
+bindEvent('[data-action="sec-quick"]', 'click', (e, el) => secretaryAsk(el.dataset.q));
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
