@@ -379,7 +379,8 @@ tr{scroll-margin-top:20px}
     <div id="tab-secretary" class="tab-content active">
         <h1 class="page-title">秘书</h1>
         <div class="card" style="padding:14px;">
-            <div id="secretary-chat" class="ip-chat-container" style="max-height:56vh;"></div>
+            <div id="sec-flow-bar" style="font-size:12px;color:var(--text3);margin-bottom:10px;"></div>
+            <div id="secretary-chat" class="ip-chat-container" style="max-height:52vh;"></div>
             <div style="display:flex;gap:8px;margin-top:12px;">
                 <input type="text" id="secretary-input" placeholder="说人话：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 这周花了多少…">
                 <button class="btn btn-primary" id="secretary-send" style="flex:0 0 auto;">发送</button>
@@ -1028,6 +1029,14 @@ tr{scroll-margin-top:20px}
     </div>
 </div>
 
+<div class="modal-overlay" id="sec-alert-modal">
+    <div class="modal-box">
+        <div class="modal-title" id="sec-alert-title">🌅 秘书提醒</div>
+        <div id="sec-alert-body" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;"></div>
+        <button class="btn btn-primary btn-full" id="sec-alert-ok" style="margin-top:14px;">知道了</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
         <div class="modal-title">⚙️ 设置</div>
@@ -1045,6 +1054,17 @@ tr{scroll-margin-top:20px}
                 <input type="checkbox" id="guide-enable" style="width:18px;height:18px;cursor:pointer;"> 启用新手引导（登录后自动按步骤介绍功能）
             </label>
             <button class="btn btn-secondary btn-full" id="guide-start-btn" style="margin-top:10px;">📖 现在查看操作说明</button>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">⏰ 秘书日程（固定时间点提醒）</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="sec-enable" style="width:18px;height:18px;cursor:pointer;"> 启用定时提醒
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-top:8px;">
+                <input type="checkbox" id="sec-notify" style="width:18px;height:18px;cursor:pointer;"> 浏览器系统通知（需授权）
+            </label>
+            <div id="sec-slots-list" style="margin-top:10px;max-height:230px;overflow-y:auto;"></div>
+            <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;">每个点位可单独关闭/改时间。提醒需要页面保持打开（静态站无法后台推送）；当天打开晚于点位，会依次补发全部提醒。</p>
         </div>
     </div>
 </div>
@@ -4917,6 +4937,17 @@ function renderSecretary() {
     if (!secretaryChat.length) secretaryChat.push({ role: 'sys', text: secretaryGreetingText() });
     el.innerHTML = secretaryChat.map(m => '<div class="ip-msg ' + (m.role === 'user' ? 'user' : 'sys') + '"><div class="ip-bubble">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>').join('');
     el.scrollTop = el.scrollHeight;
+    const flow = $('sec-flow-bar');
+    if (flow) {
+        if (secSchedule.enabled) {
+            const doneCount = secSchedule.slots.filter(s => secFired.date === todayStr() && secFired.slots[s.id]).length;
+            const total = secSchedule.slots.filter(s => s.on !== false).length;
+            const nextSlot = secSchedule.slots.find(s => s.on !== false && !(secFired.date === todayStr() && secFired.slots[s.id]));
+            flow.textContent = '⏰ 今日流程：已提醒 ' + doneCount + '/' + total + (nextSlot ? ' · 下一点位：' + nextSlot.label + ' ' + nextSlot.time : ' · 今日全部完成 ✓');
+        } else {
+            flow.textContent = '⏰ 定时提醒未启用（右上角 ⚙️ 设置 → 秘书日程开启，共 12 个点位覆盖全部模块）';
+        }
+    }
     const quick = $('secretary-quick');
     if (quick && quick.dataset.ready !== '1') {
         quick.dataset.ready = '1';
@@ -5115,6 +5146,171 @@ async function secretaryAsk(text) {
     renderSecretary();
 }
 
+/* ================= 秘书日程（全模块固定时间点提醒） ================= */
+const SEC_SCHEDULE_KEY = 'sec_schedule_v1';
+const SEC_FIRED_KEY = 'sec_fired_v1';
+const SEC_DEFAULT_SLOTS = [
+    { id: 'morning', label: '🌅 晨会', time: '07:00', on: true },
+    { id: 'sleep', label: '🛏️ 记录睡眠', time: '07:15', on: true },
+    { id: 'habit_am', label: '🎯 早晨习惯', time: '07:30', on: true },
+    { id: 'news', label: '📰 世事简报', time: '08:30', on: true },
+    { id: 'rhythm_am', label: '⏱️ 上午节律', time: '10:00', on: true },
+    { id: 'lunch', label: '🍚 午餐记账', time: '12:30', on: true },
+    { id: 'water', label: '💧 下午节律', time: '14:30', on: true },
+    { id: 'exercise', label: '🏃 运动提醒', time: '17:30', on: true },
+    { id: 'dinner', label: '🍜 晚餐记账', time: '19:00', on: true },
+    { id: 'prep', label: '🎒 睡前准备', time: '21:00', on: true },
+    { id: 'evening', label: '📋 晚间复盘', time: '22:00', on: true },
+    { id: 'bed', label: '🛌 睡觉提醒', time: '22:30', on: true }
+];
+let secSchedule = { enabled: false, notify: false, slots: JSON.parse(JSON.stringify(SEC_DEFAULT_SLOTS)) };
+let secFired = { date: '', slots: {} };
+let secAlertQueue = [];
+function loadSecPrefs() {
+    try {
+        const s = JSON.parse(localStorage.getItem(SEC_SCHEDULE_KEY) || '{}');
+        if (Array.isArray(s.slots) && s.slots.length === SEC_DEFAULT_SLOTS.length) {
+            secSchedule.slots = SEC_DEFAULT_SLOTS.map(d => {
+                const st = s.slots.find(x => x.id === d.id) || {};
+                return { id: d.id, label: d.label, time: st.time || d.time, on: st.on !== false };
+            });
+        }
+        secSchedule.enabled = s.enabled === true;
+        secSchedule.notify = s.notify === true;
+    } catch (e) {}
+    try { secFired = JSON.parse(localStorage.getItem(SEC_FIRED_KEY) || '{"date":"","slots":{}}'); } catch (e) { secFired = { date: '', slots: {} }; }
+}
+function saveSecPrefs() { try { localStorage.setItem(SEC_SCHEDULE_KEY, JSON.stringify(secSchedule)); } catch (e) {} }
+function saveSecFired() { try { localStorage.setItem(SEC_FIRED_KEY, JSON.stringify(secFired)); } catch (e) {} }
+function secSyncSettingsUI() {
+    const en = $('sec-enable');
+    if (en) en.checked = secSchedule.enabled;
+    const nf = $('sec-notify');
+    if (nf) nf.checked = secSchedule.notify;
+    const list = $('sec-slots-list');
+    if (list) {
+        list.innerHTML = secSchedule.slots.map(s => '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">' +
+            '<input type="checkbox" data-sec-on="' + s.id + '" style="width:16px;height:16px;cursor:pointer;"' + (s.on !== false ? ' checked' : '') + '>' +
+            '<span style="flex:1;">' + esc(s.label) + '</span>' +
+            '<input type="time" data-sec-time="' + s.id + '" value="' + esc(s.time) + '" style="width:auto;flex:0 0 auto;padding:6px 8px;font-size:13px;">' +
+            '</div>').join('');
+    }
+}
+function secMessageFor(slot) {
+    const f = secretaryFacts();
+    const today = todayStr();
+    const id = slot.id;
+    if (id === 'morning') {
+        const lines = ['早上好，今日安排如下：'];
+        if (!f.gateOk) lines.push('· 先去主页把门禁 3 件事选了（或对我说「帮我选 3 件事」）');
+        else if (f.gate.picked && f.gate.picked.length) lines.push('· 今日三件事：' + f.gate.picked.map(pid => { const l = planLocate(pid); return l ? l.plan.work : ''; }).filter(Boolean).join('、'));
+        if (f.openToday.length) lines.push('· 今日待完成：' + f.openToday.map(p => p.work).join('、'));
+        if (f.overdue.length) lines.push('· ⚠️ 逾期：' + f.overdue.slice(0, 3).map(o => o.work).join('、'));
+        if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === today) lines.push('· 天气 ' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭去「衣橱」确认');
+        lines.push('· 记昨晚睡眠、早晨习惯打卡，我会分别在 7:15 / 7:30 提醒');
+        return lines.join('\n');
+    }
+    if (id === 'sleep') {
+        if (healthData.sleep.some(r => r.date === today)) return '昨晚睡眠已记录 ✓';
+        return '昨晚几点睡、几点起？去「健康」页记睡眠，或直接对我说「昨晚 12 点睡 7 点起」。';
+    }
+    if (id === 'habit_am') {
+        const missing = habits.filter(h => h.category === '早晨' && !(h.dates || []).includes(today)).map(h => h.name);
+        return missing.length ? '早晨习惯还有 ' + missing.length + ' 个没打卡：' + missing.join('、') + '。去「习惯」页打卡。' : '早晨习惯全部打卡完成 ✓';
+    }
+    if (id === 'news') {
+        if ((newsData.briefings || []).some(b => b.date === today)) return '今日简报已生成 ✓ 有空去「世事」读一遍。';
+        return '今天还没有简报——去「世事」点「抓取并生成简报」（需要已配置 API Key 和 RSS 源）。';
+    }
+    if (id === 'rhythm_am') {
+        const r = getTodayRhythm();
+        const wordsDone = r.done && r.done.includes('words');
+        return wordsDone ? '上午节律：背单词已打卡 ✓ 继续推进今日执行点。' : '上午节律：背单词时间（墨墨）。完成后去「节律」点一下打卡。';
+    }
+    if (id === 'lunch') {
+        const lines = ['午间提醒：'];
+        if (f.openToday.length) lines.push('· 今日还剩 ' + f.openToday.length + ' 件：' + f.openToday.map(p => p.work).join('、'));
+        else lines.push('· 今日执行点已全部完成，干得漂亮');
+        lines.push('· 记午饭：对我说「午饭 XX 块」即可');
+        if (!f.reviewDone) lines.push('· 晚上别忘写复盘');
+        return lines.join('\n');
+    }
+    if (id === 'water') {
+        const lines = ['下午节律：'];
+        lines.push('· 喝口水、起来走动一下');
+        if (!healthData.energy.some(r => r.date === today)) lines.push('· 顺手记一下下午能量（「健康」→ 能量，或对我说「下午能量 6 分」）');
+        return lines.join('\n');
+    }
+    if (id === 'exercise') {
+        if (healthData.exercise.some(r => r.date === today)) return '今天已经运动过 ✓';
+        const hasPlan = goalData.goals.some(g => g.status === 'active' && g.plans.some(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)));
+        if (hasPlan) return '今天的运动执行点还没完成：' + goalData.goals.flatMap(g => g.plans.filter(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)).map(p => p.work)).join('、') + '。做完对我说一声。';
+        return '今天还没运动：散个步、做个微运动都算（去「健康」或对我说「跑了 3 公里」）。';
+    }
+    if (id === 'dinner') {
+        return '晚餐记账提醒：对我说「晚饭 XX 块」即可。';
+    }
+    if (id === 'prep') {
+        const lines = ['睡前准备：'];
+        const tomorrow = goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => (p.status === 'next' || p.status === 'doing') && p.due === addDays(today, 1)).map(p => ({ work: p.work, goal: g.title })));
+        lines.push(tomorrow.length ? '· 明天有 ' + tomorrow.length + ' 件事：' + tomorrow.slice(0, 5).map(x => x.work).join('、') : '· 明天暂无安排执行点');
+        lines.push('· 把明天要穿的衣服拿出来（「衣橱」页有穿搭建议）');
+        return lines.join('\n');
+    }
+    if (id === 'evening') {
+        const done = f.todayPlans.filter(p => p.status === 'done').length;
+        const lines = ['晚间复盘时间：'];
+        lines.push('· 今日完成 ' + done + ' / ' + f.todayPlans.length + ' 件执行点');
+        if (f.openToday.length) lines.push('· 未完成：' + f.openToday.map(p => p.work).join('、'));
+        if (f.overdue.length) lines.push('· 逾期 ' + f.overdue.length + ' 件，明天优先处理');
+        if (!f.reviewDone) lines.push('· 现在写今日复盘（对我说「写复盘」）');
+        else lines.push('· 复盘已写 ✓');
+        return lines.join('\n');
+    }
+    const missingBed = habits.filter(h => h.category === '睡眠' && !(h.dates || []).includes(today)).map(h => h.name);
+    const lines = ['该睡觉了：'];
+    lines.push(missingBed.length ? '· 睡前习惯还没打卡：' + missingBed.join('、') : '· 睡前习惯已完成 ✓');
+    lines.push('· 放下手机，明早告诉我昨晚几点睡的');
+    return lines.join('\n');
+}
+function fireSecSlot(s) {
+    const text = secMessageFor(s);
+    secretaryChat.push({ role: 'sys', text: '【' + s.label + ' · ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) + '】\n' + text });
+    renderSecretary();
+    secAlertQueue.push({ title: s.label + ' · 秘书提醒', body: text });
+    showSecAlert();
+    if (secSchedule.notify && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try { new Notification('秘书 · ' + s.label, { body: text.slice(0, 120) }); } catch (e) {}
+    }
+}
+function showSecAlert() {
+    if (!secAlertQueue.length) return;
+    const m = $('sec-alert-modal');
+    const t = $('sec-alert-title');
+    const b = $('sec-alert-body');
+    if (t) t.textContent = secAlertQueue[0].title;
+    if (b) b.textContent = secAlertQueue[0].body;
+    if (m) m.classList.add('active');
+}
+function secTick() {
+    if (!secSchedule.enabled || !currentUser) return;
+    const today = todayStr();
+    if (secFired.date !== today) secFired = { date: today, slots: {} };
+    const now = new Date();
+    const hhmm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    let fired = false;
+    secSchedule.slots.forEach(s => {
+        if (s.on === false) return;
+        if (hhmm >= s.time && !secFired.slots[s.id]) {
+            secFired.slots[s.id] = true;
+            fired = true;
+            fireSecSlot(s);
+        }
+    });
+    if (fired) saveSecFired();
+}
+setInterval(secTick, 30000);
+
 /* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
     renderSleep(); renderEnergy(); renderCharge();
@@ -5160,7 +5356,7 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
-bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; if (m) m.classList.add('active'); });
+bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; secSyncSettingsUI(); if (m) m.classList.add('active'); });
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
     aiConfig.apiKey = $('ai-api-key').value.trim();
@@ -5249,6 +5445,24 @@ bindEvent('#guide-enable', 'change', (e, el) => { guideEnabled = el.checked; sav
 bindEvent('#secretary-send', 'click', () => { const inp = $('secretary-input'); const v = inp ? inp.value : ''; if (!v.trim()) return; inp.value = ''; secretaryAsk(v); });
 bindEvent('#secretary-input', 'keydown', (e) => { if (e.key === 'Enter') { const v = $('secretary-input').value; if (v.trim()) { $('secretary-input').value = ''; secretaryAsk(v); } } });
 bindEvent('[data-action="sec-quick"]', 'click', (e, el) => secretaryAsk(el.dataset.q));
+
+// 秘书日程
+bindEvent('#sec-enable', 'change', (e, el) => { secSchedule.enabled = el.checked; saveSecPrefs(); });
+bindEvent('#sec-notify', 'change', async (e, el) => {
+    secSchedule.notify = el.checked;
+    if (el.checked && typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+        try { await Notification.requestPermission(); } catch (err) {}
+        if (Notification.permission !== 'granted') { el.checked = false; secSchedule.notify = false; alert('通知权限未授权，浏览器系统通知不会生效'); }
+    }
+    saveSecPrefs();
+});
+bindEvent('[data-sec-on]', 'change', (e, el) => { const s = secSchedule.slots.find(x => x.id === el.dataset.secOn); if (s) { s.on = el.checked; saveSecPrefs(); } });
+bindEvent('[data-sec-time]', 'change', (e, el) => { const s = secSchedule.slots.find(x => x.id === el.dataset.secTime); if (s) { s.time = el.value; saveSecPrefs(); } });
+bindEvent('#sec-alert-ok', 'click', () => {
+    secAlertQueue.shift();
+    if (secAlertQueue.length) showSecAlert();
+    else { const m = $('sec-alert-modal'); if (m) m.classList.remove('active'); }
+});
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
@@ -5496,6 +5710,7 @@ bindEvent('[data-action="wd-del-log"]', 'click', (e, el) => wdDeleteLog(el.datas
 document.addEventListener('DOMContentLoaded', async () => {
     buildNav();
     loadGuidePrefs();
+    loadSecPrefs();
 
     $('expense-date').value = todayStr();
     $('income-date').value = todayStr();
