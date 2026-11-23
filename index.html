@@ -2004,6 +2004,40 @@ const Core = (() => {
                 item.amount = na;
             }
             if (p.amount !== undefined && card.type === 'transfer') return { ok: false, error: '转换金额暂不支持修改' };
+            /* 换账户（支出）：余额随记录搬移，不再需要撤销重记 */
+            if (p.account !== undefined && card.type === 'expense' && p.account !== item.account) {
+                if (!ACCOUNT_LABEL[p.account]) return { ok: false, error: '账户无效' };
+                state.accountsData.balances[item.account] += item.amount;
+                if (state.accountsData.balances[p.account] < item.amount) {
+                    state.accountsData.balances[item.account] -= item.amount;
+                    return { ok: false, error: '⚠️ ' + ACCOUNT_LABEL[p.account] + '账户余额不足！' };
+                }
+                state.accountsData.balances[p.account] -= item.amount;
+                item.account = p.account;
+                map.account = p.account;
+                if (item.account !== 'survival') item.subCategory = null;
+                else if (!item.subCategory) { item.subCategory = 'rigid'; map.sub_category = 'rigid'; }
+            }
+            /* 换转出/转入账户（转换）：两账户余额联动调整 */
+            if ((p.from !== undefined || p.to !== undefined) && card.type === 'transfer') {
+                const nf = p.from !== undefined ? p.from : item.from;
+                const nt = p.to !== undefined ? p.to : item.to;
+                if (nf === nt) return { ok: false, error: '转出和转入账户不能相同' };
+                if (!ACCOUNT_LABEL[nf] || !ACCOUNT_LABEL[nt]) return { ok: false, error: '账户无效' };
+                const of = item.from, ot = item.to;
+                state.accountsData.balances[of] += item.amount;
+                state.accountsData.balances[ot] -= item.amount;
+                if (state.accountsData.balances[nf] < item.amount) {
+                    state.accountsData.balances[of] -= item.amount;
+                    state.accountsData.balances[ot] += item.amount;
+                    return { ok: false, error: '⚠️ ' + ACCOUNT_LABEL[nf] + '账户余额不足！' };
+                }
+                state.accountsData.balances[nf] -= item.amount;
+                state.accountsData.balances[nt] += item.amount;
+                item.from = nf; item.to = nt;
+                if (nf !== of) map.from = nf;
+                if (nt !== ot) map.to = nt;
+            }
             if (p.desc !== undefined) item.desc = p.desc;
             if (p.subCategory !== undefined) item.subCategory = p.subCategory;
             if (currentUser) await updateAccountRecord(card.id, map);
@@ -6037,7 +6071,7 @@ const SEC_CHARGE_OPTS = [['rest', '休息'], ['nature', '大自然'], ['social',
 const SEC_FIELD_SPECS = {
     'finance/expense': [
         { k: 'amount', label: '金额', kind: 'num', step: '0.01' },
-        { k: 'account', label: '账户', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
+        { k: 'account', label: '账户', kind: 'sel', opts: SEC_ACCOUNT_OPTS },
         { k: 'subCategory', label: '分类', kind: 'sel', opts: SEC_SUB_OPTS, showIf: (f) => f.account === 'survival' },
         { k: 'desc', label: '用途', kind: 'text', full: true }
     ],
@@ -6047,8 +6081,8 @@ const SEC_FIELD_SPECS = {
     ],
     'finance/transfer': [
         { k: 'amount', label: '金额', kind: 'num', step: '0.01' },
-        { k: 'from', label: '转出', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
-        { k: 'to', label: '转入', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
+        { k: 'from', label: '转出', kind: 'sel', opts: SEC_ACCOUNT_OPTS },
+        { k: 'to', label: '转入', kind: 'sel', opts: SEC_ACCOUNT_OPTS },
         { k: 'desc', label: '备注', kind: 'text', full: true }
     ],
     'schedule/event': [
@@ -6226,7 +6260,6 @@ function renderCard(card, mi, ci) {
     const canRevoke = (card.status === 'pending' || card.status === 'committed' || card.status === 'error') && !disabledAll;
     let footNote = '';
     if (card.tip) footNote += '<div class="sec-foot-msg ' + (card.tipOk ? 'ok' : 'err') + '">' + esc(card.tip) + '</div>';
-    if (card.status === 'committed' && !disabledAll && card.module === 'finance' && (card.type === 'expense' || card.type === 'transfer')) footNote += '<div class="sec-foot-msg">已提交的账户不可改，改账户请先撤销重记。</div>';
     return '<div class="sec-card' + (card.status === 'revoked' ? ' revoked' : '') + '" data-mi="' + mi + '" data-ci="' + ci + '">' +
         '<div class="sec-card-head"><span class="sec-badge sec-badge-mod">' + (SEC_MODULE_BADGE[card.module] || esc(card.module)) + '</span><span class="sec-card-title">' + esc(card.title || '') + '</span>' + badge + '</div>' +
         fieldsHtml + clarifyHtml + errHtml +
