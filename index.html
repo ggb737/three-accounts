@@ -352,8 +352,8 @@ body.readonly #tab-health .field,
 body.readonly #tab-health .score-row,
 body.readonly #tab-health .chip-row,
 body.readonly #tab-health .btn-primary,
-body.readonly #tab-habits #habit-add-fold,
-body.readonly #tab-habits .habit-action-btn,
+body.readonly #tab-Core.state.habits #habit-add-fold,
+body.readonly #tab-Core.state.habits .habit-action-btn,
 body.readonly #tab-goals [data-action="idea-add"],
 body.readonly #tab-goals [data-action="goal-add"],
 body.readonly #tab-goals [data-action="goal-edit"],
@@ -1359,6 +1359,99 @@ function bindEvent(selector, eventName, handler) {
     });
 }
 
+/* ================= Core（内核层：统一状态 + API，交互层唯一入口） ================= */
+const Core = (() => {
+    /**
+     * 统一卡片契约（Card Contract）
+     * @typedef {Object} Card
+     * @property {('finance'|'schedule'|'goal'|'health'|'habit'|'wardrobe'|'news')} module 所属模块
+     * @property {string} type    模块内动作类型（expense / sleep / plan / task / outfit …）
+     * @property {string} title   卡片标题（人类可读一句话）
+     * @property {Object} fields  结构化字段（各模块自定义）
+     * @property {string} [time]  发生时间（YYYY-MM-DD，缺省 = 今天）
+     * @property {number} confidence 抽取置信度 0~1
+     * @property {string} [sourceText] 用户原话（可追溯）
+     * @property {('pending'|'confirmed'|'committed'|'revoked'|'error')} status 卡片状态
+     * 预留 API（后续阶段实现）：parse(text, context) / commit(card) / revoke(id) / update(id, patch)
+     */
+
+    /* —— 状态：各模块数据统一收拢（真实初始化在原声明行原位执行，勿删原行赋值） —— */
+    const state = {
+        accountsData: { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] }, // finance
+        healthData: { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] }, // health
+        newsData: { items: [], summaries: [], briefings: [] }, // news
+        rssFeeds: [], // news(rss)
+        aiConfig: { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' },
+        cloudConfigRefs: { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, goals: { _cloudId: null }, schedule: { _cloudId: null } },
+        habits: [], // habit
+        rhythmNodes: [], // rhythm
+        rhythmDaily: [],
+        goalData: null, // goal（由目标系统区 defaultGoalData() 初始化）
+        scheduleData: { tasks: [] }, // schedule
+        wardrobeData: { items: [], outfits: [], wishlist: [], config: { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null } }, // wardrobe
+        wardrobeLog: [],
+        wardrobeWeather: null
+    };
+
+    /* 模块名 → 取数函数（先只做转发，返回与现有渲染同源的数据） */
+    const QUERY_MAP = {
+        finance: () => state.accountsData,
+        schedule: () => state.scheduleData.tasks,
+        goal: () => state.goalData,
+        goals: () => state.goalData,
+        health: () => state.healthData,
+        habit: () => state.habits,
+        habits: () => state.habits,
+        wardrobe: () => state.wardrobeData,
+        news: () => state.newsData,
+        rss: () => state.rssFeeds
+    };
+
+    /* 模块名 → 现有 renderXxx 转发（container/opts 第 2 阶段启用，本阶段仅转发不重写） */
+    const RENDER_MAP = {
+        secretary: () => renderSecretary(),
+        execution: () => renderHome(),
+        schedule: () => renderSchedule(),
+        goal: () => renderGoals(),
+        goals: () => renderGoals(),
+        accounts: () => renderAccounts(),
+        finance: () => renderAccounts(),
+        rhythm: () => renderRhythm(),
+        health: () => renderHealthAll(),
+        habit: () => renderHabits(),
+        habits: () => renderHabits(),
+        wardrobe: () => renderWardrobe(),
+        news: () => { renderNews(); renderRssSources(); },
+        rss: () => renderRssSources()
+    };
+
+    return {
+        state,
+
+        /** 按模块取数。
+         *  @param {('finance'|'schedule'|'goal'|'health'|'habit'|'wardrobe'|'news'|'goals'|'habits'|'accounts'|'rss')} module 模块名
+         *  @param {Object} [opts] 过滤/排序选项（第 2 阶段启用）
+         *  @returns {*} 对应模块数据（与渲染同源引用） */
+        query(module, opts) { const fn = QUERY_MAP[module]; return fn ? fn() : null; },
+
+        /** 今日聚合视图：按时间+状态+异常组织（本阶段返回空结构，第 2 阶段填充）。
+         *  @returns {{timeline:Array, todos:Array, promises:Array, anomalies:Array}} */
+        queryToday() { return { timeline: [], todos: [], promises: [], anomalies: [] }; },
+
+        /** 周/月回顾：模块摘要（本阶段返回空结构，第 2 阶段填充）。
+         *  @param {('week'|'month')} period 回顾周期
+         *  @returns {{finance:Object, goals:Object, health:Object, habits:Object, wardrobe:Object, news:Object}} */
+        queryReview(period) { return { finance: {}, goals: {}, health: {}, habits: {}, wardrobe: {}, news: {} }; },
+
+        /** 渲染模块：内部调现有 renderXxx，不重写渲染逻辑。
+         *  @param {string} module 模块名（同 QUERY_MAP 键）
+         *  @param {HTMLElement} [container] 目标容器（第 2 阶段启用；现有 renderXxx 固定渲染各自容器，本阶段忽略）
+         *  @param {Object} [opts] 渲染选项（第 2 阶段启用）
+         *  @returns {boolean} 是否命中渲染映射 */
+        render(module, container, opts) { const fn = RENDER_MAP[module]; if (!fn) return false; fn(); return true; }
+    };
+})();
+
 /* 写入云端前剔除 _cloudId 这类本地字段 */
 function cleanForCloud(obj) {
     if (!obj || typeof obj !== 'object') return obj;
@@ -1405,7 +1498,7 @@ async function deleteHealthRecord(id) {
 }
 
 /* 配置类记录的云端 id 引用 */
-const cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, goals: { _cloudId: null }, schedule: { _cloudId: null } };
+Core.state.cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null }, rhythm: { _cloudId: null }, wardrobe: { _cloudId: null }, goals: { _cloudId: null }, schedule: { _cloudId: null } };
 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
@@ -1607,28 +1700,28 @@ const DEFAULT_RHYTHM_NODES = [
     { key: 'review', time: '22:00-22:30', task: '床上整理现象调查集', desc: '碎片整理', lowTask: '写一句"今天我很累，但活下来了"', lowDesc: '甚至可以只写一个句号' }
 ];
 
-let rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
+Core.state.rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
 let rhythmEditMode = false;
 let rhythmEditingIndex = -1;
 
 function genRhythmKey() { return 'n' + Date.now() + Math.random().toString(36).slice(2, 6); }
-function saveRhythmNodesLocal() { try { localStorage.setItem(RHYTHM_NODES_KEY, JSON.stringify(rhythmNodes)); } catch (e) {} }
+function saveRhythmNodesLocal() { try { localStorage.setItem(RHYTHM_NODES_KEY, JSON.stringify(Core.state.rhythmNodes)); } catch (e) {} }
 function loadRhythmNodesLocal() {
-    try { const raw = localStorage.getItem(RHYTHM_NODES_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) rhythmNodes = arr; } } catch (e) {}
+    try { const raw = localStorage.getItem(RHYTHM_NODES_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length) Core.state.rhythmNodes = arr; } } catch (e) {}
 }
 
 /* ================= 数据 ================= */
-let accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
-let healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
-let newsData = { items: [], summaries: [], briefings: [] };
-let rssFeeds = [];
-let aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
-let habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
+Core.state.accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
+Core.state.healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+Core.state.newsData = { items: [], summaries: [], briefings: [] };
+Core.state.rssFeeds = [];
+Core.state.aiConfig = { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' };
+Core.state.habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
 let currentEditingHabitId = null;
-let rhythmDaily = [];
-let wardrobeData = { items: [], outfits: [], wishlist: [], config: { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null } };
-let wardrobeLog = [];
-let wardrobeWeather = null;
+Core.state.rhythmDaily = [];
+Core.state.wardrobeData = { items: [], outfits: [], wishlist: [], config: { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null } };
+Core.state.wardrobeLog = [];
+Core.state.wardrobeWeather = null;
 
 /* ================= 缓存 ================= */
 const CACHE_KEY = 'sys_data_cache';
@@ -1641,13 +1734,13 @@ const HEALTH_LIST_MAP = { sleep: 'sleep', energy: 'energy', charge: 'charge', ex
 
 function saveAIConfigLocal(c) { localStorage.setItem(AI_KEY, JSON.stringify(c)); }
 function loadAIConfigLocal() { try { const r = localStorage.getItem(AI_KEY); if (r) return JSON.parse(r); } catch(e) {} return { apiKey: '', apiUrl: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }; }
-function saveHabitsLocal() { localStorage.setItem(HABITS_KEY, JSON.stringify(habits)); }
-function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); if (r) { const arr = JSON.parse(r); habits = arr.map(h => ({ category: '其他', ...h })); } } catch(e) {} }
+function saveHabitsLocal() { localStorage.setItem(HABITS_KEY, JSON.stringify(Core.state.habits)); }
+function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); if (r) { const arr = JSON.parse(r); Core.state.habits = arr.map(h => ({ category: '其他', ...h })); } } catch(e) {} }
 
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: accountsData, health: healthData, news: newsData, rhythm: rhythmDaily, exec: goalData, wardrobe: wardrobeData, wardrobeLog: wardrobeLog, schedule: scheduleData }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: Core.state.accountsData, health: Core.state.healthData, news: Core.state.newsData, rhythm: Core.state.rhythmDaily, exec: Core.state.goalData, wardrobe: Core.state.wardrobeData, wardrobeLog: Core.state.wardrobeLog, schedule: Core.state.scheduleData }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -1656,20 +1749,20 @@ function loadCache() {
         if (!raw) return false;
         const d = JSON.parse(raw);
         if (!d.uid || !currentUser || d.uid !== currentUser.id) return false;
-        accountsData = d.accounts || accountsData;
-        healthData = d.health || healthData;
-        newsData = d.news || newsData;
-        if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
-        rhythmDaily = d.rhythm || rhythmDaily;
-        if (d.exec) { goalData = { ...defaultGoalData(), ...d.exec }; goalData.goals = goalData.goals || []; goalData.ideas = goalData.ideas || []; goalData.dailyReviews = goalData.dailyReviews || []; goalData.gate = goalData.gate || { date: '', picked: [] }; }
-        if (d.wardrobe) { wardrobeData = { items: [], outfits: [], wishlist: [], config: wardrobeData.config, ...d.wardrobe }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
-        wardrobeLog = d.wardrobeLog || wardrobeLog;
-        if (d.schedule) { scheduleData = { tasks: [], ...d.schedule }; scheduleData.tasks = scheduleData.tasks || []; }
+        Core.state.accountsData = d.accounts || Core.state.accountsData;
+        Core.state.healthData = d.health || Core.state.healthData;
+        Core.state.newsData = d.news || Core.state.newsData;
+        if (!Array.isArray(Core.state.newsData.briefings)) Core.state.newsData.briefings = [];
+        Core.state.rhythmDaily = d.rhythm || Core.state.rhythmDaily;
+        if (d.exec) { Core.state.goalData = { ...defaultGoalData(), ...d.exec }; Core.state.goalData.goals = Core.state.goalData.goals || []; Core.state.goalData.ideas = Core.state.goalData.ideas || []; Core.state.goalData.dailyReviews = Core.state.goalData.dailyReviews || []; Core.state.goalData.gate = Core.state.goalData.gate || { date: '', picked: [] }; }
+        if (d.wardrobe) { Core.state.wardrobeData = { items: [], outfits: [], wishlist: [], config: Core.state.wardrobeData.config, ...d.wardrobe }; Core.state.wardrobeData.items = Core.state.wardrobeData.items || []; Core.state.wardrobeData.outfits = Core.state.wardrobeData.outfits || []; Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist || []; if (!Core.state.wardrobeData.config) Core.state.wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
+        Core.state.wardrobeLog = d.wardrobeLog || Core.state.wardrobeLog;
+        if (d.schedule) { Core.state.scheduleData = { tasks: [], ...d.schedule }; Core.state.scheduleData.tasks = Core.state.scheduleData.tasks || []; }
         return true;
     } catch (e) { return false; }
 }
-function saveRssFeedsLocal() { try { localStorage.setItem(RSS_KEY, JSON.stringify(rssFeeds)); } catch (e) {} }
-function loadRssFeedsLocal() { try { const raw = localStorage.getItem(RSS_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) { rssFeeds = arr; return; } } } catch (e) {} }
+function saveRssFeedsLocal() { try { localStorage.setItem(RSS_KEY, JSON.stringify(Core.state.rssFeeds)); } catch (e) {} }
+function loadRssFeedsLocal() { try { const raw = localStorage.getItem(RSS_KEY); if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) { Core.state.rssFeeds = arr; return; } } } catch (e) {} }
 
 /* ================= UI ================= */
 function showLoginUI() { $('auth-card').style.display = 'block'; $('loading-overlay').style.display = 'none'; $('main-content').style.display = 'none'; }
@@ -1704,64 +1797,64 @@ async function loadAllFromCloud(silent = false) {
         const { data: records, error: err1 } = await withTimeout(sb.from('records').select('*').order('ts', { ascending: true }), 10000, '拉取账户数据');
         if (err1) throw err1;
 
-        accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
+        Core.state.accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
         (records || []).forEach(r => {
             if (r.type === 'income') {
-                accountsData.income += r.amount;
-                accountsData.incomeRecords.push({ id: r.id, amount: r.amount, day: r.day, month: r.month, ts: r.ts });
-                accountsData.balances.survival += r.amount * RATIOS.survival;
-                accountsData.balances.stable += r.amount * RATIOS.stable;
-                accountsData.balances.develop += r.amount * RATIOS.develop;
+                Core.state.accountsData.income += r.amount;
+                Core.state.accountsData.incomeRecords.push({ id: r.id, amount: r.amount, day: r.day, month: r.month, ts: r.ts });
+                Core.state.accountsData.balances.survival += r.amount * RATIOS.survival;
+                Core.state.accountsData.balances.stable += r.amount * RATIOS.stable;
+                Core.state.accountsData.balances.develop += r.amount * RATIOS.develop;
             } else if (r.type === 'transfer') {
-                accountsData.balances[r.account] -= r.amount;
-                if (accountsData.balances[r.sub_category] !== undefined) accountsData.balances[r.sub_category] += r.amount;
-                accountsData.transfers.push({ id: r.id, amount: r.amount, from: r.account, to: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
+                Core.state.accountsData.balances[r.account] -= r.amount;
+                if (Core.state.accountsData.balances[r.sub_category] !== undefined) Core.state.accountsData.balances[r.sub_category] += r.amount;
+                Core.state.accountsData.transfers.push({ id: r.id, amount: r.amount, from: r.account, to: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
             } else {
-                accountsData.balances[r.account] -= r.amount;
-                accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
+                Core.state.accountsData.balances[r.account] -= r.amount;
+                Core.state.accountsData.expenses.push({ id: r.id, amount: r.amount, account: r.account, subCategory: r.sub_category, desc: r.description, day: r.day, month: r.month, ts: r.ts });
             }
         });
 
         const { data: hd, error: err2 } = await withTimeout(sb.from('health_data').select('*').order('ts', { ascending: true }), 10000, '拉取健康与执行数据');
         if (err2) throw err2;
 
-        healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
-        newsData = { items: [], summaries: [], briefings: [] };
-        goalData = defaultGoalData();
-        rhythmDaily = [];
-        wardrobeLog = [];
-        scheduleData = { tasks: [] };
+        Core.state.healthData = { sleep: [], energy: [], charge: [], exercise: [], meal: [], innerPeace: [], microExercise: [], bodySignals: [], aiAnalysis: [] };
+        Core.state.newsData = { items: [], summaries: [], briefings: [] };
+        Core.state.goalData = defaultGoalData();
+        Core.state.rhythmDaily = [];
+        Core.state.wardrobeLog = [];
+        Core.state.scheduleData = { tasks: [] };
         let cloudFeeds = null;
-        Object.values(cloudConfigRefs).forEach(ref => ref._cloudId = null);
+        Object.values(Core.state.cloudConfigRefs).forEach(ref => ref._cloudId = null);
         loadHabitsLocal();
 
         (hd || []).forEach(r => {
             const d = r.data || {};
             const item = { id: r.id, date: r.date, ts: r.ts, ...d };
 
-            if (r.type === 'goals') { cloudConfigRefs.goals._cloudId = r.id; goalData = { ...defaultGoalData(), ...d }; goalData.goals = goalData.goals || []; goalData.ideas = goalData.ideas || []; goalData.dailyReviews = goalData.dailyReviews || []; goalData.gate = goalData.gate || { date: '', picked: [] }; return; }
-            if (r.type === 'schedule') { cloudConfigRefs.schedule._cloudId = r.id; scheduleData = { tasks: [], ...d }; scheduleData.tasks = scheduleData.tasks || []; return; }
-            if (r.type === 'ai_config') { cloudConfigRefs.ai._cloudId = r.id; aiConfig = { ...aiConfig, ...d }; saveAIConfigLocal(aiConfig); return; }
-            if (r.type === 'habits_config') { cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
-            if (r.type === 'rhythm_config') { cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
-            if (r.type === 'rhythm_daily') { rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
-            if (r.type === 'wardrobe') { cloudConfigRefs.wardrobe._cloudId = r.id; wardrobeData = { ...wardrobeData, ...d }; wardrobeData.items = wardrobeData.items || []; wardrobeData.outfits = wardrobeData.outfits || []; wardrobeData.wishlist = wardrobeData.wishlist || []; if (!wardrobeData.config) wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; return; }
-            if (r.type === 'wardrobe_log') { wardrobeLog.push({ ...d, _cloudId: r.id }); return; }
-            if (r.type === 'news_item') { newsData.items.push(item); return; }
-            if (r.type === 'news_summary') { newsData.summaries.push(item); return; }
-            if (r.type === 'briefing') { newsData.briefings.push({ ...item, _cloudId: r.id }); return; }
+            if (r.type === 'goals') { Core.state.cloudConfigRefs.goals._cloudId = r.id; Core.state.goalData = { ...defaultGoalData(), ...d }; Core.state.goalData.goals = Core.state.goalData.goals || []; Core.state.goalData.ideas = Core.state.goalData.ideas || []; Core.state.goalData.dailyReviews = Core.state.goalData.dailyReviews || []; Core.state.goalData.gate = Core.state.goalData.gate || { date: '', picked: [] }; return; }
+            if (r.type === 'schedule') { Core.state.cloudConfigRefs.schedule._cloudId = r.id; Core.state.scheduleData = { tasks: [], ...d }; Core.state.scheduleData.tasks = Core.state.scheduleData.tasks || []; return; }
+            if (r.type === 'ai_config') { Core.state.cloudConfigRefs.ai._cloudId = r.id; Core.state.aiConfig = { ...Core.state.aiConfig, ...d }; saveAIConfigLocal(Core.state.aiConfig); return; }
+            if (r.type === 'habits_config') { Core.state.cloudConfigRefs.habits._cloudId = r.id; if (Array.isArray(d.habits)) { Core.state.habits = d.habits.map(h => ({ category: '其他', ...h })); saveHabitsLocal(); } return; }
+            if (r.type === 'rhythm_config') { Core.state.cloudConfigRefs.rhythm._cloudId = r.id; if (Array.isArray(d.nodes) && d.nodes.length) { Core.state.rhythmNodes = d.nodes; saveRhythmNodesLocal(); } return; }
+            if (r.type === 'rhythm_daily') { Core.state.rhythmDaily.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'wardrobe') { Core.state.cloudConfigRefs.wardrobe._cloudId = r.id; Core.state.wardrobeData = { ...Core.state.wardrobeData, ...d }; Core.state.wardrobeData.items = Core.state.wardrobeData.items || []; Core.state.wardrobeData.outfits = Core.state.wardrobeData.outfits || []; Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist || []; if (!Core.state.wardrobeData.config) Core.state.wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; return; }
+            if (r.type === 'wardrobe_log') { Core.state.wardrobeLog.push({ ...d, _cloudId: r.id }); return; }
+            if (r.type === 'news_item') { Core.state.newsData.items.push(item); return; }
+            if (r.type === 'news_summary') { Core.state.newsData.summaries.push(item); return; }
+            if (r.type === 'briefing') { Core.state.newsData.briefings.push({ ...item, _cloudId: r.id }); return; }
             if (r.type === 'rss_feeds') { cloudFeeds = d.feeds || null; return; }
             const listKey = HEALTH_LIST_MAP[r.type];
-            if (listKey) healthData[listKey].push(item);
+            if (listKey) Core.state.healthData[listKey].push(item);
         });
 
         loadRssFeedsLocal();
-        if (Array.isArray(cloudFeeds)) { rssFeeds = cloudFeeds; saveRssFeedsLocal(); }
-        else if (rssFeeds.length) { await pushRssFeedsToCloud(); }
+        if (Array.isArray(cloudFeeds)) { Core.state.rssFeeds = cloudFeeds; saveRssFeedsLocal(); }
+        else if (Core.state.rssFeeds.length) { await pushRssFeedsToCloud(); }
 
-        $('ai-api-key').value = aiConfig.apiKey || '';
-        $('ai-api-url').value = aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
-        $('ai-model').value = aiConfig.model || 'deepseek-chat';
+        $('ai-api-key').value = Core.state.aiConfig.apiKey || '';
+        $('ai-api-url').value = Core.state.aiConfig.apiUrl || 'https://api.deepseek.com/chat/completions';
+        $('ai-model').value = Core.state.aiConfig.model || 'deepseek-chat';
 
         saveCache();
         showMainUI();
@@ -1794,18 +1887,18 @@ async function pushRssFeedsToCloud() {
     if (!currentUser) return;
     try {
         await sb.from('health_data').delete().eq('user_id', currentUser.id).eq('type', 'rss_feeds');
-        if (rssFeeds.length) { await sb.from('health_data').insert({ user_id: currentUser.id, type: 'rss_feeds', date: todayStr(), data: { feeds: rssFeeds }, ts: Date.now() }); }
+        if (Core.state.rssFeeds.length) { await sb.from('health_data').insert({ user_id: currentUser.id, type: 'rss_feeds', date: todayStr(), data: { feeds: Core.state.rssFeeds }, ts: Date.now() }); }
         lastLocalChange = Date.now();
     } catch (e) { console.warn('RSS 源同步云端失败', e); }
 }
 async function saveAIConfigToCloud(config) {
     if (!currentUser) return;
-    try { await syncRecord('ai_config', todayStr(), config, cloudConfigRefs.ai, { silent: true }); }
+    try { await syncRecord('ai_config', todayStr(), config, Core.state.cloudConfigRefs.ai, { silent: true }); }
     catch (e) { console.warn('API 配置同步云端失败', e); }
 }
 async function saveHabitsToCloud() {
     if (!currentUser) return;
-    try { await syncRecord('habits_config', todayStr(), { habits }, cloudConfigRefs.habits, { silent: true }); }
+    try { await syncRecord('habits_config', todayStr(), { habits: Core.state.habits }, Core.state.cloudConfigRefs.habits, { silent: true }); }
     catch (e) { console.warn('打卡配置同步云端失败', e); }
 }
 
@@ -1854,19 +1947,19 @@ function defaultGoalData() {
         dailyReviews: []
     };
 }
-let goalData = defaultGoalData();
+Core.state.goalData = defaultGoalData();
 let gdEditingGoalId = null, gdEditingKrId = null, gdEditingPlanId = null;
 let gw = null;
 let gwGatePicked = new Set();
 
 async function saveGoalsCloud() {
     if (!currentUser) return;
-    await syncRecord('goals', todayStr(), goalData, cloudConfigRefs.goals, { silent: true });
+    await syncRecord('goals', todayStr(), Core.state.goalData, Core.state.cloudConfigRefs.goals, { silent: true });
     saveCache();
 }
-function goalById(id) { return goalData.goals.find(g => g.id === id); }
-function krLocate(id) { for (const g of goalData.goals) { const k = g.krs.find(x => x.id === id); if (k) return { goal: g, kr: k }; } return null; }
-function planLocate(id) { for (const g of goalData.goals) { const pl = g.plans.find(x => x.id === id); if (pl) return { goal: g, plan: pl }; } return null; }
+function goalById(id) { return Core.state.goalData.goals.find(g => g.id === id); }
+function krLocate(id) { for (const g of Core.state.goalData.goals) { const k = g.krs.find(x => x.id === id); if (k) return { goal: g, kr: k }; } return null; }
+function planLocate(id) { for (const g of Core.state.goalData.goals) { const pl = g.plans.find(x => x.id === id); if (pl) return { goal: g, plan: pl }; } return null; }
 function krPct(k) { return k.target > 0 ? Math.min(100, Math.round((k.current / k.target) * 100)) : (k.current >= k.target ? 100 : 0); }
 function goalPct(g) {
     if (!g.krs.length) {
@@ -1875,13 +1968,13 @@ function goalPct(g) {
     }
     return Math.round(g.krs.reduce((s, k) => s + krPct(k), 0) / g.krs.length);
 }
-function gateDoneToday() { return !!(goalData.gate && goalData.gate.date === todayStr()); }
+function gateDoneToday() { return !!(Core.state.goalData.gate && Core.state.goalData.gate.date === todayStr()); }
 
 /* ---------- 今日执行点与门禁 ---------- */
 function goalTodayPlans() {
     const today = todayStr();
     const out = [];
-    goalData.goals.forEach(g => {
+    Core.state.goalData.goals.forEach(g => {
         if (g.status !== 'active') return;
         g.plans.forEach(p => {
             if (p.status === 'done' || p.status === 'someday' || p.due !== today) return;
@@ -1898,14 +1991,14 @@ function goalGateList() {
     push(goalTodayPlans());
     if (list.length < 3) {
         const over = [];
-        goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) over.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
+        Core.state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) over.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
         over.sort((a, b) => a.due.localeCompare(b.due));
         push(over);
     }
     if (list.length < 3) {
         const cap = addDays(today, 7);
         const up = [];
-        goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due > today && p.due <= cap) up.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
+        Core.state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due > today && p.due <= cap) up.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
         up.sort((a, b) => a.due.localeCompare(b.due));
         push(up);
     }
@@ -1946,16 +2039,16 @@ async function saveGate() {
     const list = goalGateList();
     const need = Math.min(3, list.length);
     if (gwGatePicked.size < need) return alert(list.length ? ('请勾选 ' + need + ' 个任务') : '请点击「直接激活系统」');
-    goalData.gate = { date: todayStr(), picked: Array.from(gwGatePicked), skipped: false };
+    Core.state.goalData.gate = { date: todayStr(), picked: Array.from(gwGatePicked), skipped: false };
     await saveGoalsCloud();
     const m = $('gate-modal');
     if (m) m.classList.remove('active');
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
-    alert(goalData.gate.picked.length ? '✅ 今日系统已激活。先去啃最硬的那块。' : '✅ 今日系统已激活。今天没有任务，好好休息。');
+    alert(Core.state.goalData.gate.picked.length ? '✅ 今日系统已激活。先去啃最硬的那块。' : '✅ 今日系统已激活。今天没有任务，好好休息。');
     maybeAutoGuide();
 }
 async function skipGate() {
-    goalData.gate = { date: todayStr(), picked: [], skipped: true };
+    Core.state.goalData.gate = { date: todayStr(), picked: [], skipped: true };
     await saveGoalsCloud();
     const m = $('gate-modal');
     if (m) m.classList.remove('active');
@@ -1979,7 +2072,7 @@ async function gpToggleSomeday(id) {
     if (!loc) return;
     const p = loc.plan;
     p.status = p.status === 'someday' ? 'next' : 'someday';
-    if (p.status === 'someday' && goalData.gate && goalData.gate.picked) goalData.gate.picked = goalData.gate.picked.filter(x => x !== id);
+    if (p.status === 'someday' && Core.state.goalData.gate && Core.state.goalData.gate.picked) Core.state.goalData.gate.picked = Core.state.goalData.gate.picked.filter(x => x !== id);
     await saveGoalsCloud();
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
 }
@@ -2009,18 +2102,18 @@ async function gpSaveDept(planId) {
 
 /* ---------- 每日复盘 ---------- */
 function todayDailyReview() {
-    let r = goalData.dailyReviews.find(x => x.date === todayStr());
-    if (!r) { r = { date: todayStr(), answers: { done: '', fail: '', adjust: '' }, autoFeed: [] }; goalData.dailyReviews.push(r); }
+    let r = Core.state.goalData.dailyReviews.find(x => x.date === todayStr());
+    if (!r) { r = { date: todayStr(), answers: { done: '', fail: '', adjust: '' }, autoFeed: [] }; Core.state.goalData.dailyReviews.push(r); }
     return r;
 }
 function dailyReviewStats() {
     const today = todayStr();
     const donePlans = [];
-    goalData.goals.forEach(g => g.plans.forEach(p => { if (p.doneAt === today) donePlans.push({ work: p.work, goal: g.title }); }));
-    const habitsDone = habits.reduce((s, h) => s + (h.dates || []).filter(d => d === today).length, 0);
-    const sleepDays = healthData.sleep.filter(x => x.date === today).length;
-    const exerciseCount = healthData.exercise.filter(x => x.date === today).length;
-    const rhythmDays = rhythmDaily.filter(x => x.date === today && x.done && x.done.length).length;
+    Core.state.goalData.goals.forEach(g => g.plans.forEach(p => { if (p.doneAt === today) donePlans.push({ work: p.work, goal: g.title }); }));
+    const habitsDone = Core.state.habits.reduce((s, h) => s + (h.dates || []).filter(d => d === today).length, 0);
+    const sleepDays = Core.state.healthData.sleep.filter(x => x.date === today).length;
+    const exerciseCount = Core.state.healthData.exercise.filter(x => x.date === today).length;
+    const rhythmDays = Core.state.rhythmDaily.filter(x => x.date === today && x.done && x.done.length).length;
     return { donePlans, habitsDone, sleepDays, exerciseCount, rhythmDays };
 }
 function openDailyReviewModal() {
@@ -2051,7 +2144,7 @@ async function saveDailyReview() {
 
 /* ---------- 想法库 ---------- */
 async function ideaRestore(id) {
-    const i = goalData.ideas.find(x => x.id === id);
+    const i = Core.state.goalData.ideas.find(x => x.id === id);
     if (!i) return;
     i.status = 'pending';
     await saveGoalsCloud();
@@ -2059,7 +2152,7 @@ async function ideaRestore(id) {
 }
 async function ideaDelete(id) {
     if (!confirm('删除这个想法记录？')) return;
-    goalData.ideas = goalData.ideas.filter(x => x.id !== id);
+    Core.state.goalData.ideas = Core.state.goalData.ideas.filter(x => x.id !== id);
     await saveGoalsCloud();
     RenderBus.emit('goals');
 }
@@ -2093,8 +2186,8 @@ async function deleteGoal(id) {
     const g = goalById(id);
     if (!g) return;
     if (!confirm('删除目标「' + g.title + '」及其全部 KR / 执行点？')) return;
-    goalData.goals = goalData.goals.filter(x => x.id !== id);
-    if (goalData.gate && goalData.gate.picked) goalData.gate.picked = goalData.gate.picked.filter(pid => planLocate(pid));
+    Core.state.goalData.goals = Core.state.goalData.goals.filter(x => x.id !== id);
+    if (Core.state.goalData.gate && Core.state.goalData.gate.picked) Core.state.goalData.gate.picked = Core.state.goalData.gate.picked.filter(pid => planLocate(pid));
     await saveGoalsCloud();
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
 }
@@ -2194,14 +2287,14 @@ async function deleteGoalPlan(goalId, planId) {
     if (!g) return;
     if (!confirm('删除这个执行点？')) return;
     g.plans = g.plans.filter(x => x.id !== planId);
-    if (goalData.gate && goalData.gate.picked) goalData.gate.picked = goalData.gate.picked.filter(x => x !== planId);
+    if (Core.state.goalData.gate && Core.state.goalData.gate.picked) Core.state.goalData.gate.picked = Core.state.goalData.gate.picked.filter(x => x !== planId);
     await saveGoalsCloud();
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
 }
 
 /* ---------- 目标向导（想法 → SMART → 筛选 → 轨道 → KR → 时间规划） ---------- */
 function openGoalWizard(ideaId) {
-    const idea = ideaId ? goalData.ideas.find(x => x.id === ideaId) : null;
+    const idea = ideaId ? Core.state.goalData.ideas.find(x => x.id === ideaId) : null;
     gw = {
         step: 1,
         ideaId: ideaId || null,
@@ -2234,10 +2327,10 @@ function gwRender() {
     $('gw-text').value = gw.text;
     $('gw-why').value = gw.why;
     $('gw-deadline-hint').value = gw.deadlineHint;
-    $('gw-kr-ai-btn').style.display = aiConfig.apiKey ? '' : 'none';
-    $('gw-plans-ai-btn').style.display = aiConfig.apiKey ? '' : 'none';
+    $('gw-kr-ai-btn').style.display = Core.state.aiConfig.apiKey ? '' : 'none';
+    $('gw-plans-ai-btn').style.display = Core.state.aiConfig.apiKey ? '' : 'none';
     const autoBtn = $('gw-auto-btn');
-    if (autoBtn && !autoBtn.disabled) autoBtn.textContent = aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）';
+    if (autoBtn && !autoBtn.disabled) autoBtn.textContent = Core.state.aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）';
     $$('.track-option').forEach(o => o.classList.toggle('selected', gw.track === o.dataset.track));
     gwRenderSmart();
     gwRenderKrs();
@@ -2294,7 +2387,7 @@ async function gwNext() {
         gw.deadlineHint = $('gw-deadline-hint').value;
         if (!gw.ideaId) {
             const idea = { id: 'gi_' + Date.now() + Math.random().toString(36).slice(2, 6), text: gw.text, why: gw.why, deadlineHint: gw.deadlineHint, status: 'pending', createdAt: Date.now(), goalId: null };
-            goalData.ideas.push(idea);
+            Core.state.goalData.ideas.push(idea);
             gw.ideaId = idea.id;
             await saveGoalsCloud();
         }
@@ -2314,7 +2407,7 @@ async function gwNext() {
 }
 async function gwPark() {
     if (gw && gw.ideaId) {
-        const i = goalData.ideas.find(x => x.id === gw.ideaId);
+        const i = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
         if (i) i.status = 'parked';
         await saveGoalsCloud();
         RenderBus.emit('goals');
@@ -2324,7 +2417,7 @@ async function gwPark() {
 }
 async function gwDrop() {
     if (gw && gw.ideaId) {
-        const i = goalData.ideas.find(x => x.id === gw.ideaId);
+        const i = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
         if (i) i.status = 'dropped';
         await saveGoalsCloud();
         RenderBus.emit('goals');
@@ -2364,7 +2457,7 @@ function gwCollectKrs() {
     });
 }
 async function gwAiKrsGenerate() {
-    if (!aiConfig.apiKey) return false;
+    if (!Core.state.aiConfig.apiKey) return false;
     const statusEl = $('gw-kr-ai-status');
     if (statusEl) statusEl.innerHTML = '⏳ AI 拆解 KR 中…';
     try {
@@ -2384,7 +2477,7 @@ async function gwAiKrsGenerate() {
 }
 async function gwAiKrs() {
     gwCollectKrs();
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
     await gwAiKrsGenerate();
     gwRender();
 }
@@ -2427,7 +2520,7 @@ function gwTemplatePlans() {
     gwRender();
 }
 async function gwAiPlansGenerate() {
-    if (!aiConfig.apiKey) return false;
+    if (!Core.state.aiConfig.apiKey) return false;
     const statusEl = $('gw-plans-preview');
     if (statusEl) statusEl.innerHTML = '⏳ AI 生成规划中…';
     try {
@@ -2448,7 +2541,7 @@ async function gwAiPlansGenerate() {
 }
 async function gwAiPlans() {
     gwCollectKrs();
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
     await gwAiPlansGenerate();
     gwRender();
 }
@@ -2493,9 +2586,9 @@ async function gwFinish() {
             optimize: { root: '', solution: '', effect: '' }
         }))
     };
-    goalData.goals.push(goal);
+    Core.state.goalData.goals.push(goal);
     if (gw.ideaId) {
-        const idea = goalData.ideas.find(x => x.id === gw.ideaId);
+        const idea = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
         if (idea) { idea.status = 'adopted'; idea.goalId = goal.id; }
     }
     await saveGoalsCloud();
@@ -2514,7 +2607,7 @@ async function gwAutoRun() {
     gw.deadlineHint = $('gw-deadline-hint').value;
     if (!gw.ideaId) {
         const idea = { id: 'gi_' + Date.now() + Math.random().toString(36).slice(2, 6), text: gw.text, why: gw.why, deadlineHint: gw.deadlineHint, status: 'pending', createdAt: Date.now(), goalId: null };
-        goalData.ideas.push(idea);
+        Core.state.goalData.ideas.push(idea);
         gw.ideaId = idea.id;
         await saveGoalsCloud();
     }
@@ -2525,7 +2618,7 @@ async function gwAutoRun() {
         gw.track = gw.track || gwGuessTrack();
         gw.step = 6;
         gwRender();
-        if (aiConfig.apiKey) {
+        if (Core.state.aiConfig.apiKey) {
             const krOk = await gwAiKrsGenerate();
             if (!krOk || !gw.krs.length) gwTemplateKrs();
             const plOk = await gwAiPlansGenerate();
@@ -2537,7 +2630,7 @@ async function gwAutoRun() {
         gwRender();
         await gwFinish();
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）'; }
+        if (btn) { btn.disabled = false; btn.textContent = Core.state.aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）'; }
     }
 }
 
@@ -2546,11 +2639,11 @@ function renderGateBar() {
     const el = $('gate-bar');
     if (!el) return;
     if (gateDoneToday()) {
-        if (goalData.gate.skipped) {
+        if (Core.state.goalData.gate.skipped) {
             el.className = 'gate-bar';
             el.innerHTML = '<span>😴 今日门禁已跳过（最低电量，允许休息）。明天见。</span>';
-        } else if (goalData.gate.picked && goalData.gate.picked.length) {
-            const picked = goalData.gate.picked.map(id => planLocate(id)).filter(Boolean);
+        } else if (Core.state.goalData.gate.picked && Core.state.goalData.gate.picked.length) {
+            const picked = Core.state.goalData.gate.picked.map(id => planLocate(id)).filter(Boolean);
             el.className = 'gate-bar active';
             el.innerHTML = '<span>✅ 今日系统已激活：' + picked.map(x => esc(x.plan.work)).join('、') + '</span>';
         } else {
@@ -2565,7 +2658,7 @@ function renderGateBar() {
 function renderGoalOverview() {
     const el = $('goal-overview-list');
     if (!el) return;
-    const active = goalData.goals.filter(g => g.status === 'active');
+    const active = Core.state.goalData.goals.filter(g => g.status === 'active');
     if (!active.length) { el.innerHTML = '<div class="card"><div class="empty-hint">还没有进行中的目标<br>去「🎯 目标」页，用科学流程建立第一个目标</div></div>'; return; }
     el.innerHTML = active.map(g => {
         const pct = goalPct(g);
@@ -2573,7 +2666,7 @@ function renderGoalOverview() {
         const trackShort = g.track === 'long' ? '🛤️ 长期' : '⚡ 快速';
         const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="flex:0 0 auto;max-width:52%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + ' · ' + krPct(k) + '%</span></div>').join('');
         const todayPlans = goalTodayPlans().filter(p => p.goalId === g.id);
-        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + ((goalData.gate && goalData.gate.picked.includes(p.id)) ? ' <span class="tag tag-warn">⭐</span>' : '') + '</div></div>').join('') : '<div class="empty-hint" style="padding:6px 0;">今天没有安排</div>';
+        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + ((Core.state.goalData.gate && Core.state.goalData.gate.picked.includes(p.id)) ? ' <span class="tag tag-warn">⭐</span>' : '') + '</div></div>').join('') : '<div class="empty-hint" style="padding:6px 0;">今天没有安排</div>';
         return '<div class="goal-card" style="padding:16px;">' +
             '<div class="goal-card-head"><div style="min-width:0;flex:1;"><span class="goal-title" style="font-size:16px;">' + esc(g.title) + '</span><span class="track-tag ' + track.cls + '">' + trackShort + '</span></div>' +
             '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><b style="color:var(--accent);font-size:15px;">' + pct + '%</b><button class="btn btn-secondary btn-sm" data-action="goto-goals">管理</button></div></div>' +
@@ -2585,7 +2678,7 @@ function renderGoalOverview() {
 function renderIdeas() {
     const el = $('idea-list');
     if (!el) return;
-    const list = goalData.ideas;
+    const list = Core.state.goalData.ideas;
     if (!list.length) { el.innerHTML = '<div class="empty-hint">想法库是空的——任何念头都可以先记在这里</div>'; return; }
     const stTag = { pending: '<span class="tag tag-warn">分析中</span>', parked: '<span class="tag tag-neutral">暂存</span>', dropped: '<span class="tag tag-bad">已放弃</span>', adopted: '<span class="tag tag-good">已采纳</span>' };
     el.innerHTML = list.map(i => '<div class="idea-row"><div style="flex:1;min-width:140px;"><div>' + esc(i.text) + ' ' + (stTag[i.status] || '') + '</div>' + (i.why ? '<div class="meta">' + esc(i.why) + '</div>' : '') + '</div><div style="display:flex;gap:4px;">' + ((i.status !== 'dropped' && i.status !== 'adopted') ? '<button class="btn btn-primary btn-sm" data-action="idea-adopt" data-id="' + i.id + '">分析采纳 →</button>' : '') + (i.status === 'parked' ? '<button class="btn btn-secondary btn-sm" data-action="idea-restore" data-id="' + i.id + '">恢复</button>' : '') + '<button class="btn btn-danger btn-sm" data-action="idea-del" data-id="' + i.id + '">✕</button></div></div>').join('');
@@ -2616,8 +2709,8 @@ function gpRowHtml(g, p) {
 function renderGoalManageList() {
     const el = $('goal-manage-list');
     if (!el) return;
-    if (!goalData.goals.length) { el.innerHTML = '<div class="empty-hint">还没有目标，点击上方按钮走一遍科学流程</div>'; return; }
-    el.innerHTML = goalData.goals.map(g => {
+    if (!Core.state.goalData.goals.length) { el.innerHTML = '<div class="empty-hint">还没有目标，点击上方按钮走一遍科学流程</div>'; return; }
+    el.innerHTML = Core.state.goalData.goals.map(g => {
         const pct = goalPct(g);
         const track = GOAL_TRACK[g.track] || GOAL_TRACK.long;
         const trackShort = g.track === 'long' ? '🛤️ 长期' : '⚡ 快速';
@@ -2643,7 +2736,7 @@ function renderDailyTrend() {
     if (!el) return;
     const days = [];
     for (let i = 7; i >= 0; i--) days.push(addDays(todayStr(), -i));
-    const data = days.map(d => ({ d: d, count: goalData.goals.reduce((s, g) => s + g.plans.filter(p => p.doneAt === d).length, 0) }));
+    const data = days.map(d => ({ d: d, count: Core.state.goalData.goals.reduce((s, g) => s + g.plans.filter(p => p.doneAt === d).length, 0) }));
     const max = Math.max(1, ...data.map(x => x.count));
     el.innerHTML = '<div class="habit-section-title" style="margin:12px 0 0;">近 8 日完成执行点</div><div class="ex-trend">' + data.map(x => {
         const h = Math.round(x.count / max * 100);
@@ -2653,14 +2746,14 @@ function renderDailyTrend() {
 function renderDailyReviewHistory() {
     const el = $('daily-review-history');
     if (!el) return;
-    const list = [...goalData.dailyReviews].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+    const list = [...Core.state.goalData.dailyReviews].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有复盘记录</div>'; return; }
     el.innerHTML = '<div class="habit-section-title" style="margin-top:14px;">复盘历史</div>' + list.map(r => '<details class="ex-review-item"><summary style="cursor:pointer;font-weight:600;">' + shortDay(r.date) + ' 复盘</summary><div style="margin-top:8px;font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;"><b>完成了什么</b>：' + esc(r.answers.done || '—') + '<br><b>没完成及原因</b>：' + esc(r.answers.fail || '—') + '<br><b>明天调整</b>：' + esc(r.answers.adjust || '—') + '</div></details>').join('');
 }
 function renderExecTodayStrip() {
     const el = $('exec-today-strip');
     if (!el) return;
-    const pickedIds = gateDoneToday() ? goalData.gate.picked : [];
+    const pickedIds = gateDoneToday() ? Core.state.goalData.gate.picked : [];
     const picked = pickedIds.map(id => planLocate(id)).filter(Boolean);
     const today = goalTodayPlans();
     if (!today.length && !picked.length) {
@@ -2685,8 +2778,8 @@ function renderGoals() {
 
 /* ================= 节律 ================= */
 function getTodayRhythm() {
-    let r = rhythmDaily.find(x => x.date === todayStr());
-    if (!r) { r = { date: todayStr(), mode: 'normal', done: [], note: '' }; rhythmDaily.push(r); }
+    let r = Core.state.rhythmDaily.find(x => x.date === todayStr());
+    if (!r) { r = { date: todayStr(), mode: 'normal', done: [], note: '' }; Core.state.rhythmDaily.push(r); }
     return r;
 }
 async function saveRhythmCloud() {
@@ -2698,12 +2791,12 @@ async function saveRhythmCloud() {
 async function saveRhythmNodesCloud() {
     saveRhythmNodesLocal();
     if (!currentUser) return;
-    try { await syncRecord('rhythm_config', todayStr(), { nodes: rhythmNodes }, cloudConfigRefs.rhythm); }
+    try { await syncRecord('rhythm_config', todayStr(), { nodes: Core.state.rhythmNodes }, Core.state.cloudConfigRefs.rhythm); }
     catch (e) { console.warn('节律配置同步失败', e); }
 }
 function openRhythmEditModal(idx) {
     rhythmEditingIndex = idx;
-    const node = rhythmNodes[idx];
+    const node = Core.state.rhythmNodes[idx];
     if (!node) return;
     $('rhythm-edit-modal-title').textContent = '✏️ 编辑节点';
     $('rhythm-edit-time').value = node.time || '';
@@ -2727,14 +2820,14 @@ function openRhythmAddModal() {
 function updateRhythmMoveButtons() {
     if (rhythmEditingIndex < 0) return;
     $('rhythm-edit-up').disabled = rhythmEditingIndex === 0;
-    $('rhythm-edit-down').disabled = rhythmEditingIndex === rhythmNodes.length - 1;
-    $('rhythm-edit-del').disabled = rhythmNodes.length <= 1;
+    $('rhythm-edit-down').disabled = rhythmEditingIndex === Core.state.rhythmNodes.length - 1;
+    $('rhythm-edit-del').disabled = Core.state.rhythmNodes.length <= 1;
 }
 function moveRhythmNode(dir) {
     if (rhythmEditingIndex < 0) return;
     const target = rhythmEditingIndex + dir;
-    if (target < 0 || target >= rhythmNodes.length) return;
-    [rhythmNodes[rhythmEditingIndex], rhythmNodes[target]] = [rhythmNodes[target], rhythmNodes[rhythmEditingIndex]];
+    if (target < 0 || target >= Core.state.rhythmNodes.length) return;
+    [Core.state.rhythmNodes[rhythmEditingIndex], Core.state.rhythmNodes[target]] = [Core.state.rhythmNodes[target], Core.state.rhythmNodes[rhythmEditingIndex]];
     rhythmEditingIndex = target;
     updateRhythmMoveButtons();
 }
@@ -2746,9 +2839,9 @@ function saveRhythmNodeEdit() {
     const lowDesc = $('rhythm-edit-low-desc').value.trim();
     if (!time || !task) return alert('时间和任务必填');
     if (rhythmEditingIndex >= 0) {
-        const node = rhythmNodes[rhythmEditingIndex];
+        const node = Core.state.rhythmNodes[rhythmEditingIndex];
         node.time = time; node.task = task; node.desc = desc; node.lowTask = lowTask; node.lowDesc = lowDesc;
-    } else { rhythmNodes.push({ key: genRhythmKey(), time, task, desc, lowTask, lowDesc }); }
+    } else { Core.state.rhythmNodes.push({ key: genRhythmKey(), time, task, desc, lowTask, lowDesc }); }
     saveRhythmNodesCloud();
     $('rhythm-edit-modal').classList.remove('active');
     rhythmEditingIndex = -1;
@@ -2757,7 +2850,7 @@ function saveRhythmNodeEdit() {
 function deleteRhythmNode() {
     if (rhythmEditingIndex < 0) return;
     if (!confirm('删除这个节律节点？已有打卡记录不会删除。')) return;
-    rhythmNodes.splice(rhythmEditingIndex, 1);
+    Core.state.rhythmNodes.splice(rhythmEditingIndex, 1);
     saveRhythmNodesCloud();
     $('rhythm-edit-modal').classList.remove('active');
     rhythmEditingIndex = -1;
@@ -2765,7 +2858,7 @@ function deleteRhythmNode() {
 }
 function resetRhythmNodes() {
     if (!confirm('恢复默认的 8 个节律节点？当前自定义的节点会被覆盖。')) return;
-    rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
+    Core.state.rhythmNodes = JSON.parse(JSON.stringify(DEFAULT_RHYTHM_NODES));
     saveRhythmNodesCloud();
     RenderBus.emit('rhythm');
 }
@@ -2791,7 +2884,7 @@ function renderRhythm() {
     }
 
     let html = '';
-    rhythmNodes.forEach((node, idx) => {
+    Core.state.rhythmNodes.forEach((node, idx) => {
         const done = r.done.includes(node.key);
         const hideInLow = isLow && !node.lowTask;
         if (hideInLow && !rhythmEditMode) return;
@@ -2867,7 +2960,7 @@ function calcStreak(habit) {
     return streak;
 }
 function toggleHabit(id) {
-    const habit = habits.find(h => h.id === id);
+    const habit = Core.state.habits.find(h => h.id === id);
     if (!habit) return;
     if (!habit.dates) habit.dates = [];
     const idx = habit.dates.indexOf(currentDay);
@@ -2875,7 +2968,7 @@ function toggleHabit(id) {
     saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
 }
 function openEditHabitModal(id) {
-    const habit = habits.find(h => h.id === id);
+    const habit = Core.state.habits.find(h => h.id === id);
     if (!habit) return;
     currentEditingHabitId = id;
     $('edit-habit-name-input').value = habit.name;
@@ -2885,37 +2978,37 @@ function openEditHabitModal(id) {
 }
 function updateModalMoveButtons() {
     if (!currentEditingHabitId) return;
-    const habit = habits.find(h => h.id === currentEditingHabitId);
+    const habit = Core.state.habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
     const cat = habit.category || '其他';
-    const catHabits = habits.filter(h => (h.category || '其他') === cat);
+    const catHabits = Core.state.habits.filter(h => (h.category || '其他') === cat);
     const idx = catHabits.findIndex(h => h.id === currentEditingHabitId);
     $('edit-habit-up-btn').disabled = (idx === 0);
     $('edit-habit-down-btn').disabled = (idx === catHabits.length - 1);
 }
 function moveHabitInModal(dir) {
     if (!currentEditingHabitId) return;
-    const habit = habits.find(h => h.id === currentEditingHabitId);
+    const habit = Core.state.habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
     const cat = habit.category || '其他';
-    const catHabits = habits.filter(h => (h.category || '其他') === cat);
+    const catHabits = Core.state.habits.filter(h => (h.category || '其他') === cat);
     const idx = catHabits.findIndex(h => h.id === currentEditingHabitId);
     if (dir === -1 && idx > 0) {
         const target = catHabits[idx - 1];
-        const g1 = habits.findIndex(h => h.id === habit.id);
-        const g2 = habits.findIndex(h => h.id === target.id);
-        [habits[g1], habits[g2]] = [habits[g2], habits[g1]];
+        const g1 = Core.state.habits.findIndex(h => h.id === habit.id);
+        const g2 = Core.state.habits.findIndex(h => h.id === target.id);
+        [Core.state.habits[g1], Core.state.habits[g2]] = [Core.state.habits[g2], Core.state.habits[g1]];
     } else if (dir === 1 && idx < catHabits.length - 1) {
         const target = catHabits[idx + 1];
-        const g1 = habits.findIndex(h => h.id === habit.id);
-        const g2 = habits.findIndex(h => h.id === target.id);
-        [habits[g1], habits[g2]] = [habits[g2], habits[g1]];
+        const g1 = Core.state.habits.findIndex(h => h.id === habit.id);
+        const g2 = Core.state.habits.findIndex(h => h.id === target.id);
+        [Core.state.habits[g1], Core.state.habits[g2]] = [Core.state.habits[g2], Core.state.habits[g1]];
     } else return;
     saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits'); updateModalMoveButtons();
 }
 function saveHabitModal() {
     if (!currentEditingHabitId) return;
-    const habit = habits.find(h => h.id === currentEditingHabitId);
+    const habit = Core.state.habits.find(h => h.id === currentEditingHabitId);
     if (!habit) return;
     const name = $('edit-habit-name-input').value.trim();
     const category = $('edit-habit-category').value;
@@ -2928,7 +3021,7 @@ function saveHabitModal() {
 function deleteHabitInModal() {
     if (!currentEditingHabitId) return;
     if (!confirm('确定删除这个微习惯和所有打卡记录吗？')) return;
-    habits = habits.filter(h => h.id !== currentEditingHabitId);
+    Core.state.habits = Core.state.habits.filter(h => h.id !== currentEditingHabitId);
     saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
     $('edit-habit-modal').classList.remove('active');
     currentEditingHabitId = null;
@@ -2938,7 +3031,7 @@ function addNewHabit() {
     const select = $('new-habit-category');
     const name = input.value.trim();
     if (!name) return;
-    habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name, category: select.value, icon: '🎯', dates: [] });
+    Core.state.habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name, category: select.value, icon: '🎯', dates: [] });
     input.value = '';
     saveHabitsLocal(); saveHabitsToCloud(); RenderBus.emit('habits');
 }
@@ -2951,8 +3044,8 @@ function importMorningRoutine() {
     ];
     let added = 0;
     morningHabits.forEach(mh => {
-        if (!habits.some(h => h.name === mh.name)) {
-            habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name: mh.name, category: mh.category, icon: mh.icon, dates: [] });
+        if (!Core.state.habits.some(h => h.name === mh.name)) {
+            Core.state.habits.push({ id: 'h' + Date.now() + Math.random().toString(36).slice(2, 6), name: mh.name, category: mh.category, icon: mh.icon, dates: [] });
             added++;
         }
     });
@@ -2961,9 +3054,9 @@ function importMorningRoutine() {
 }
 function renderHabits() {
     const el = $('habit-list');
-    if (!habits.length) { el.innerHTML = '<div class="empty-hint">还没有微习惯，展开下方添加</div>'; return; }
+    if (!Core.state.habits.length) { el.innerHTML = '<div class="empty-hint">还没有微习惯，展开下方添加</div>'; return; }
     const grouped = {};
-    habits.forEach(h => { const cat = h.category || '其他'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(h); });
+    Core.state.habits.forEach(h => { const cat = h.category || '其他'; if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(h); });
     let html = '';
     const catOrder = ['早晨', '睡眠', '学习', '健康', '其他'];
     const sortedCats = Object.keys(grouped).sort((a, b) => { const ia = catOrder.indexOf(a), ib = catOrder.indexOf(b); return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib); });
@@ -2997,66 +3090,79 @@ async function addIncome(amount, day) {
     const inserted = await pushAccountRecord(record);
     if (!inserted) return false;
     record.id = inserted.id;
-    accountsData.income += amount;
-    accountsData.incomeRecords.push(record);
-    accountsData.balances.survival += amount * RATIOS.survival;
-    accountsData.balances.stable += amount * RATIOS.stable;
-    accountsData.balances.develop += amount * RATIOS.develop;
+    Core.state.accountsData.income += amount;
+    Core.state.accountsData.incomeRecords.push(record);
+    Core.state.accountsData.balances.survival += amount * RATIOS.survival;
+    Core.state.accountsData.balances.stable += amount * RATIOS.stable;
+    Core.state.accountsData.balances.develop += amount * RATIOS.develop;
     saveCache(); RenderBus.emit('accounts');
     return true;
 }
-async function addExpense(amount, account, desc, day, subCategory) {
-    if (isNaN(amount) || amount <= 0) return false;
-    if (accountsData.balances[account] < amount) { alert('⚠️ ' + ACCOUNT_LABEL[account] + '账户余额不足！'); return false; }
-    if (account === 'survival' && !subCategory) { alert('⚠️ 请选择生存账户分类'); return false; }
-    const d = isValidDay(day) ? day : todayStr();
+/* 核心写路径：支出（表单与秘书共用，只做校验 + 写入 + 状态变更，不弹窗） */
+async function _addExpenseCore(payload) {
+    const amount = parseFloat(payload && payload.amount);
+    const account = payload && payload.account;
+    const subCategory = (payload && payload.subCategory) || null;
+    const desc = (payload && payload.desc) || '未注明';
+    const date = (payload && payload.date) || todayStr();
+    if (isNaN(amount) || amount <= 0) return { ok: false, error: '金额无效，请输入大于 0 的数字' };
+    if (!ACCOUNT_LABEL[account]) return { ok: false, error: '账户无效' };
+    if (Core.state.accountsData.balances[account] < amount) return { ok: false, error: '⚠️ ' + ACCOUNT_LABEL[account] + '账户余额不足！' };
+    if (account === 'survival' && !subCategory) return { ok: false, error: '⚠️ 请选择生存账户分类' };
+    const d = isValidDay(date) ? date : todayStr();
     const ts = Date.now();
-    const record = { type: 'expense', amount, account, subCategory: account === 'survival' ? subCategory : null, desc: desc || '未注明', day: d, month: d.slice(0,7), ts };
-    const inserted = await pushAccountRecord(record);
-    if (!inserted) return false;
+    const record = { type: 'expense', amount, account, subCategory: account === 'survival' ? subCategory : null, desc, day: d, month: d.slice(0,7), ts };
+    const inserted = currentUser ? await pushAccountRecord(record) : { id: 'local_' + ts + '_' + Math.random().toString(36).slice(2, 6) };
+    if (!inserted) return { ok: false, error: '云端写入失败' };
     record.id = inserted.id;
-    accountsData.balances[account] -= amount;
-    accountsData.expenses.push(record);
+    Core.state.accountsData.balances[account] -= amount;
+    Core.state.accountsData.expenses.push(record);
     saveCache(); RenderBus.emit('accounts');
-    return true;
+    return { ok: true, id: inserted.id, record };
+}
+/* 表单路径：弹窗 + 调核心 */
+async function addExpense(amount, account, desc, day, subCategory) {
+    const r = await _addExpenseCore({ amount, account, subCategory, desc, date: day });
+    if (!r.ok) alert(r.error);
+    return r.ok;
 }
 async function addTransfer(amount, from, to, desc, day) {
     if (from === to) { alert('转出和转入账户不能相同'); return false; }
     if (isNaN(amount) || amount <= 0) { alert('请输入有效金额'); return false; }
-    if (accountsData.balances[from] < amount) { alert('⚠️ 转出账户余额不足！'); return false; }
+    if (Core.state.accountsData.balances[from] < amount) { alert('⚠️ 转出账户余额不足！'); return false; }
     const d = isValidDay(day) ? day : todayStr();
     const ts = Date.now();
     const record = { type: 'transfer', amount, account: from, subCategory: to, desc: desc || '账户转换', day: d, month: d.slice(0,7), ts };
     const inserted = await pushAccountRecord(record);
     if (!inserted) return false;
     record.id = inserted.id;
-    accountsData.balances[from] -= amount;
-    accountsData.balances[to] += amount;
-    accountsData.transfers.push({ id: inserted.id, amount, from, to, desc: record.desc, day: d, month: record.month, ts });
+    Core.state.accountsData.balances[from] -= amount;
+    Core.state.accountsData.balances[to] += amount;
+    Core.state.accountsData.transfers.push({ id: inserted.id, amount, from, to, desc: record.desc, day: d, month: record.month, ts });
     saveCache(); RenderBus.emit('accounts');
     return true;
 }
 async function deleteExpense(id) {
-    const idx = accountsData.expenses.findIndex(e => String(e.id) === String(id));
+    const idx = Core.state.accountsData.expenses.findIndex(e => String(e.id) === String(id));
     if (idx === -1) return;
-    const item = accountsData.expenses[idx];
+    const item = Core.state.accountsData.expenses[idx];
     await deleteAccountRecord(id);
-    accountsData.balances[item.account] += item.amount;
-    accountsData.expenses.splice(idx, 1);
+    Core.state.accountsData.balances[item.account] += item.amount;
+    Core.state.accountsData.expenses.splice(idx, 1);
     saveCache(); RenderBus.emit('accounts');
 }
 async function deleteTransfer(id) {
-    const idx = accountsData.transfers.findIndex(e => String(e.id) === String(id));
+    const idx = Core.state.accountsData.transfers.findIndex(e => String(e.id) === String(id));
     if (idx === -1) return;
-    const item = accountsData.transfers[idx];
+    const item = Core.state.accountsData.transfers[idx];
     await deleteAccountRecord(id);
-    accountsData.balances[item.from] += item.amount;
-    accountsData.balances[item.to] -= item.amount;
-    accountsData.transfers.splice(idx, 1);
+    Core.state.accountsData.balances[item.from] += item.amount;
+    Core.state.accountsData.balances[item.to] -= item.amount;
+    Core.state.accountsData.transfers.splice(idx, 1);
     saveCache(); RenderBus.emit('accounts');
 }
 async function updateExpenseDate(id, newDate) {
-    const e = accountsData.expenses.find(x => String(x.id) === String(id));
+    const e = Core.state.accountsData.expenses.find(x => String(x.id) === String(id));
     if (!e) return;
     let day = null, month = null;
     if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
@@ -3065,7 +3171,7 @@ async function updateExpenseDate(id, newDate) {
     saveCache(); RenderBus.emit('accounts');
 }
 async function updateExpenseSubcategory(id, sub) {
-    const e = accountsData.expenses.find(x => String(x.id) === String(id));
+    const e = Core.state.accountsData.expenses.find(x => String(x.id) === String(id));
     if (!e || e.account !== 'survival') return;
     const v = SUB_CATEGORIES[sub] ? sub : null;
     await updateAccountRecord(id, { sub_category: v });
@@ -3073,7 +3179,7 @@ async function updateExpenseSubcategory(id, sub) {
     saveCache(); RenderBus.emit('accounts');
 }
 async function updateIncomeDate(id, newDate) {
-    const r = accountsData.incomeRecords.find(x => String(x.id) === String(id));
+    const r = Core.state.accountsData.incomeRecords.find(x => String(x.id) === String(id));
     if (!r) return;
     let day = null, month = null;
     if (isValidDay(newDate)) { day = newDate; month = newDate.slice(0,7); }
@@ -3083,15 +3189,15 @@ async function updateIncomeDate(id, newDate) {
 }
 
 function renderAccounts() {
-    $('balance-survival').textContent = accountsData.balances.survival.toFixed(2);
-    $('balance-stable').textContent = accountsData.balances.stable.toFixed(2);
-    $('balance-develop').textContent = accountsData.balances.develop.toFixed(2);
+    $('balance-survival').textContent = Core.state.accountsData.balances.survival.toFixed(2);
+    $('balance-stable').textContent = Core.state.accountsData.balances.stable.toFixed(2);
+    $('balance-develop').textContent = Core.state.accountsData.balances.develop.toFixed(2);
 
     const expEl = $('expense-list');
-    if (accountsData.expenses.length === 0) { expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>'; }
+    if (Core.state.accountsData.expenses.length === 0) { expEl.innerHTML = '<div class="empty-hint">还没有支出记录</div>'; }
     else {
         const grouped = {};
-        accountsData.expenses.forEach(e => { const m = recordMonth(e); if (!grouped[m]) grouped[m] = []; grouped[m].push(e); });
+        Core.state.accountsData.expenses.forEach(e => { const m = recordMonth(e); if (!grouped[m]) grouped[m] = []; grouped[m].push(e); });
         const months = Object.keys(grouped).sort((a, b) => { if (a === 'unknown') return 1; if (b === 'unknown') return -1; return b.localeCompare(a); });
         let html = '';
         months.forEach((m, idx) => {
@@ -3120,9 +3226,9 @@ function renderAccounts() {
     }
 
     const transEl = $('transfer-list');
-    if (accountsData.transfers.length === 0) { transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>'; }
+    if (Core.state.accountsData.transfers.length === 0) { transEl.innerHTML = '<div class="empty-hint">还没有转换记录</div>'; }
     else {
-        const sorted = [...accountsData.transfers].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
+        const sorted = [...Core.state.accountsData.transfers].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
         let html = '<table><thead><tr><th>日期</th><th>路径</th><th>金额</th><th></th></tr></thead><tbody>';
         sorted.forEach(e => {
             html += `<tr><td>${shortDay(e.day)}</td><td style="font-size:12px;"><span class="tag tag-warn">${ACCOUNT_LABEL[e.from]}</span> → <span class="tag tag-good">${ACCOUNT_LABEL[e.to]}</span></td><td>${e.amount.toFixed(2)}</td><td><button class="btn btn-danger btn-sm" data-del-transfer="${e.id}">✕</button></td></tr>`;
@@ -3132,9 +3238,9 @@ function renderAccounts() {
     }
 
     const incEl = $('income-list');
-    if (accountsData.incomeRecords.length === 0) { incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>'; }
+    if (Core.state.accountsData.incomeRecords.length === 0) { incEl.innerHTML = '<div class="empty-hint">还没有收入记录</div>'; }
     else {
-        const sorted = [...accountsData.incomeRecords].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
+        const sorted = [...Core.state.accountsData.incomeRecords].sort((a, b) => { const da = recordDay(a), db = recordDay(b); if (da !== db) return db.localeCompare(da); return (b.ts||0) - (a.ts||0); });
         let html = '<table><thead><tr><th>日期</th><th>金额</th><th>分配</th></tr></thead><tbody>';
         sorted.forEach(r => {
             const dayVal = recordDay(r) === 'unknown' ? '' : recordDay(r);
@@ -3144,8 +3250,8 @@ function renderAccounts() {
         incEl.innerHTML = html;
     }
 
-    const totalExpense = accountsData.expenses.reduce((s, e) => s + e.amount, 0);
-    $('accounts-summary').textContent = `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${accountsData.income.toFixed(2)} · 剩余 ¥${(accountsData.income - totalExpense).toFixed(2)}`;
+    const totalExpense = Core.state.accountsData.expenses.reduce((s, e) => s + e.amount, 0);
+    $('accounts-summary').textContent = `总支出 ¥${totalExpense.toFixed(2)} · 总收入 ¥${Core.state.accountsData.income.toFixed(2)} · 剩余 ¥${(Core.state.accountsData.income - totalExpense).toFixed(2)}`;
 
     renderMonthly();
 }
@@ -3153,8 +3259,8 @@ function renderAccounts() {
 function renderMonthly() {
     const map = {};
     function ensure(key) { if (!map[key]) map[key] = { month: key, income: 0, expense: 0, count: 0, byAccount: { survival: 0, stable: 0, develop: 0 }, bySub: { rigid: 0, emotional: 0, once: 0 }, days: {} }; return map[key]; }
-    accountsData.incomeRecords.forEach(r => { ensure(recordMonth(r)).income += r.amount; });
-    accountsData.expenses.forEach(e => {
+    Core.state.accountsData.incomeRecords.forEach(r => { ensure(recordMonth(r)).income += r.amount; });
+    Core.state.accountsData.expenses.forEach(e => {
         const item = ensure(recordMonth(e));
         item.expense += e.amount; item.count += 1;
         if (item.byAccount[e.account] !== undefined) item.byAccount[e.account] += e.amount;
@@ -3243,7 +3349,7 @@ async function addSleep() {
     if (!start || !end) return alert('请填写入睡和醒来时间');
     const rec = { date: currentDay, ts: Date.now(), start_time: start, end_time: end, feeling, note };
     const item = await syncRecord('sleep', currentDay, rec, rec);
-    if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; }
+    if (item) { Core.state.healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; }
 }
 async function addEnergy() {
     let am = 5, pm = 5;
@@ -3252,7 +3358,7 @@ async function addEnergy() {
     const note = $('energy-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), am_score: am, pm_score: pm, note };
     const item = await syncRecord('energy', currentDay, rec, rec);
-    if (item) { healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('energy-note').value=''; }
+    if (item) { Core.state.healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('energy-note').value=''; }
 }
 async function addCharge() {
     const type = $('charge-type').value;
@@ -3260,7 +3366,7 @@ async function addCharge() {
     const note = $('charge-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), type, delta, note };
     const item = await syncRecord('charge', currentDay, rec, rec);
-    if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('charge-note').value=''; }
+    if (item) { Core.state.healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('charge-note').value=''; }
 }
 async function addExercise() {
     const dur = parseInt($('exercise-duration').value, 10);
@@ -3269,7 +3375,7 @@ async function addExercise() {
     const note = $('exercise-note').value.trim();
     const rec = { date: currentDay, ts: Date.now(), type, duration: dur, note };
     const item = await syncRecord('exercise', currentDay, rec, rec);
-    if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('exercise-duration').value=''; $('exercise-note').value=''; }
+    if (item) { Core.state.healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('exercise-duration').value=''; $('exercise-note').value=''; }
 }
 async function addMicro() {
     if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
@@ -3279,7 +3385,7 @@ async function addMicro() {
     const rec = { date: currentDay, ts: Date.now(), posture, habits: habitsArr, note };
     const item = await syncRecord('micro', currentDay, rec, rec);
     if (item) {
-        healthData.microExercise.unshift({ id: item.id, ...rec });
+        Core.state.healthData.microExercise.unshift({ id: item.id, ...rec });
         saveCache(); RenderBus.emit('health');
         selectedPosture.clear(); selectedHabit.clear();
         buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
@@ -3297,7 +3403,7 @@ async function addBody() {
     const rec = { date: currentDay, ts: Date.now(), signals, acne: hasAcne ? acne : null, note };
     const item = await syncRecord('body', currentDay, rec, rec);
     if (item) {
-        healthData.bodySignals.unshift({ id: item.id, ...rec });
+        Core.state.healthData.bodySignals.unshift({ id: item.id, ...rec });
         saveCache(); RenderBus.emit('health');
         selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
         $('signal-other').value = ''; $('acne-location').value = ''; $('acne-location-other').value = ''; $('acne-location-other-field').style.display = 'none'; $('acne-type').value = ''; $('acne-severity').value = ''; $('acne-note').value = ''; $('signal-note').value = '';
@@ -3311,7 +3417,7 @@ async function addMeal() {
     const rec = { date: currentDay, ts: Date.now(), ...meals, water, snack };
     const item = await syncRecord('meal', currentDay, rec, rec);
     if (item) {
-        healthData.meal.unshift({ id: item.id, ...rec });
+        Core.state.healthData.meal.unshift({ id: item.id, ...rec });
         saveCache(); RenderBus.emit('health'); showFoodAnalysis(meals, water, snack);
         ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value = '');
     }
@@ -3319,7 +3425,7 @@ async function addMeal() {
 
 function renderSleep() {
     const el = $('sleep-history');
-    const list = filterByDay(healthData.sleep);
+    const list = filterByDay(Core.state.healthData.sleep);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有睡眠记录</div>'; return; }
     const fm = { refreshed: { text: '😊 神清气爽', cls: 'tag-good' }, ok: { text: '😐 还行', cls: 'tag-warn' }, tired: { text: '😫 疲惫', cls: 'tag-bad' }, groggy: { text: '😵 昏沉', cls: 'tag-bad' } };
     let html = '';
@@ -3339,7 +3445,7 @@ function renderSleep() {
 }
 function renderEnergy() {
     const el = $('energy-history');
-    const list = filterByDay(healthData.energy);
+    const list = filterByDay(Core.state.healthData.energy);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有能量记录</div>'; return; }
     let html = '';
     list.forEach(r => {
@@ -3351,7 +3457,7 @@ function renderEnergy() {
 }
 function renderCharge() {
     const el = $('charge-history');
-    const list = filterByDay(healthData.charge);
+    const list = filterByDay(Core.state.healthData.charge);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有充电记录</div>'; return; }
     const tm = { rest:'🛌 休息', nature:'🌿 自然', social:'👥 社交', hobby:'🎨 爱好', exercise:'🏃 轻度运动', food:'🍵 好好吃饭', other:'✨ 其他' };
     let html = '';
@@ -3365,7 +3471,7 @@ function renderCharge() {
 function renderExercise() {
     renderExerciseWeek();
     const el = $('exercise-history');
-    const list = filterByDay(healthData.exercise);
+    const list = filterByDay(Core.state.healthData.exercise);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有运动记录</div>'; return; }
     const tm = { walk:'🚶 散步', run:'🏃 跑步', cycling:'🚴 骑行', strength:'🏋️ 力量', yoga:'🧘 瑜伽', ball:'⚽ 球类', swim:'🏊 游泳', other:'✨ 其他' };
     let html = '';
@@ -3374,7 +3480,7 @@ function renderExercise() {
 }
 function renderMicro() {
     const el = $('micro-history');
-    const list = filterByDay(healthData.microExercise);
+    const list = filterByDay(Core.state.healthData.microExercise);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有微运动记录</div>'; return; }
     let html = '';
     list.forEach(r => {
@@ -3386,7 +3492,7 @@ function renderMicro() {
 }
 function renderBody() {
     const el = $('body-history');
-    const list = filterByDay(healthData.bodySignals);
+    const list = filterByDay(Core.state.healthData.bodySignals);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有身体信号记录</div>'; return; }
     let html = '';
     list.forEach(r => {
@@ -3410,7 +3516,7 @@ function renderBody() {
 }
 function renderMeal() {
     const el = $('meal-history');
-    const list = filterByDay(healthData.meal);
+    const list = filterByDay(Core.state.healthData.meal);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有饮食记录</div>'; return; }
     let html = '';
     list.forEach(r => { html += `<div class="list-item"><div class="main"><div>饮水 ${r.water||0} 杯</div><div class="meta">早：${esc(r.breakfast||'—')} · 午：${esc(r.lunch||'—')} · 晚：${esc(r.dinner||'—')} · 加餐：${esc(r.snack||'—')}</div></div><button class="btn btn-danger btn-sm" data-del-meal="${r.id}">✕</button></div>`; });
@@ -3459,7 +3565,7 @@ function renderExerciseWeek() {
     const today = todayStr();
     let html = '';
     days.forEach(d => {
-        const has = healthData.exercise.some(r => r.date === d.date);
+        const has = Core.state.healthData.exercise.some(r => r.date === d.date);
         const isToday = d.date === today;
         const isSel = d.date === currentDay;
         html += `<div class="exercise-day"><div class="dot ${has?'done':''} ${isToday?'today':''} ${isSel?'selected':''}" data-day="${d.date}">${has?'✓':d.label}</div><div>周${d.label}</div></div>`;
@@ -3526,9 +3632,9 @@ async function finishIpSession() {
     const rec = { date: currentDay, ts: Date.now(), feeling: ipAnswers.feeling || '（未记录）', answers: { ...ipAnswers }, conversation: ipConversation.map(m => ({ role: m.role, text: m.text })), createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) };
     const item = await syncRecord('innerPeace', currentDay, rec, rec);
     if (item) {
-        healthData.innerPeace.unshift({ id: item.id, ...rec });
+        Core.state.healthData.innerPeace.unshift({ id: item.id, ...rec });
         saveCache();
-        renderIpReport(healthData.innerPeace[0]);
+        renderIpReport(Core.state.healthData.innerPeace[0]);
         renderInnerPeaceHistory();
     }
     ipCurrentKey = null; ipConversation = []; ipAnswers = {}; ipSelectedOption = null;
@@ -3558,7 +3664,7 @@ function renderIpReport(record) {
 
 function renderInnerPeaceHistory() {
     const el = $('ip-history');
-    const list = filterByDay(healthData.innerPeace);
+    const list = filterByDay(Core.state.healthData.innerPeace);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">这一天还没有反内耗练习记录</div>'; return; }
     let html = '';
     list.forEach(r => { html += `<div class="list-item"><div class="main"><div><b>${esc(r.createdAt||'')}</b></div><div style="margin-top:4px;color:var(--text2);">感受：${esc(r.feeling||'（未记录）')}</div></div><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" data-view-ip="${r.id}">查看</button><button class="btn btn-danger btn-sm" data-del-ip="${r.id}">✕</button></div></div>`; });
@@ -3568,7 +3674,7 @@ function renderInnerPeaceHistory() {
 /* ================= AI 每日分析 ================= */
 function collectDayData() {
     const day = currentDay;
-    return { date: day, sleep: healthData.sleep.filter(r => r.date === day), energy: healthData.energy.filter(r => r.date === day), charge: healthData.charge.filter(r => r.date === day), exercise: healthData.exercise.filter(r => r.date === day), micro: healthData.microExercise.filter(r => r.date === day), body: healthData.bodySignals.filter(r => r.date === day), meal: healthData.meal.filter(r => r.date === day), innerPeace: healthData.innerPeace.filter(r => r.date === day) };
+    return { date: day, sleep: Core.state.healthData.sleep.filter(r => r.date === day), energy: Core.state.healthData.energy.filter(r => r.date === day), charge: Core.state.healthData.charge.filter(r => r.date === day), exercise: Core.state.healthData.exercise.filter(r => r.date === day), micro: Core.state.healthData.microExercise.filter(r => r.date === day), body: Core.state.healthData.bodySignals.filter(r => r.date === day), meal: Core.state.healthData.meal.filter(r => r.date === day), innerPeace: Core.state.healthData.innerPeace.filter(r => r.date === day) };
 }
 function buildHealthPrompt(d) {
     const lines = ['请根据以下健康记录，生成一份简洁、温暖、可执行的每日分析报告。', '', `【日期】${d.date}`, ''];
@@ -3582,7 +3688,7 @@ function buildHealthPrompt(d) {
     return lines.join('\n');
 }
 async function runAIAnalysis() {
-    if (!aiConfig.apiKey) { alert('请先在右上角 ⚙️ 设置中配置 API Key'); return; }
+    if (!Core.state.aiConfig.apiKey) { alert('请先在右上角 ⚙️ 设置中配置 API Key'); return; }
     const resultEl = $('ai-result');
     const btn = $('ai-analyze-btn');
     btn.disabled = true; btn.textContent = '⏳ 分析中...';
@@ -3590,18 +3696,18 @@ async function runAIAnalysis() {
     const d = collectDayData();
     const prompt = buildHealthPrompt(d);
     try {
-        const res = await fetch(aiConfig.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiConfig.apiKey }, body: JSON.stringify({ model: aiConfig.model, messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 }) });
+        const res = await fetch(Core.state.aiConfig.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + Core.state.aiConfig.apiKey }, body: JSON.stringify({ model: Core.state.aiConfig.model, messages: [{ role: 'system', content: '你是一位温暖、专业、不说教的健康管理教练。' }, { role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 }) });
         if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
         const json = await res.json();
         const content = json.choices?.[0]?.message?.content;
         if (!content) throw new Error('返回为空');
         resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:var(--text);line-height:1.8;">${md2html(content)}</div>`;
-        const existing = healthData.aiAnalysis.filter(x => x.date === currentDay);
+        const existing = Core.state.healthData.aiAnalysis.filter(x => x.date === currentDay);
         for (const e of existing) { await deleteHealthRecord(e.id); }
-        healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+        Core.state.healthData.aiAnalysis = Core.state.healthData.aiAnalysis.filter(x => x.date !== currentDay);
         const rec = { date: currentDay, ts: Date.now(), content };
         const item = await syncRecord('ai', currentDay, rec, rec);
-        if (item) healthData.aiAnalysis.push({ id: item.id, ...rec });
+        if (item) Core.state.healthData.aiAnalysis.push({ id: item.id, ...rec });
         saveCache();
     } catch (err) {
         console.error(err);
@@ -3609,7 +3715,7 @@ async function runAIAnalysis() {
     } finally { btn.disabled = false; btn.textContent = '✨ 生成分析'; }
 }
 function renderAIAnalysis() {
-    const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+    const list = Core.state.healthData.aiAnalysis.filter(x => x.date === currentDay);
     const resultEl = $('ai-result');
     if (!list.length) { resultEl.innerHTML = '<div class="empty-hint">还没有今日分析</div>'; return; }
     resultEl.innerHTML = `<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;color:var(--text);line-height:1.8;">${md2html(list[0].content||'')}</div>`;
@@ -3618,9 +3724,9 @@ function renderAIAnalysis() {
 /* ================= RSS 源 UI ================= */
 function renderRssSources() {
     const el = $('rss-source-list');
-    if (!rssFeeds.length) { el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，展开下方"添加新源"输入</div>'; return; }
+    if (!Core.state.rssFeeds.length) { el.innerHTML = '<div class="empty-hint">还没有添加 RSS 源，展开下方"添加新源"输入</div>'; return; }
     let html = '';
-    rssFeeds.forEach(f => {
+    Core.state.rssFeeds.forEach(f => {
         const cat = NEWS_CATEGORY[f.category] || NEWS_CATEGORY.other;
         const on = f.enabled !== false;
         html += `<div class="rss-source ${on ? '' : 'off'}">
@@ -3639,8 +3745,8 @@ function addRssFeed() {
     const category = $('rss-category').value;
     if (!url) return alert('请填写 RSS 链接');
     if (!/^https?:\/\//i.test(url)) return alert('链接需要以 http:// 或 https:// 开头');
-    if (rssFeeds.some(f => f.url === url)) return alert('这个源已经在列表里了');
-    rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url, name, category, enabled: true });
+    if (Core.state.rssFeeds.some(f => f.url === url)) return alert('这个源已经在列表里了');
+    Core.state.rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url, name, category, enabled: true });
     saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     $('rss-url').value = ''; $('rss-name').value = '';
     $('rss-status').textContent = '✅ 已保存';
@@ -3653,9 +3759,9 @@ const FEED_CATEGORY_FIX = { 'blogs.nvidia.com':'tech','theinformation.com':'tech
 const FEEDS_TO_ADD = [{ name: '36氪', url: 'https://36kr.com/feed', category: 'domestic' }];
 function optimizeFeedList() {
     let deleted = 0, fixed = 0, added = 0;
-    rssFeeds = rssFeeds.filter(f => { const hit = FEEDS_TO_DELETE.some(k => (f.url || '').includes(k)); if (hit) deleted++; return !hit; });
-    rssFeeds.forEach(f => { for (const [domain, cat] of Object.entries(FEED_CATEGORY_FIX)) { if ((f.url || '').includes(domain) && f.category !== cat) { f.category = cat; fixed++; break; } } });
-    FEEDS_TO_ADD.forEach(nf => { if (!rssFeeds.some(f => f.url === nf.url)) { rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), ...nf, enabled: true }); added++; } });
+    Core.state.rssFeeds = Core.state.rssFeeds.filter(f => { const hit = FEEDS_TO_DELETE.some(k => (f.url || '').includes(k)); if (hit) deleted++; return !hit; });
+    Core.state.rssFeeds.forEach(f => { for (const [domain, cat] of Object.entries(FEED_CATEGORY_FIX)) { if ((f.url || '').includes(domain) && f.category !== cat) { f.category = cat; fixed++; break; } } });
+    FEEDS_TO_ADD.forEach(nf => { if (!Core.state.rssFeeds.some(f => f.url === nf.url)) { Core.state.rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), ...nf, enabled: true }); added++; } });
     saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     return { deleted, fixed, added };
 }
@@ -3700,7 +3806,7 @@ function handleOpmlFile(file) {
         try {
             const feeds = parseOpmlFeeds(e.target.result);
             if (!feeds.length) { alert('这个 OPML 文件里没有找到 RSS 源'); return; }
-            const existingUrls = new Set(rssFeeds.map(f => f.url));
+            const existingUrls = new Set(Core.state.rssFeeds.map(f => f.url));
             feeds.forEach(f => { f._isExisting = existingUrls.has(f.url); });
             opmlPreviewData = feeds;
             renderOpmlPreview();
@@ -3728,7 +3834,7 @@ function confirmOpmlImport() {
     if (!opmlPreviewData) return;
     const toImport = opmlPreviewData.filter(f => !f._isExisting);
     if (!toImport.length) { opmlPreviewData = null; $('opml-preview').innerHTML = ''; return; }
-    toImport.forEach(f => { rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url: f.url, name: f.name, category: f.category, enabled: true }); });
+    toImport.forEach(f => { Core.state.rssFeeds.push({ id: 'f' + Date.now() + Math.random().toString(36).slice(2, 6), url: f.url, name: f.name, category: f.category, enabled: true }); });
     saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     const n = toImport.length;
     opmlPreviewData = null;
@@ -3797,7 +3903,7 @@ async function fetchOneFeed(feed, timeoutMs = 20000) {
     try { return await fetchViaRss2Json(feed, timeoutMs); } catch (e) { throw new Error(`Worker: ${workerErr} / rss2json: ${e.message}`); }
 }
 async function fetchAllFeedsConcurrent(onProgress) {
-    const enabled = rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
+    const enabled = Core.state.rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
     if (!enabled.length) return { results: [], errors: [], total: 0 };
     const now = Date.now();
     const threshold = now - (BRIEFING_CONFIG.WINDOW_HOURS * 60 * 60 * 1000);
@@ -3845,9 +3951,9 @@ function parseJsonSafe(text) {
     return JSON.parse(s);
 }
 async function callDeepSeekRaw(messages, { temperature = 0.3, max_tokens = 2000, jsonMode = false } = {}) {
-    const body = { model: aiConfig.model, messages, temperature, max_tokens };
+    const body = { model: Core.state.aiConfig.model, messages, temperature, max_tokens };
     if (jsonMode) body.response_format = { type: 'json_object' };
-    const res = await fetch(aiConfig.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiConfig.apiKey }, body: JSON.stringify(body) });
+    const res = await fetch(Core.state.aiConfig.apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + Core.state.aiConfig.apiKey }, body: JSON.stringify(body) });
     if (!res.ok) { const t = await res.text(); throw new Error('AI HTTP ' + res.status + '：' + t.slice(0, 150)); }
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -3951,9 +4057,9 @@ async function generateBriefing() {
     const statusEl = $('rss-status');
     const resultEl = $('rss-fetch-result');
 
-    const enabled = rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
+    const enabled = Core.state.rssFeeds.filter(f => f.enabled !== false && !isBlockedFeed(f));
     if (!enabled.length) return alert('请先添加至少一个 RSS 源');
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
 
     btn.disabled = true;
     btn.textContent = '⏳ 抓取中…';
@@ -4042,13 +4148,13 @@ async function generateBriefing() {
 
         if (!inserted) {
             const localRecord = { id: 'local_' + Date.now(), date: currentDay, ts: Date.now(), ...dataObj };
-            if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
-            newsData.briefings.unshift(localRecord);
+            if (!Array.isArray(Core.state.newsData.briefings)) Core.state.newsData.briefings = [];
+            Core.state.newsData.briefings.unshift(localRecord);
             saveCache(); RenderBus.emit('news');
             statusEl.textContent = `⚠️ 简报已保存在本地（云端同步失败）。`;
         } else {
-            if (!Array.isArray(newsData.briefings)) newsData.briefings = [];
-            if (!newsData.briefings.find(b => String(b.id) === String(inserted.id))) newsData.briefings.unshift({ ...dataObj, id: inserted.id, date: currentDay, ts: inserted.ts, _cloudId: inserted.id });
+            if (!Array.isArray(Core.state.newsData.briefings)) Core.state.newsData.briefings = [];
+            if (!Core.state.newsData.briefings.find(b => String(b.id) === String(inserted.id))) Core.state.newsData.briefings.unshift({ ...dataObj, id: inserted.id, date: currentDay, ts: inserted.ts, _cloudId: inserted.id });
             saveCache(); RenderBus.emit('news');
             statusEl.textContent = `✅ 简报生成成功！${all.length} 篇原文 → 选中 ${quotaResult.selected.length} 条事件。`;
         }
@@ -4071,7 +4177,7 @@ async function generateBriefing() {
 function renderBriefings() {
     const el = $('briefing-history');
     if (!el) return;
-    const list = [...(newsData.briefings || [])].sort((a, b) => { const aRead = a.isRead ? 1 : 0; const bRead = b.isRead ? 1 : 0; if (aRead !== bRead) return aRead - bRead; return (b.ts || 0) - (a.ts || 0); });
+    const list = [...(Core.state.newsData.briefings || [])].sort((a, b) => { const aRead = a.isRead ? 1 : 0; const bRead = b.isRead ? 1 : 0; if (aRead !== bRead) return aRead - bRead; return (b.ts || 0) - (a.ts || 0); });
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有生成过简报</div>'; return; }
 
     let html = '';
@@ -4106,22 +4212,22 @@ async function addNewsItem() {
     if (!title) return alert('请填写新闻标题');
     const rec = { date: currentDay, ts: Date.now(), category: cat, title, content };
     const item = await syncRecord('news_item', currentDay, rec, rec);
-    if (item) { newsData.items.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-title').value = ''; $('news-content').value = ''; }
+    if (item) { Core.state.newsData.items.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-title').value = ''; $('news-content').value = ''; }
 }
 async function addNewsSummary() {
     const summary = $('news-summary').value.trim();
     if (!summary) return alert('请填写总结内容');
-    const existing = newsData.summaries.filter(x => x.date === currentDay);
+    const existing = Core.state.newsData.summaries.filter(x => x.date === currentDay);
     if (existing.length && !confirm('今天已经有总结了，是否覆盖？')) return;
     for (const e of existing) { await deleteHealthRecord(e.id); }
-    newsData.summaries = newsData.summaries.filter(x => x.date !== currentDay);
+    Core.state.newsData.summaries = Core.state.newsData.summaries.filter(x => x.date !== currentDay);
     const rec = { date: currentDay, ts: Date.now(), content: summary };
     const item = await syncRecord('news_summary', currentDay, rec, rec);
-    if (item) { newsData.summaries.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-summary').value = ''; }
+    if (item) { Core.state.newsData.summaries.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('news'); $('news-summary').value = ''; }
 }
 function renderNews() {
     const itemEl = $('news-history');
-    const todayItems = newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
+    const todayItems = Core.state.newsData.items.filter(x => x.date === currentDay).sort((a, b) => (b.ts||0) - (a.ts||0));
     if (!todayItems.length) { itemEl.innerHTML = '<div class="empty-hint">这一天还没有记录世事</div>'; }
     else {
         let html = '';
@@ -4136,7 +4242,7 @@ function renderNews() {
         /* 删除由事件委托区统一绑定：data-del-news */
     }
     const summaryEl = $('news-summary-history');
-    const todaySummary = newsData.summaries.find(x => x.date === currentDay);
+    const todaySummary = Core.state.newsData.summaries.find(x => x.date === currentDay);
     if (!todaySummary) { summaryEl.innerHTML = '<div class="empty-hint">这一天还没有写总结</div>'; $('news-summary').value = ''; }
     else {
         summaryEl.innerHTML = `<div style="background:#fdf6f6;padding:14px;border-radius:12px;position:relative;"><div style="font-size:13px;color:var(--text);line-height:1.6;padding-right:30px;">${esc(todaySummary.content).replace(/\n/g, '<br>')}</div><button class="btn btn-danger btn-sm" style="position:absolute;top:8px;right:8px;" data-del-summary="${todaySummary.id}">✕</button></div>`;
@@ -4167,7 +4273,7 @@ let wdEditingItemId = null, wdEditingOutfitId = null, wdEditingWishId = null, wd
 let wdSlotOverrides = {};
 let wdItemSeasons = new Set(), wdItemScenes = new Set();
 
-try { wardrobeWeather = JSON.parse(localStorage.getItem(WD_WEATHER_KEY)) || null; } catch (e) { wardrobeWeather = null; }
+try { Core.state.wardrobeWeather = JSON.parse(localStorage.getItem(WD_WEATHER_KEY)) || null; } catch (e) { Core.state.wardrobeWeather = null; }
 
 function wdIcon(cat) { const c = WD_CATEGORIES.find(x => x.key === cat); return c ? c.icon : '👕'; }
 function wdSeasonOf(month) { return month >= 3 && month <= 5 ? '春' : month >= 6 && month <= 8 ? '夏' : month >= 9 && month <= 11 ? '秋' : '冬'; }
@@ -4199,17 +4305,17 @@ function wdSlotThickness(lv, cat) {
 /* ---------- 当日记录与云端保存 ---------- */
 function getTodayWardrobeLog() {
     const d = todayStr();
-    let l = wardrobeLog.find(x => x.date === d);
+    let l = Core.state.wardrobeLog.find(x => x.date === d);
     if (!l) {
         const day = new Date().getDay();
         l = { date: d, scene: (day === 0 || day === 6) ? '日常' : '通勤', outfit: null, confirmed: false, weatherText: '' };
-        wardrobeLog.push(l);
+        Core.state.wardrobeLog.push(l);
     }
     return l;
 }
 async function saveWardrobeCloud() {
     if (!currentUser) return;
-    await syncRecord('wardrobe', todayStr(), wardrobeData, cloudConfigRefs.wardrobe, { silent: true });
+    await syncRecord('wardrobe', todayStr(), Core.state.wardrobeData, Core.state.cloudConfigRefs.wardrobe, { silent: true });
     saveCache();
 }
 async function saveWardrobeLogCloud() {
@@ -4222,19 +4328,19 @@ async function saveWardrobeLogCloud() {
 /* ---------- 天气 ---------- */
 async function ensureWardrobeWeather(force) {
     const today = todayStr();
-    if (!force && wardrobeWeather && wardrobeWeather.date === today && wardrobeWeather.ok) { RenderBus.emit('wardrobe'); return; }
+    if (!force && Core.state.wardrobeWeather && Core.state.wardrobeWeather.date === today && Core.state.wardrobeWeather.ok) { RenderBus.emit('wardrobe'); return; }
     renderWdWeatherBar();
     try {
-        let { lat, lon } = wardrobeData.config;
+        let { lat, lon } = Core.state.wardrobeData.config;
         if (!lat || !lon) {
-            const names = [wardrobeData.config.city, '安徽省合肥市长丰县', '合肥'].filter(Boolean);
+            const names = [Core.state.wardrobeData.config.city, '安徽省合肥市长丰县', '合肥'].filter(Boolean);
             for (const n of names) {
                 const res = await withTimeout(fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(n) + '&count=1&language=zh'), 8000, '天气定位');
                 if (!res.ok) continue;
                 const j = await res.json();
                 if (j.results && j.results.length) {
                     lat = j.results[0].latitude; lon = j.results[0].longitude;
-                    wardrobeData.config.lat = lat; wardrobeData.config.lon = lon;
+                    Core.state.wardrobeData.config.lat = lat; Core.state.wardrobeData.config.lon = lon;
                     saveWardrobeCloud();
                     break;
                 }
@@ -4248,7 +4354,7 @@ async function ensureWardrobeWeather(force) {
         const cur = j.current || {};
         const dly = j.daily || {};
         const code = cur.weather_code != null ? cur.weather_code : 0;
-        wardrobeWeather = {
+        Core.state.wardrobeWeather = {
             date: today, ok: true, manual: false,
             temp: cur.temperature_2m, feels: cur.apparent_temperature != null ? cur.apparent_temperature : cur.temperature_2m,
             code: code, group: wdWeatherGroup(code), pop: cur.precipitation_probability || 0, wind: cur.wind_speed_10m || 0,
@@ -4257,10 +4363,10 @@ async function ensureWardrobeWeather(force) {
             uv: (dly.uv_index_max && dly.uv_index_max[0]) || 0,
             text: WD_WMO[code] || '未知'
         };
-        try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(wardrobeWeather)); } catch (e) {}
+        try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(Core.state.wardrobeWeather)); } catch (e) {}
     } catch (err) {
         console.warn('[衣橱] 天气获取失败：' + err.message);
-        wardrobeWeather = { date: today, ok: false, manual: false, err: err.message };
+        Core.state.wardrobeWeather = { date: today, ok: false, manual: false, err: err.message };
     }
     RenderBus.emit('wardrobe');
 }
@@ -4268,12 +4374,12 @@ function wdApplyManualWeather() {
     const t = parseFloat($('wd-manual-temp').value);
     if (isNaN(t)) return alert('请填写体感温度');
     const code = parseInt($('wd-manual-weather').value, 10) || 0;
-    wardrobeWeather = { date: todayStr(), ok: true, manual: true, temp: t, feels: t, code: code, group: wdWeatherGroup(code), pop: 0, wind: 0, tmax: t, tmin: t, uv: 0, text: WD_WMO[code] || '手动' };
-    try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(wardrobeWeather)); } catch (e) {}
+    Core.state.wardrobeWeather = { date: todayStr(), ok: true, manual: true, temp: t, feels: t, code: code, group: wdWeatherGroup(code), pop: 0, wind: 0, tmax: t, tmin: t, uv: 0, text: WD_WMO[code] || '手动' };
+    try { localStorage.setItem(WD_WEATHER_KEY, JSON.stringify(Core.state.wardrobeWeather)); } catch (e) {}
     RenderBus.emit('wardrobe');
 }
 function wdWeatherSummaryText() {
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (!w || !w.ok) return '天气未获取';
     return Math.round(w.temp) + '°C 体感' + Math.round(w.feels) + '°C · ' + w.text + ' · 降水' + w.pop + '%';
 }
@@ -4289,7 +4395,7 @@ function wdItemFit(it, cat, lv, scene, season, w) {
     return true;
 }
 function wdSortedCandidates(cat, lv, scene, season, w) {
-    const tryScene = (s) => wardrobeData.items.filter(it => wdItemFit(it, cat, lv, s, season, w));
+    const tryScene = (s) => Core.state.wardrobeData.items.filter(it => wdItemFit(it, cat, lv, s, season, w));
     let pool = tryScene(scene);
     if (!pool.length && scene !== '通勤') pool = tryScene('通勤');
     if (!pool.length && scene !== '日常') pool = tryScene('日常');
@@ -4305,7 +4411,7 @@ function wdSortedCandidates(cat, lv, scene, season, w) {
 function wdComputeOutfit() {
     const log = getTodayWardrobeLog();
     if (log.outfit && log.outfit.length) return { outfit: log.outfit, confirmed: !!log.confirmed, scene: log.scene };
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (!w || !w.ok) return { needWeather: true, scene: log.scene || '通勤' };
     const scene = log.scene || '通勤';
     const level = wdWarmLevel(w.feels);
@@ -4315,7 +4421,7 @@ function wdComputeOutfit() {
     const slots = [...level.layers];
     if (level.outerNeed && !slots.includes('outer')) slots.push('outer');
     slots.forEach(cat => {
-        let item = wdSlotOverrides[cat] ? wardrobeData.items.find(x => x.id === wdSlotOverrides[cat]) : null;
+        let item = wdSlotOverrides[cat] ? Core.state.wardrobeData.items.find(x => x.id === wdSlotOverrides[cat]) : null;
         if (item && !wdItemFit(item, cat, level.lv, scene, season, w)) item = null;
         if (!item) {
             const pool = wdSortedCandidates(cat, level.lv, scene, season, w);
@@ -4328,7 +4434,7 @@ function wdComputeOutfit() {
 function wdReroll() {
     const log = getTodayWardrobeLog();
     if (log.outfit && log.outfit.length) return;
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (!w || !w.ok) return;
     const level = wdWarmLevel(w.feels);
     const season = wdSeasonOf(new Date().getMonth() + 1);
@@ -4348,7 +4454,7 @@ function wdReroll() {
 function wdSwapSlot(cat) {
     const log = getTodayWardrobeLog();
     if (log.outfit && log.outfit.length) return;
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (!w || !w.ok) return;
     const level = wdWarmLevel(w.feels);
     const season = wdSeasonOf(new Date().getMonth() + 1);
@@ -4363,7 +4469,7 @@ function wdSwapSlot(cat) {
 }
 function wdTodayTips(sug) {
     const tips = [];
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (w && w.ok) {
         if (w.manual) tips.push('天气为手动填写');
         if (w.group === 'rain' || w.group === 'snow') tips.push('有降水：优先防水外套，带伞更稳');
@@ -4384,7 +4490,7 @@ async function wdConfirmToday() {
     const sug = wdComputeOutfit();
     if (!sug.outfit || !sug.outfit.length) return alert('还没有可确认的穿搭，先获取天气或手动填写温度');
     const snap = sug.outfit.map(it => {
-        const real = wardrobeData.items.find(x => x.id === it.id);
+        const real = Core.state.wardrobeData.items.find(x => x.id === it.id);
         if (!real) return null;
         const s = { id: real.id, name: real.name, icon: wdIcon(real.category), color: real.color, category: real.category, wearsBefore: real.wears || 0, lastWornBefore: real.lastWorn || null };
         real.wears = (real.wears || 0) + 1;
@@ -4404,7 +4510,7 @@ async function wdClearToday() {
     if (!log.outfit || !log.outfit.length) return;
     if (!confirm('清除今日穿搭记录？相关衣物的穿着次数会恢复。')) return;
     log.outfit.forEach(s => {
-        const it = wardrobeData.items.find(x => x.id === s.id);
+        const it = Core.state.wardrobeData.items.find(x => x.id === s.id);
         if (it) { it.wears = s.wearsBefore || 0; it.lastWorn = s.lastWornBefore || null; }
     });
     log.outfit = null; log.confirmed = false; log.weatherText = '';
@@ -4414,13 +4520,13 @@ async function wdClearToday() {
     RenderBus.emit('wardrobe');
 }
 async function wdApplyOutfit(id) {
-    const o = wardrobeData.outfits.find(x => x.id === id);
+    const o = Core.state.wardrobeData.outfits.find(x => x.id === id);
     if (!o) return;
     const log = getTodayWardrobeLog();
     if (log.confirmed) return alert('今天已确认过穿搭，先「清除重选」再换');
     const snap = [];
     ['inner','top','bottom','outer','shoes'].forEach(cat => {
-        const it = o.slots && o.slots[cat] ? wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
+        const it = o.slots && o.slots[cat] ? Core.state.wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
         if (it && (it.status || '在用') === '在用') snap.push({ id: it.id, name: it.name, icon: wdIcon(it.category), color: it.color, category: it.category, wearsBefore: it.wears || 0, lastWornBefore: it.lastWorn || null });
     });
     if (!snap.length) return alert('这套搭配里没有有效衣物');
@@ -4439,7 +4545,7 @@ function wdBuildChips(containerId, items, set) {
 }
 function openWdItemModal(id) {
     wdEditingItemId = id || null;
-    const item = id ? wardrobeData.items.find(x => x.id === id) : null;
+    const item = id ? Core.state.wardrobeData.items.find(x => x.id === id) : null;
     wdItemSeasons = new Set(item && item.seasons ? item.seasons : [wdSeasonOf(new Date().getMonth() + 1)]);
     wdItemScenes = new Set(item && item.scenes ? item.scenes : []);
     $('wd-item-title').textContent = item ? '✏️ 编辑衣物' : '➕ 添加衣物';
@@ -4480,11 +4586,11 @@ async function saveWdItem() {
         lastWorn: null
     };
     if (wdEditingItemId) {
-        const old = wardrobeData.items.find(x => x.id === wdEditingItemId);
+        const old = Core.state.wardrobeData.items.find(x => x.id === wdEditingItemId);
         if (old) { data.addedAt = old.addedAt || todayStr(); data.wears = old.wears || 0; data.lastWorn = old.lastWorn || null; }
-        wardrobeData.items = wardrobeData.items.map(x => x.id === wdEditingItemId ? data : x);
+        Core.state.wardrobeData.items = Core.state.wardrobeData.items.map(x => x.id === wdEditingItemId ? data : x);
     } else {
-        wardrobeData.items.push(data);
+        Core.state.wardrobeData.items.push(data);
     }
     await saveWardrobeCloud();
     $('wd-item-modal').classList.remove('active');
@@ -4492,23 +4598,23 @@ async function saveWdItem() {
     RenderBus.emit('wardrobe');
 }
 async function deleteWdItem(id) {
-    const it = wardrobeData.items.find(x => x.id === id);
+    const it = Core.state.wardrobeData.items.find(x => x.id === id);
     if (!it) return;
     if (!confirm('删除「' + it.name + '」？预设搭配中的引用会一并移除。')) return;
-    wardrobeData.items = wardrobeData.items.filter(x => x.id !== id);
-    wardrobeData.outfits.forEach(o => { if (o.slots) { Object.keys(o.slots).forEach(k => { if (o.slots[k] === id) o.slots[k] = null; }); } });
+    Core.state.wardrobeData.items = Core.state.wardrobeData.items.filter(x => x.id !== id);
+    Core.state.wardrobeData.outfits.forEach(o => { if (o.slots) { Object.keys(o.slots).forEach(k => { if (o.slots[k] === id) o.slots[k] = null; }); } });
     await saveWardrobeCloud();
     RenderBus.emit('wardrobe');
 }
 async function wdToggleStatus(id) {
-    const it = wardrobeData.items.find(x => x.id === id);
+    const it = Core.state.wardrobeData.items.find(x => x.id === id);
     if (!it) return;
     it.status = it.status === '在用' ? '闲置' : '在用';
     await saveWardrobeCloud();
     RenderBus.emit('wardrobe');
 }
 async function wdMarkIdle(id) {
-    const it = wardrobeData.items.find(x => x.id === id);
+    const it = Core.state.wardrobeData.items.find(x => x.id === id);
     if (!it) return;
     it.status = '闲置';
     await saveWardrobeCloud();
@@ -4518,7 +4624,7 @@ async function wdMarkIdle(id) {
 /* ---------- 预设搭配 CRUD ---------- */
 function openWdOutfitModal(id) {
     wdEditingOutfitId = id || null;
-    const o = id ? wardrobeData.outfits.find(x => x.id === id) : null;
+    const o = id ? Core.state.wardrobeData.outfits.find(x => x.id === id) : null;
     $('wd-outfit-title').textContent = o ? '✏️ 编辑搭配方案' : '➕ 新建搭配方案';
     $('wd-outfit-name').value = o ? o.name : '';
     $('wd-outfit-tmin').value = o ? o.tmin : 10;
@@ -4527,7 +4633,7 @@ function openWdOutfitModal(id) {
     ['inner','top','bottom','outer','shoes'].forEach(cat => {
         const sel = $('wd-outfit-slot-' + cat);
         if (!sel) return;
-        const list = wardrobeData.items.filter(it => it.category === cat);
+        const list = Core.state.wardrobeData.items.filter(it => it.category === cat);
         sel.innerHTML = '<option value="">— 不选 —</option>' + list.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('');
         sel.value = o && o.slots && o.slots[cat] ? o.slots[cat] : '';
     });
@@ -4549,8 +4655,8 @@ async function saveWdOutfit() {
         slots: slots
     };
     if (isNaN(data.tmin) || isNaN(data.tmax)) return alert('请填写适用温度范围');
-    if (wdEditingOutfitId) wardrobeData.outfits = wardrobeData.outfits.map(x => x.id === wdEditingOutfitId ? data : x);
-    else wardrobeData.outfits.push(data);
+    if (wdEditingOutfitId) Core.state.wardrobeData.outfits = Core.state.wardrobeData.outfits.map(x => x.id === wdEditingOutfitId ? data : x);
+    else Core.state.wardrobeData.outfits.push(data);
     await saveWardrobeCloud();
     $('wd-outfit-modal').classList.remove('active');
     wdEditingOutfitId = null;
@@ -4558,14 +4664,14 @@ async function saveWdOutfit() {
 }
 async function deleteWdOutfit(id) {
     if (!confirm('删除这个搭配方案？')) return;
-    wardrobeData.outfits = wardrobeData.outfits.filter(x => x.id !== id);
+    Core.state.wardrobeData.outfits = Core.state.wardrobeData.outfits.filter(x => x.id !== id);
     await saveWardrobeCloud();
     RenderBus.emit('wardrobe');
 }
 function wdOutfitMemberText(o) {
     const names = [];
     ['inner','top','bottom','outer','shoes'].forEach(cat => {
-        const it = o.slots && o.slots[cat] ? wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
+        const it = o.slots && o.slots[cat] ? Core.state.wardrobeData.items.find(x => x.id === o.slots[cat]) : null;
         names.push(it ? esc(it.name) : '—');
     });
     return names.join(' + ');
@@ -4576,7 +4682,7 @@ let wdWishFromGap = false;
 function openWdWishModal(id, prefill) {
     wdEditingWishId = id || null;
     wdWishFromGap = !!(prefill && prefill.gap);
-    const w = id ? wardrobeData.wishlist.find(x => x.id === id) : null;
+    const w = id ? Core.state.wardrobeData.wishlist.find(x => x.id === id) : null;
     $('wd-wish-title').textContent = w ? '✏️ 编辑愿望' : '＋ 加入愿望清单';
     $('wd-wish-name').value = w ? w.name : (prefill ? '' : '');
     $('wd-wish-category').value = w ? w.category : (prefill ? prefill.category : 'outer');
@@ -4595,11 +4701,11 @@ async function saveWdWish() {
         price: $('wd-wish-price').value === '' ? null : parseFloat($('wd-wish-price').value),
         priority: $('wd-wish-priority').value,
         reason: $('wd-wish-reason').value.trim(),
-        gap: wdEditingWishId ? (wardrobeData.wishlist.find(x => x.id === wdEditingWishId) || {}).gap : wdWishFromGap,
+        gap: wdEditingWishId ? (Core.state.wardrobeData.wishlist.find(x => x.id === wdEditingWishId) || {}).gap : wdWishFromGap,
         addedAt: todayStr()
     };
-    if (wdEditingWishId) wardrobeData.wishlist = wardrobeData.wishlist.map(x => x.id === wdEditingWishId ? data : x);
-    else wardrobeData.wishlist.push(data);
+    if (wdEditingWishId) Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist.map(x => x.id === wdEditingWishId ? data : x);
+    else Core.state.wardrobeData.wishlist.push(data);
     await saveWardrobeCloud();
     $('wd-wish-modal').classList.remove('active');
     wdEditingWishId = null; wdWishFromGap = false;
@@ -4607,13 +4713,13 @@ async function saveWdWish() {
 }
 async function deleteWdWish(id) {
     if (!confirm('从愿望清单移除？')) return;
-    wardrobeData.wishlist = wardrobeData.wishlist.filter(x => x.id !== id);
+    Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist.filter(x => x.id !== id);
     await saveWardrobeCloud();
     RenderBus.emit('wardrobe');
 }
 function wdWishRank(w) { return (w.priority === '高' ? 3 : w.priority === '中' ? 2 : 1) + (w.gap ? 2 : 0); }
 function openWdBuyModal(id) {
-    const w = wardrobeData.wishlist.find(x => x.id === id);
+    const w = Core.state.wardrobeData.wishlist.find(x => x.id === id);
     if (!w) return;
     wdBuyingWishId = id;
     $('wd-buy-info').textContent = w.name + ' · 目标价 ' + (w.price != null ? '¥' + w.price : '未定');
@@ -4630,7 +4736,7 @@ function wdUpdateBuySubcat() {
     f.style.display = a.value === 'survival' ? '' : 'none';
 }
 async function saveWdBuy() {
-    const w = wardrobeData.wishlist.find(x => x.id === wdBuyingWishId);
+    const w = Core.state.wardrobeData.wishlist.find(x => x.id === wdBuyingWishId);
     if (!w) return;
     const amount = parseFloat($('wd-buy-amount').value);
     if (isNaN(amount) || amount <= 0) return alert('请填写金额');
@@ -4640,8 +4746,8 @@ async function saveWdBuy() {
     const ok = await addExpense(amount, account, '购入衣物：' + w.name, day, sub);
     if (!ok) return;
     const season = wdSeasonOf(new Date().getMonth() + 1);
-    wardrobeData.items.push({ id: 'wi_' + Date.now() + Math.random().toString(36).slice(2, 6), name: w.name, category: w.category || 'top', color: 'black', thickness: 3, status: '在用', waterproof: false, seasons: [season], scenes: [], price: amount, account: account, boughtAt: day, note: '愿望清单购入' + (w.reason ? '：' + w.reason : ''), addedAt: day, wears: 0, lastWorn: null });
-    wardrobeData.wishlist = wardrobeData.wishlist.filter(x => x.id !== wdBuyingWishId);
+    Core.state.wardrobeData.items.push({ id: 'wi_' + Date.now() + Math.random().toString(36).slice(2, 6), name: w.name, category: w.category || 'top', color: 'black', thickness: 3, status: '在用', waterproof: false, seasons: [season], scenes: [], price: amount, account: account, boughtAt: day, note: '愿望清单购入' + (w.reason ? '：' + w.reason : ''), addedAt: day, wears: 0, lastWorn: null });
+    Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist.filter(x => x.id !== wdBuyingWishId);
     await saveWardrobeCloud();
     $('wd-buy-modal').classList.remove('active');
     wdBuyingWishId = null;
@@ -4653,7 +4759,7 @@ async function saveWdBuy() {
 function wdComputeGaps(w) {
     const gaps = [];
     const season = wdSeasonOf(new Date().getMonth() + 1);
-    const active = wardrobeData.items.filter(it => (it.status || '在用') === '在用');
+    const active = Core.state.wardrobeData.items.filter(it => (it.status || '在用') === '在用');
     const seasonItems = active.filter(it => !it.seasons || !it.seasons.length || it.seasons.includes(season));
     ['outer','top','bottom','shoes','inner'].forEach(cat => {
         const n = seasonItems.filter(it => it.category === cat).length;
@@ -4671,10 +4777,10 @@ function wdComputeGaps(w) {
     return gaps;
 }
 function wdBudgetHtml() {
-    const b = accountsData.balances;
-    const monthSpend = accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
+    const b = Core.state.accountsData.balances;
+    const monthSpend = Core.state.accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
     let html = '<b>账户余额</b>：生存 ¥' + b.survival.toFixed(2) + ' · 稳定 ¥' + b.stable.toFixed(2) + ' · 发展 ¥' + b.develop.toFixed(2) + '<br>本月已支出：¥' + monthSpend.toFixed(2) + '<br><b>建议</b>：衣物类建议从「发展」账户支出，参考可支配额度 ¥' + b.develop.toFixed(2) + '（也可走生存账户的「一次性支出」）。';
-    const wish = [...wardrobeData.wishlist].sort((a, b2) => wdWishRank(b2) - wdWishRank(a));
+    const wish = [...Core.state.wardrobeData.wishlist].sort((a, b2) => wdWishRank(b2) - wdWishRank(a));
     if (wish.length) {
         html += '<div style="margin-top:8px;"><b>愿望优先级</b>：</div>';
         wish.forEach((w2, i) => {
@@ -4691,15 +4797,15 @@ function toggleWdBudget() {
     if (hidden) box.innerHTML = wdBudgetHtml();
 }
 async function runWardrobeAI(mode) {
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
     const el = $('wd-ai-result');
     if (!el) return;
     el.innerHTML = '<div class="empty-hint">⏳ AI 思考中…</div>';
     try {
-        const w = wardrobeWeather && wardrobeWeather.ok ? wardrobeWeather : null;
+        const w = Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok ? Core.state.wardrobeWeather : null;
         const log = getTodayWardrobeLog();
         const outfitText = (log.outfit && log.outfit.length) ? log.outfit.map(s => s.name + '（' + (WD_COLOR_LABEL[s.color] || s.color) + '）').join('、') : '尚未确认穿搭';
-        const active = wardrobeData.items.filter(it => (it.status || '在用') === '在用');
+        const active = Core.state.wardrobeData.items.filter(it => (it.status || '在用') === '在用');
         const itemsBrief = active.slice(0, 40).map(it => wdIcon(it.category) + it.name + '（' + (WD_COLOR_LABEL[it.color] || it.color) + '，厚度' + it.thickness + '，' + ((it.scenes || []).join('/') || '通用') + '）').join('；') || '衣橱还是空的';
         const weatherText = w ? ('温度' + Math.round(w.temp) + '°C、体感' + Math.round(w.feels) + '°C、' + w.text + '、降水概率' + w.pop + '%、风速' + Math.round(w.wind) + 'km/h') : '天气未获取';
         let prompt;
@@ -4716,15 +4822,15 @@ async function runWardrobeAI(mode) {
     }
 }
 async function runWardrobeBuyAI() {
-    if (!aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
+    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
     const el = $('wd-buy-ai-result');
     if (!el) return;
     el.innerHTML = '<div class="empty-hint">⏳ AI 思考中…</div>';
     try {
-        const gaps = wdComputeGaps(wardrobeWeather).map(g => g.text).join('；') || '无';
-        const wish = wardrobeData.wishlist.map(w => w.name + '（' + w.category + '，¥' + (w.price != null ? w.price : '未定') + '，' + w.priority + '优先级）').join('；') || '无';
-        const b = accountsData.balances;
-        const monthSpend = accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
+        const gaps = wdComputeGaps(Core.state.wardrobeWeather).map(g => g.text).join('；') || '无';
+        const wish = Core.state.wardrobeData.wishlist.map(w => w.name + '（' + w.category + '，¥' + (w.price != null ? w.price : '未定') + '，' + w.priority + '优先级）').join('；') || '无';
+        const b = Core.state.accountsData.balances;
+        const monthSpend = Core.state.accountsData.expenses.filter(e => recordMonth(e) === todayStr().slice(0, 7)).reduce((s, e) => s + e.amount, 0);
         const prompt = '我是西部计划基层志愿者，工资微薄，需要务实的购衣建议。账户余额：生存 ¥' + b.survival.toFixed(2) + '、稳定 ¥' + b.stable.toFixed(2) + '、发展 ¥' + b.develop.toFixed(2) + '；本月已支出 ¥' + monthSpend.toFixed(2) + '。衣橱缺口：' + gaps + '。愿望清单：' + wish + '。请给出购买优先级建议：先买什么、大概什么价位合理、什么可以缓一缓。150字以内，不说空话。';
         const content = await callDeepSeekRaw([{ role: 'system', content: '你是务实的极简消费顾问，为低收入用户给出真实省钱的建议。' }, { role: 'user', content: prompt }], { temperature: 0.5, max_tokens: 500 });
         el.innerHTML = '<div style="background:#f7fbf9;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;margin-top:10px;">' + md2html(content) + '</div>';
@@ -4735,28 +4841,37 @@ async function runWardrobeBuyAI() {
 }
 
 /* ---------- 日志 ---------- */
-async function wdDeleteLog(date) {
-    const l = wardrobeLog.find(x => x.date === date);
-    if (!l) return;
-    if (!confirm('删除 ' + shortDay(date) + ' 的穿搭记录？相关衣物的穿着次数会恢复。')) return;
+/* 核心删除路径：穿搭日志删除（含衣物状态/穿着次数完整恢复，不弹 confirm） */
+async function _deleteLogCore(date) {
+    const l = Core.state.wardrobeLog.find(x => x.date === date);
+    if (!l) return { ok: false, error: '没有该日期的穿搭记录' };
+    const restored = [];
     (l.outfit || []).forEach(s => {
-        const it = wardrobeData.items.find(x => x.id === s.id);
-        if (it) { it.wears = s.wearsBefore || 0; it.lastWorn = s.lastWornBefore || null; }
+        const it = Core.state.wardrobeData.items.find(x => x.id === s.id);
+        if (it) { it.wears = s.wearsBefore || 0; it.lastWorn = s.lastWornBefore || null; restored.push(s.id); }
     });
     if (l._cloudId) await deleteHealthRecord(l._cloudId);
-    wardrobeLog = wardrobeLog.filter(x => x.date !== date);
+    Core.state.wardrobeLog = Core.state.wardrobeLog.filter(x => x.date !== date);
     await saveWardrobeCloud();
     saveCache();
     RenderBus.emit('wardrobe');
+    return { ok: true, date, restored };
+}
+/* 手动删除：confirm + 调核心（行为与改前一致） */
+async function wdDeleteLog(date) {
+    const l = Core.state.wardrobeLog.find(x => x.date === date);
+    if (!l) return;
+    if (!confirm('删除 ' + shortDay(date) + ' 的穿搭记录？相关衣物的穿着次数会恢复。')) return;
+    await _deleteLogCore(date);
 }
 
 /* ---------- 渲染 ---------- */
 function renderWdWeatherBar() {
     const el = $('wardrobe-weather-bar');
     const city = $('wd-city-label');
-    if (city) city.textContent = '📍 ' + (wardrobeData.config.city || '未设置');
+    if (city) city.textContent = '📍 ' + (Core.state.wardrobeData.config.city || '未设置');
     if (!el) return;
-    const w = wardrobeWeather;
+    const w = Core.state.wardrobeWeather;
     if (!w || w.date !== todayStr()) {
         el.innerHTML = '<span style="font-size:13px;color:var(--text2);">还没有今天的天气数据。</span> <button class="btn btn-secondary btn-sm" data-action="wd-fetch">🌤 获取天气</button>';
         return;
@@ -4800,8 +4915,8 @@ function renderWdToday() {
     const tips = wdTodayTips(sug);
     if (tipsEl) tipsEl.innerHTML = tips.length ? `<div class="wd-tips">${tips.map(t => `<div>· ${esc(t)}</div>`).join('')}</div>` : '';
     let presetHtml = '';
-    if (!sug.confirmed && wardrobeWeather && wardrobeWeather.ok) {
-        const matched = wardrobeData.outfits.filter(o => (o.tmin == null || wardrobeWeather.feels >= o.tmin) && (o.tmax == null || wardrobeWeather.feels <= o.tmax) && (o.scene === '不限' || o.scene === log.scene));
+    if (!sug.confirmed && Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok) {
+        const matched = Core.state.wardrobeData.outfits.filter(o => (o.tmin == null || Core.state.wardrobeWeather.feels >= o.tmin) && (o.tmax == null || Core.state.wardrobeWeather.feels <= o.tmax) && (o.scene === '不限' || o.scene === log.scene));
         if (matched.length) {
             presetHtml = '<div class="habit-section-title" style="margin-top:12px;">📌 匹配的预设搭配</div>' + matched.map(o => `<div class="wd-preset"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><div><b>${esc(o.name)}</b> <span class="meta">${o.tmin}~${o.tmax}°C · ${esc(o.scene)}</span></div><button class="btn btn-secondary btn-sm" data-action="wd-apply-outfit" data-id="${o.id}">用这套</button></div><div class="meta" style="margin-top:4px;">${wdOutfitMemberText(o)}</div></div>`).join('');
         }
@@ -4815,24 +4930,24 @@ function renderWdToday() {
         act += '<button class="btn btn-primary" data-action="wd-confirm">✅ 确认今日穿搭</button>';
         act += '<button class="btn btn-secondary" data-action="wd-reroll">🔀 换一套</button>';
     }
-    if (aiConfig.apiKey) {
+    if (Core.state.aiConfig.apiKey) {
         act += '<button class="btn btn-secondary btn-sm" data-action="wd-ai-comment">🤖 AI 点评</button><button class="btn btn-secondary btn-sm" data-action="wd-ai-suggest">💡 AI 建议搭配</button>';
     }
     if (actionsEl) actionsEl.innerHTML = act;
     const buyBtn = $('wd-ai-buy-btn');
-    if (buyBtn) buyBtn.style.display = aiConfig.apiKey ? '' : 'none';
+    if (buyBtn) buyBtn.style.display = Core.state.aiConfig.apiKey ? '' : 'none';
 }
 function renderWdItems() {
     const el = $('wd-items-list');
     const idleEl = $('wd-idle-list');
     if (!el) return;
-    if (!wardrobeData.items.length) {
+    if (!Core.state.wardrobeData.items.length) {
         el.innerHTML = '<div class="empty-hint">衣橱还是空的，点击上方添加第一件衣物</div>';
         if (idleEl) idleEl.innerHTML = '';
         return;
     }
     const grouped = {};
-    wardrobeData.items.forEach(it => { const c = it.category || 'top'; (grouped[c] = grouped[c] || []).push(it); });
+    Core.state.wardrobeData.items.forEach(it => { const c = it.category || 'top'; (grouped[c] = grouped[c] || []).push(it); });
     let html = '';
     WD_CATEGORIES.forEach(c => {
         const list = grouped[c.key] || [];
@@ -4868,8 +4983,8 @@ function renderWdItems() {
         });
     });
     el.innerHTML = html;
-    const never = wardrobeData.items.filter(it => (it.status || '在用') === '在用' && !it.wears);
-    const stale = wardrobeData.items.filter(it => (it.status || '在用') === '在用' && it.lastWorn && it.lastWorn < addDays(todayStr(), -60));
+    const never = Core.state.wardrobeData.items.filter(it => (it.status || '在用') === '在用' && !it.wears);
+    const stale = Core.state.wardrobeData.items.filter(it => (it.status || '在用') === '在用' && it.lastWorn && it.lastWorn < addDays(todayStr(), -60));
     let idleHtml = '';
     if (never.length) idleHtml += '<div class="habit-section-title">🕰️ 从没穿过（' + never.length + '）</div>' + never.map(it => `<div class="list-item"><div class="main"><div>${esc(it.name)}</div><div class="meta">添加于 ${shortDay(it.addedAt || todayStr())}</div></div><button class="btn btn-secondary btn-sm" data-action="wd-idle-item" data-id="${it.id}">标记闲置</button></div>`).join('');
     if (stale.length) idleHtml += '<div class="habit-section-title">📦 超过 60 天没穿（' + stale.length + '）</div>' + stale.map(it => `<div class="list-item"><div class="main"><div>${esc(it.name)}</div><div class="meta">上次 ${shortDay(it.lastWorn)}</div></div><button class="btn btn-secondary btn-sm" data-action="wd-idle-item" data-id="${it.id}">标记闲置</button></div>`).join('');
@@ -4878,21 +4993,21 @@ function renderWdItems() {
 function renderWdOutfits() {
     const el = $('wd-outfits-list');
     if (!el) return;
-    if (!wardrobeData.outfits.length) { el.innerHTML = '<div class="empty-hint">还没有预设搭配，新建后可在合适温度一键套用</div>'; return; }
-    el.innerHTML = wardrobeData.outfits.map(o => `<div class="list-item"><div class="main"><div><b>${esc(o.name)}</b></div><div class="meta">${o.tmin}~${o.tmax}°C · ${esc(o.scene)}</div><div class="meta">${wdOutfitMemberText(o)}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button class="btn btn-secondary btn-sm" data-action="wd-edit-outfit" data-id="${o.id}">✏️</button><button class="btn btn-danger btn-sm" data-action="wd-del-outfit" data-id="${o.id}">✕</button></div></div>`).join('');
+    if (!Core.state.wardrobeData.outfits.length) { el.innerHTML = '<div class="empty-hint">还没有预设搭配，新建后可在合适温度一键套用</div>'; return; }
+    el.innerHTML = Core.state.wardrobeData.outfits.map(o => `<div class="list-item"><div class="main"><div><b>${esc(o.name)}</b></div><div class="meta">${o.tmin}~${o.tmax}°C · ${esc(o.scene)}</div><div class="meta">${wdOutfitMemberText(o)}</div></div><div style="display:flex;gap:4px;flex-shrink:0;"><button class="btn btn-secondary btn-sm" data-action="wd-edit-outfit" data-id="${o.id}">✏️</button><button class="btn btn-danger btn-sm" data-action="wd-del-outfit" data-id="${o.id}">✕</button></div></div>`).join('');
 }
 function renderWdGaps() {
     const el = $('wd-gaps');
     if (!el) return;
-    const gaps = wdComputeGaps(wardrobeWeather);
+    const gaps = wdComputeGaps(Core.state.wardrobeWeather);
     if (!gaps.length) { el.innerHTML = '<div class="empty-hint">暂无缺口建议 ✓</div>'; return; }
     el.innerHTML = '<div class="habit-section-title">🔍 缺口检测（基于当季衣橱与今日天气）</div>' + gaps.map(g => `<div class="wd-gap"><span style="flex:1;min-width:140px;">${esc(g.text)}</span><button class="btn btn-secondary btn-sm" data-action="wd-gap-add" data-cat="${g.cat}" data-text="${esc(g.text)}">＋ 加入愿望清单</button></div>`).join('');
 }
 function renderWdWishlist() {
     const el = $('wd-wishlist');
     if (!el) return;
-    if (!wardrobeData.wishlist.length) { el.innerHTML = '<div class="empty-hint">愿望清单是空的</div>'; return; }
-    el.innerHTML = [...wardrobeData.wishlist].sort((a, b) => wdWishRank(b) - wdWishRank(a)).map(w => {
+    if (!Core.state.wardrobeData.wishlist.length) { el.innerHTML = '<div class="empty-hint">愿望清单是空的</div>'; return; }
+    el.innerHTML = [...Core.state.wardrobeData.wishlist].sort((a, b) => wdWishRank(b) - wdWishRank(a)).map(w => {
         const cat = WD_CATEGORIES.find(c => c.key === w.category) || {};
         return `<div class="list-item"><div class="main"><div>${cat.icon || '👕'} <b>${esc(w.name)}</b> ${w.gap ? '<span class="tag tag-warn">缺口</span>' : ''} <span class="tag tag-neutral">${esc(w.priority)}优先</span></div>${w.reason ? `<div class="meta">${esc(w.reason)}</div>` : ''}</div><div style="display:flex;gap:4px;align-items:center;flex-shrink:0;"><span style="font-size:12px;color:var(--text2);">${w.price != null ? '¥' + w.price : '—'}</span><button class="btn btn-primary btn-sm" data-action="wd-buy-wish" data-id="${w.id}">🛍️ 购买并记账</button><button class="btn btn-secondary btn-sm" data-action="wd-edit-wish" data-id="${w.id}">✏️</button><button class="btn btn-danger btn-sm" data-action="wd-del-wish" data-id="${w.id}">✕</button></div></div>`;
     }).join('');
@@ -4900,7 +5015,7 @@ function renderWdWishlist() {
 function renderWdLogs() {
     const el = $('wd-logs-list');
     if (!el) return;
-    const list = [...wardrobeLog].filter(l => l.outfit && l.outfit.length).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
+    const list = [...Core.state.wardrobeLog].filter(l => l.outfit && l.outfit.length).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
     if (!list.length) { el.innerHTML = '<div class="empty-hint">还没有穿搭记录，确认今日穿搭后会自动记录</div>'; return; }
     el.innerHTML = list.map(l => `<div class="list-item"><div class="main"><div><b>${shortDay(l.date)}</b> · ${esc(l.scene || '通勤')}</div><div class="meta">${esc(l.weatherText || '')}</div><div class="meta">${(l.outfit || []).map(s => esc(s.name)).join(' · ')}</div></div><button class="btn btn-danger btn-sm" data-action="wd-del-log" data-date="${l.date}">✕</button></div>`).join('');
 }
@@ -4990,7 +5105,7 @@ function maybeAutoGuide() {
 }
 
 /* ================= 日程模块（SMART 快速任务安排，工作琐事也进每日流程） ================= */
-let scheduleData = { tasks: [] };
+Core.state.scheduleData = { tasks: [] };
 let schEditingId = null;
 function schParseTitle(t) {
     let clean = (t || '').trim();
@@ -5021,7 +5136,7 @@ function schSmart(t, date, time) {
 function schSmartScore(s) { return ['s', 'm', 'a', 'r', 't'].filter(k => s[k]).length; }
 async function saveScheduleCloud() {
     if (!currentUser) return;
-    await syncRecord('schedule', todayStr(), scheduleData, cloudConfigRefs.schedule, { silent: true });
+    await syncRecord('schedule', todayStr(), Core.state.scheduleData, Core.state.cloudConfigRefs.schedule, { silent: true });
     saveCache();
 }
 function schAutoFill() {
@@ -5054,7 +5169,7 @@ async function schAdd() {
     const date = (dateEl && dateEl.value) ? dateEl.value : (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
     const time = (timeEl && timeEl.value) ? timeEl.value : parsed.time;
     const noteEl = $('sch-note');
-    scheduleData.tasks.push({
+    Core.state.scheduleData.tasks.push({
         id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6),
         title: parsed.clean || title,
         date: date,
@@ -5076,7 +5191,7 @@ async function schAdd() {
     renderSchSmart();
 }
 async function schToggleDone(id) {
-    const t = scheduleData.tasks.find(x => x.id === id);
+    const t = Core.state.scheduleData.tasks.find(x => x.id === id);
     if (!t) return;
     if (t.status === 'done') { t.status = 'todo'; t.doneAt = null; }
     else { t.status = 'done'; t.doneAt = todayStr(); }
@@ -5085,12 +5200,12 @@ async function schToggleDone(id) {
 }
 async function schDelete(id) {
     if (!confirm('删除这个日程？')) return;
-    scheduleData.tasks = scheduleData.tasks.filter(x => x.id !== id);
+    Core.state.scheduleData.tasks = Core.state.scheduleData.tasks.filter(x => x.id !== id);
     await saveScheduleCloud();
     RenderBus.emitAll(['schedule', 'execution', 'secretary']);
 }
 function openSchModal(id) {
-    const t = scheduleData.tasks.find(x => x.id === id);
+    const t = Core.state.scheduleData.tasks.find(x => x.id === id);
     if (!t) return;
     schEditingId = id;
     $('sch-edit-title').value = t.title;
@@ -5102,7 +5217,7 @@ function openSchModal(id) {
     $('sch-modal').classList.add('active');
 }
 async function saveSchModal() {
-    const t = scheduleData.tasks.find(x => x.id === schEditingId);
+    const t = Core.state.scheduleData.tasks.find(x => x.id === schEditingId);
     if (!t) return;
     const title = $('sch-edit-title').value.trim();
     if (!title) return alert('请填写任务内容');
@@ -5127,8 +5242,8 @@ function renderSchToday() {
     const el = $('sch-today');
     if (!el) return;
     const today = todayStr();
-    const overdue = scheduleData.tasks.filter(t => t.status === 'todo' && t.date < today);
-    const todayList = scheduleData.tasks.filter(t => t.date === today).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    const overdue = Core.state.scheduleData.tasks.filter(t => t.status === 'todo' && t.date < today);
+    const todayList = Core.state.scheduleData.tasks.filter(t => t.date === today).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
     if (!overdue.length && !todayList.length) { el.innerHTML = '<div class="empty-hint">今天没有安排——上方一句话就能加，例如「明天上午看百度世界大会」</div>'; return; }
     let html = '';
     if (overdue.length) html += '<div class="habit-section-title">⚠️ 逾期（' + overdue.length + '）</div>' + overdue.map(schRow).join('');
@@ -5138,7 +5253,7 @@ function renderSchToday() {
 function renderSchAll() {
     const el = $('sch-all');
     if (!el) return;
-    if (!scheduleData.tasks.length) { el.innerHTML = '<div class="empty-hint">还没有任务</div>'; return; }
+    if (!Core.state.scheduleData.tasks.length) { el.innerHTML = '<div class="empty-hint">还没有任务</div>'; return; }
     const today = todayStr();
     const groups = [
         ['todo_today', '今天', t => t.date === today && t.status === 'todo'],
@@ -5148,7 +5263,7 @@ function renderSchAll() {
         ['someday', '搁置', t => t.status === 'someday']
     ];
     el.innerHTML = groups.map(g => {
-        const list = scheduleData.tasks.filter(g[2]).sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '99:99').localeCompare(b.time || '99:99'));
+        const list = Core.state.scheduleData.tasks.filter(g[2]).sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '99:99').localeCompare(b.time || '99:99'));
         if (!list.length) return '';
         return '<details class="goal-kr-fold" ' + (g[0] === 'todo_today' ? 'open' : '') + '><summary>' + g[1] + '（' + list.length + '）</summary>' + list.map(schRow).join('') + '</details>';
     }).join('');
@@ -5157,7 +5272,7 @@ function renderHomeSchedule() {
     const el = $('home-schedule');
     if (!el) return;
     const today = todayStr();
-    const list = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo').sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    const list = Core.state.scheduleData.tasks.filter(t => t.date === today && t.status === 'todo').sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
     if (!list.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
     el.style.display = '';
     el.innerHTML = '<div class="card" style="padding:14px;"><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px;">📅 今日日程（' + list.length + '）</div>' + list.map(t => '<div class="gp-row ' + (t.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="sch-done" data-id="' + t.id + '">✓</div><div class="gp-work">' + (t.time ? '<b style="font-size:12px;color:var(--text2);">' + t.time + '</b> ' : '') + esc(t.title) + '</div></div>').join('') + '</div>';
@@ -5219,11 +5334,11 @@ function secretaryFacts() {
     const todayPlans = goalTodayPlans();
     const openToday = todayPlans.filter(p => p.status !== 'done');
     const overdue = [];
-    goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) overdue.push({ work: p.work, goal: g.title, due: p.due }); }); });
-    const reviewDone = goalData.dailyReviews.some(r => r.date === today);
+    Core.state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) overdue.push({ work: p.work, goal: g.title, due: p.due }); }); });
+    const reviewDone = Core.state.goalData.dailyReviews.some(r => r.date === today);
     const last3 = [addDays(today, -1), addDays(today, -2), addDays(today, -3)];
     let sleepShort = 0, sleepRecs = 0;
-    healthData.sleep.forEach(r => {
+    Core.state.healthData.sleep.forEach(r => {
         if (last3.includes(r.date) && r.start_time && r.end_time) {
             sleepRecs++;
             const [sh, sm] = r.start_time.split(':').map(Number);
@@ -5233,7 +5348,7 @@ function secretaryFacts() {
             if (mins < 7 * 60) sleepShort++;
         }
     });
-    return { gateOk, gate: goalData.gate, todayPlans, openToday, overdue, reviewDone, sleepShort, sleepRecs };
+    return { gateOk, gate: Core.state.goalData.gate, todayPlans, openToday, overdue, reviewDone, sleepShort, sleepRecs };
 }
 function secretaryGreetingText() {
     const f = secretaryFacts();
@@ -5249,8 +5364,8 @@ function secretaryGreetingText() {
     if (f.overdue.length) lines.push('· ⚠️ 逾期未完成 ' + f.overdue.length + ' 件，最早的是：「' + f.overdue[0].work + '」（' + shortDay(f.overdue[0].due) + '）');
     if (!f.reviewDone) lines.push('· 今日复盘还没写，晚上对我说「写复盘」');
     if (f.sleepRecs >= 2 && f.sleepShort >= 2) lines.push('· 💤 近 3 天有 ' + f.sleepShort + ' 天睡眠不足 7 小时，考虑让我「切最低电量模式」');
-    if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === todayStr()) lines.push('· 天气：' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭方案在「衣橱」页');
-    const schToday = scheduleData.tasks.filter(t => t.date === todayStr() && t.status === 'todo');
+    if (Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok && Core.state.wardrobeWeather.date === todayStr()) lines.push('· 天气：' + Math.round(Core.state.wardrobeWeather.temp) + '°C ' + Core.state.wardrobeWeather.text + '，穿搭方案在「衣橱」页');
+    const schToday = Core.state.scheduleData.tasks.filter(t => t.date === todayStr() && t.status === 'todo');
     if (schToday.length) lines.push('· 📅 今日日程 ' + schToday.length + ' 件：' + schToday.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
     lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 明天上午看百度世界大会 / 这周花了多少。');
     return lines.join('\n');
@@ -5303,12 +5418,12 @@ function secretaryRuleAnswer(text) {
         for (let i = 0; i < 7; i++) week.push(addDays(today, -i));
         const wk = week;
         const isWeek = /本周|这周|一周/.test(t);
-        const list = accountsData.expenses.filter(e => isWeek ? wk.includes(recordDay(e)) : recordMonth(e) === today.slice(0, 7));
+        const list = Core.state.accountsData.expenses.filter(e => isWeek ? wk.includes(recordDay(e)) : recordMonth(e) === today.slice(0, 7));
         const sum = list.reduce((s, e) => s + e.amount, 0);
         return (isWeek ? '本周' : '本月') + '支出 ¥' + sum.toFixed(2) + '（' + list.length + ' 笔）' + (list.length ? '\n最近：' + list.slice(0, 3).map(e => e.desc + ' ¥' + e.amount.toFixed(2)).join('、') : '');
     }
     if (/进度|目标|K[Rr]/.test(t)) {
-        const gs = goalData.goals.filter(g => g.status === 'active');
+        const gs = Core.state.goalData.goals.filter(g => g.status === 'active');
         if (!gs.length) return '还没有进行中的目标，去「目标」页建一个。';
         return gs.map(g => '· ' + g.title + '：' + goalPct(g) + '%').join('\n');
     }
@@ -5343,33 +5458,33 @@ async function secretaryExecuteActions(actions) {
                 if (!a.start || !a.end) { results.push('睡眠时间不完整，请告诉我几点睡几点起'); continue; }
                 const rec = { date: todayStr(), ts: Date.now(), start_time: a.start, end_time: a.end, feeling: a.feeling || 'ok', note: a.note || '' };
                 const item = await syncRecord('sleep', todayStr(), rec, rec);
-                if (item) { healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记睡眠 ' + a.start + '→' + a.end); } else results.push('睡眠记录失败');
+                if (item) { Core.state.healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记睡眠 ' + a.start + '→' + a.end); } else results.push('睡眠记录失败');
             } else if (a.action === 'record_exercise') {
                 const dur = parseInt(a.duration, 10);
                 if (!(dur > 0)) { results.push('运动时长无效'); continue; }
                 const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', duration: dur, note: a.note || '' };
                 const item = await syncRecord('exercise', todayStr(), rec, rec);
-                if (item) { healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记运动 ' + (a.type || '其他') + ' ' + dur + ' 分钟'); } else results.push('运动记录失败');
+                if (item) { Core.state.healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记运动 ' + (a.type || '其他') + ' ' + dur + ' 分钟'); } else results.push('运动记录失败');
             } else if (a.action === 'record_meal') {
                 const rec = { date: todayStr(), ts: Date.now(), breakfast: a.breakfast || '', lunch: a.lunch || '', dinner: a.dinner || '', snack: a.snack || '', water: parseInt(a.water, 10) || 0 };
                 if (!rec.breakfast && !rec.lunch && !rec.dinner && !rec.snack) { results.push('饮食内容为空'); continue; }
                 const item = await syncRecord('meal', todayStr(), rec, rec);
-                if (item) { healthData.meal.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记饮食'); } else results.push('饮食记录失败');
+                if (item) { Core.state.healthData.meal.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记饮食'); } else results.push('饮食记录失败');
             } else if (a.action === 'record_charge') {
                 const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', delta: parseInt(a.delta, 10) || 0, note: a.note || '' };
                 const item = await syncRecord('charge', todayStr(), rec, rec);
-                if (item) { healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记充电（能量' + (rec.delta > 0 ? '+' : '') + rec.delta + '）'); } else results.push('充电记录失败');
+                if (item) { Core.state.healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记充电（能量' + (rec.delta > 0 ? '+' : '') + rec.delta + '）'); } else results.push('充电记录失败');
             } else if (a.action === 'complete_plan') {
                 const kw = String(a.keyword || '').trim();
                 let found = null;
-                for (const g of goalData.goals) { const p = g.plans.find(x => (x.status === 'next' || x.status === 'doing') && x.work.indexOf(kw) >= 0); if (p) { found = p; break; } }
+                for (const g of Core.state.goalData.goals) { const p = g.plans.find(x => (x.status === 'next' || x.status === 'doing') && x.work.indexOf(kw) >= 0); if (p) { found = p; break; } }
                 if (!found) { results.push('没找到「' + kw + '」对应的执行点，请换个说法'); continue; }
                 found.status = 'done'; found.doneAt = todayStr();
                 await saveGoalsCloud();
                 results.push('已完成执行点「' + found.work + '」✅');
             } else if (a.action === 'add_plan') {
                 const gkw = String(a.goalKeyword || '').trim();
-                const goal = goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0) || goalData.goals.find(g => g.status === 'active');
+                const goal = Core.state.goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0) || Core.state.goalData.goals.find(g => g.status === 'active');
                 if (!goal) { results.push('没有进行中的目标可添加执行点'); continue; }
                 if (!a.work) { results.push('请说明执行点内容'); continue; }
                 goal.plans.push({ id: 'gp_' + Date.now() + Math.random().toString(36).slice(2, 6), krId: goal.krs[0] ? goal.krs[0].id : null, period: ['day', 'week', 'month'].includes(a.period) ? a.period : 'day', work: a.work, due: a.due || todayStr(), reward: a.reward || '', punish: a.punish || '', status: 'next', doneAt: null, risk: {}, resource: {}, feedback: {}, optimize: {} });
@@ -5377,7 +5492,7 @@ async function secretaryExecuteActions(actions) {
                 results.push('已为「' + goal.title + '」添加执行点：' + a.work);
             } else if (a.action === 'update_kr') {
                 const gkw = String(a.goalKeyword || '').trim();
-                const goal = goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0);
+                const goal = Core.state.goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0);
                 if (!goal) { results.push('没找到目标「' + gkw + '」'); continue; }
                 const kr = goal.krs.find(k => k.text.indexOf(String(a.krKeyword || '')) >= 0);
                 if (!kr) { results.push('没找到 KR「' + a.krKeyword + '」'); continue; }
@@ -5387,7 +5502,7 @@ async function secretaryExecuteActions(actions) {
             } else if (a.action === 'add_feedback') {
                 const kw = String(a.planKeyword || '').trim();
                 let loc = null;
-                for (const g of goalData.goals) { const p = g.plans.find(x => x.work.indexOf(kw) >= 0); if (p) { loc = { goal: g, plan: p }; break; } }
+                for (const g of Core.state.goalData.goals) { const p = g.plans.find(x => x.work.indexOf(kw) >= 0); if (p) { loc = { goal: g, plan: p }; break; } }
                 if (!loc) { results.push('没找到执行点「' + kw + '」'); continue; }
                 loc.plan.feedback = loc.plan.feedback || {};
                 loc.plan.feedback.resistance = a.resistance || loc.plan.feedback.resistance || '';
@@ -5408,12 +5523,12 @@ async function secretaryExecuteActions(actions) {
                 const parsed = schParseTitle(a.title);
                 const date = a.date || (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
                 const time = a.time || parsed.time || '';
-                scheduleData.tasks.push({ id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6), title: a.title, date: date, time: time, period: parsed.period, note: '', priority: 'mid', status: 'todo', doneAt: null, smart: schSmart(a.title, date, time), createdAt: Date.now() });
+                Core.state.scheduleData.tasks.push({ id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6), title: a.title, date: date, time: time, period: parsed.period, note: '', priority: 'mid', status: 'todo', doneAt: null, smart: schSmart(a.title, date, time), createdAt: Date.now() });
                 await saveScheduleCloud();
                 results.push('已安排日程：' + a.title + '（' + shortDay(date) + (time ? ' ' + time : '') + '）');
             } else if (a.action === 'complete_task') {
                 const kw = String(a.keyword || '').trim();
-                const t = scheduleData.tasks.find(x => x.status === 'todo' && x.title.indexOf(kw) >= 0);
+                const t = Core.state.scheduleData.tasks.find(x => x.status === 'todo' && x.title.indexOf(kw) >= 0);
                 if (!t) { results.push('没找到日程「' + kw + '」'); continue; }
                 t.status = 'done'; t.doneAt = todayStr();
                 await saveScheduleCloud();
@@ -5426,7 +5541,7 @@ async function secretaryExecuteActions(actions) {
                     if (l) picked.push(l.plan.id);
                 }
                 if (!picked.length) { results.push('没匹配到今天可选的执行点'); continue; }
-                goalData.gate = { date: todayStr(), picked: picked.slice(0, 3), skipped: false };
+                Core.state.goalData.gate = { date: todayStr(), picked: picked.slice(0, 3), skipped: false };
                 await saveGoalsCloud();
                 results.push('门禁已激活，今日三件事已定');
             } else if (a.action === 'toggle_low_mode') {
@@ -5517,7 +5632,7 @@ async function secCreateGoalExecute(p) {
     const deadline = p.deadline || addDays(todayStr(), 540);
     const track = p.track === 'quick' ? 'quick' : 'long';
     let krs = [];
-    if (aiConfig.apiKey) {
+    if (Core.state.aiConfig.apiKey) {
         try { krs = await secAiKrs(title, p.why || '', track); } catch (e) { console.warn('[秘书] AI 拆解 KR 失败，用模板', e); }
     }
     if (!krs.length) krs = secTemplateKrs(title, deadline);
@@ -5546,7 +5661,7 @@ async function secCreateGoalExecute(p) {
             optimize: { root: '', solution: '', effect: '' }
         }))
     };
-    goalData.goals.push(goal);
+    Core.state.goalData.goals.push(goal);
     await saveGoalsCloud();
     RenderBus.emitAll(['execution', 'goals', 'secretary']);
     return '✅ 目标「' + title + '」已建立：' + krs.length + ' 条 KR、' + goal.plans.length + ' 个执行点（' + (track === 'long' ? '🛤️ 长期回报轨道' : '⚡ 快速回报轨道') + '）。\n去主页看进度，或对我说「目标进度」。';
@@ -5561,7 +5676,7 @@ async function secretaryAsk(text) {
         renderSecretary();
         return;
     }
-    if (!aiConfig.apiKey) {
+    if (!Core.state.aiConfig.apiKey) {
         let hint = '🤖 完整对话能力需要配置 DeepSeek API Key（右上角 ⚙️ 设置）。\n没配 Key 时，我支持这些指令：\n· 今天有什么安排 / 有什么逾期没做的\n· 本周花了多少钱（也可问「本月」）\n· 目标进度怎么样\n· 写复盘 / 切低电量模式';
         if (/目标|goal/.test(text)) hint = '🤖 对话式创建目标需要 AI 提取细节，请先在设置配置 API Key；或临时关掉「只读模式」去目标页用向导。';
         secretaryChat.push({ role: 'sys', text: hint });
@@ -5577,10 +5692,10 @@ async function secretaryAsk(text) {
             gatePicked: f.gate ? f.gate.picked : [],
             openToday: f.openToday.slice(0, 8).map(p => ({ id: p.id, work: p.work })),
             overdue: f.overdue.slice(0, 8),
-            goals: goalData.goals.filter(g => g.status === 'active').map(g => ({ title: g.title, pct: goalPct(g), krs: g.krs.map(k => ({ text: k.text, current: k.current, target: k.target, unit: k.unit })) })),
-            plans: goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => p.status === 'next' || p.status === 'doing').slice(0, 15).map(p => ({ id: p.id, goal: g.title, work: p.work, due: p.due }))),
-            schedules: scheduleData.tasks.filter(t => t.status === 'todo').slice(0, 10).map(t => ({ title: t.title, date: t.date, time: t.time })),
-            balances: accountsData.balances
+            goals: Core.state.goalData.goals.filter(g => g.status === 'active').map(g => ({ title: g.title, pct: goalPct(g), krs: g.krs.map(k => ({ text: k.text, current: k.current, target: k.target, unit: k.unit })) })),
+            plans: Core.state.goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => p.status === 'next' || p.status === 'doing').slice(0, 15).map(p => ({ id: p.id, goal: g.title, work: p.work, due: p.due }))),
+            schedules: Core.state.scheduleData.tasks.filter(t => t.status === 'todo').slice(0, 10).map(t => ({ title: t.title, date: t.date, time: t.time })),
+            balances: Core.state.accountsData.balances
         };
         const history = secretaryChat.slice(-6).map(m => m.role + '：' + (m.text || '').replace(/<[^>]*>/g, ' ')).join('\n');
         const prompt = '【今日事实】' + JSON.stringify(context) + '\n【最近对话】\n' + history + '\n【用户说】' + text.trim() + '\n请输出严格 JSON：{"actions":[...],"reply":"你的回复"}';
@@ -5668,22 +5783,22 @@ function secMessageFor(slot) {
         else if (f.gate.picked && f.gate.picked.length) lines.push('· 今日三件事：' + f.gate.picked.map(pid => { const l = planLocate(pid); return l ? l.plan.work : ''; }).filter(Boolean).join('、'));
         if (f.openToday.length) lines.push('· 今日待完成：' + f.openToday.map(p => p.work).join('、'));
         if (f.overdue.length) lines.push('· ⚠️ 逾期：' + f.overdue.slice(0, 3).map(o => o.work).join('、'));
-        if (wardrobeWeather && wardrobeWeather.ok && wardrobeWeather.date === today) lines.push('· 天气 ' + Math.round(wardrobeWeather.temp) + '°C ' + wardrobeWeather.text + '，穿搭去「衣橱」确认');
-        const schToday = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
+        if (Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok && Core.state.wardrobeWeather.date === today) lines.push('· 天气 ' + Math.round(Core.state.wardrobeWeather.temp) + '°C ' + Core.state.wardrobeWeather.text + '，穿搭去「衣橱」确认');
+        const schToday = Core.state.scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
         if (schToday.length) lines.push('· 📅 今日日程：' + schToday.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
         lines.push('· 记昨晚睡眠、早晨习惯打卡，我会分别在 7:15 / 7:30 提醒');
         return lines.join('\n');
     }
     if (id === 'sleep') {
-        if (healthData.sleep.some(r => r.date === today)) return '昨晚睡眠已记录 ✓';
+        if (Core.state.healthData.sleep.some(r => r.date === today)) return '昨晚睡眠已记录 ✓';
         return '昨晚几点睡、几点起？去「健康」页记睡眠，或直接对我说「昨晚 12 点睡 7 点起」。';
     }
     if (id === 'habit_am') {
-        const missing = habits.filter(h => h.category === '早晨' && !(h.dates || []).includes(today)).map(h => h.name);
+        const missing = Core.state.habits.filter(h => h.category === '早晨' && !(h.dates || []).includes(today)).map(h => h.name);
         return missing.length ? '早晨习惯还有 ' + missing.length + ' 个没打卡：' + missing.join('、') + '。去「习惯」页打卡。' : '早晨习惯全部打卡完成 ✓';
     }
     if (id === 'news') {
-        if ((newsData.briefings || []).some(b => b.date === today)) return '今日简报已生成 ✓ 有空去「世事」读一遍。';
+        if ((Core.state.newsData.briefings || []).some(b => b.date === today)) return '今日简报已生成 ✓ 有空去「世事」读一遍。';
         return '今天还没有简报——去「世事」点「抓取并生成简报」（需要已配置 API Key 和 RSS 源）。';
     }
     if (id === 'rhythm_am') {
@@ -5695,7 +5810,7 @@ function secMessageFor(slot) {
         const lines = ['午间提醒：'];
         if (f.openToday.length) lines.push('· 今日还剩 ' + f.openToday.length + ' 件：' + f.openToday.map(p => p.work).join('、'));
         else lines.push('· 今日执行点已全部完成，干得漂亮');
-        const schLeft = scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
+        const schLeft = Core.state.scheduleData.tasks.filter(t => t.date === today && t.status === 'todo');
         if (schLeft.length) lines.push('· 今日日程还剩 ' + schLeft.length + ' 件：' + schLeft.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
         lines.push('· 记午饭：对我说「午饭 XX 块」即可');
         if (!f.reviewDone) lines.push('· 晚上别忘写复盘');
@@ -5704,13 +5819,13 @@ function secMessageFor(slot) {
     if (id === 'water') {
         const lines = ['下午节律：'];
         lines.push('· 喝口水、起来走动一下');
-        if (!healthData.energy.some(r => r.date === today)) lines.push('· 顺手记一下下午能量（「健康」→ 能量，或对我说「下午能量 6 分」）');
+        if (!Core.state.healthData.energy.some(r => r.date === today)) lines.push('· 顺手记一下下午能量（「健康」→ 能量，或对我说「下午能量 6 分」）');
         return lines.join('\n');
     }
     if (id === 'exercise') {
-        if (healthData.exercise.some(r => r.date === today)) return '今天已经运动过 ✓';
-        const hasPlan = goalData.goals.some(g => g.status === 'active' && g.plans.some(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)));
-        if (hasPlan) return '今天的运动执行点还没完成：' + goalData.goals.flatMap(g => g.plans.filter(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)).map(p => p.work)).join('、') + '。做完对我说一声。';
+        if (Core.state.healthData.exercise.some(r => r.date === today)) return '今天已经运动过 ✓';
+        const hasPlan = Core.state.goalData.goals.some(g => g.status === 'active' && g.plans.some(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)));
+        if (hasPlan) return '今天的运动执行点还没完成：' + Core.state.goalData.goals.flatMap(g => g.plans.filter(p => p.status !== 'done' && p.status !== 'someday' && p.due === today && /运动|健身|跑|散步|锻炼/.test(p.work)).map(p => p.work)).join('、') + '。做完对我说一声。';
         return '今天还没运动：散个步、做个微运动都算（去「健康」或对我说「跑了 3 公里」）。';
     }
     if (id === 'dinner') {
@@ -5718,7 +5833,7 @@ function secMessageFor(slot) {
     }
     if (id === 'prep') {
         const lines = ['睡前准备：'];
-        const tomorrow = goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => (p.status === 'next' || p.status === 'doing') && p.due === addDays(today, 1)).map(p => ({ work: p.work, goal: g.title })));
+        const tomorrow = Core.state.goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => (p.status === 'next' || p.status === 'doing') && p.due === addDays(today, 1)).map(p => ({ work: p.work, goal: g.title })));
         lines.push(tomorrow.length ? '· 明天有 ' + tomorrow.length + ' 件事：' + tomorrow.slice(0, 5).map(x => x.work).join('、') : '· 明天暂无安排执行点');
         lines.push('· 把明天要穿的衣服拿出来（「衣橱」页有穿搭建议）');
         return lines.join('\n');
@@ -5733,7 +5848,7 @@ function secMessageFor(slot) {
         else lines.push('· 复盘已写 ✓');
         return lines.join('\n');
     }
-    const missingBed = habits.filter(h => h.category === '睡眠' && !(h.dates || []).includes(today)).map(h => h.name);
+    const missingBed = Core.state.habits.filter(h => h.category === '睡眠' && !(h.dates || []).includes(today)).map(h => h.name);
     const lines = ['该睡觉了：'];
     lines.push(missingBed.length ? '· 睡前习惯还没打卡：' + missingBed.join('、') : '· 睡前习惯已完成 ✓');
     lines.push('· 放下手机，明早告诉我昨晚几点睡的');
@@ -5782,7 +5897,7 @@ function secTickTasks() {
     const now = new Date();
     const hhmm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
     let fired = false;
-    scheduleData.tasks.forEach(t => {
+    Core.state.scheduleData.tasks.forEach(t => {
         if (t.status !== 'todo' || t.date !== today || !t.time) return;
         if (hhmm >= t.time && !secFired.sch[t.id]) {
             secFired.sch[t.id] = true;
@@ -5803,6 +5918,19 @@ function fireSecTask(t) {
     }
 }
 setInterval(secTick, 30000);
+
+/* ================= Core 挂载区（现有函数转发给内核，逻辑不重写） ================= */
+Object.assign(Core, {
+    _addExpenseCore, _deleteLogCore,
+    syncRecord, deleteHealthRecord,
+    /* 数据读取 */
+    goalById, krLocate, planLocate, krPct, goalPct, gateDoneToday, goalTodayPlans, goalGateList,
+    todayDailyReview, dailyReviewStats,
+    getTodayRhythm, calcStreak,
+    filterByDay, collectDayData,
+    getTodayWardrobeLog, wdComputeOutfit, wdComputeGaps,
+    secretaryFacts
+});
 
 /* ================= 渲染调度（RenderBus 发布订阅） ================= */
 function renderHealthAll() {
@@ -5853,11 +5981,11 @@ bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
 bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; secSyncSettingsUI(); applyUiPrefs(); stdSyncUI(); if (m) m.classList.add('active'); });
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
-    aiConfig.apiKey = $('ai-api-key').value.trim();
-    aiConfig.apiUrl = $('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
-    aiConfig.model = $('ai-model').value.trim() || 'deepseek-chat';
-    saveAIConfigLocal(aiConfig);
-    await saveAIConfigToCloud(aiConfig);
+    Core.state.aiConfig.apiKey = $('ai-api-key').value.trim();
+    Core.state.aiConfig.apiUrl = $('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+    Core.state.aiConfig.model = $('ai-model').value.trim() || 'deepseek-chat';
+    saveAIConfigLocal(Core.state.aiConfig);
+    await saveAIConfigToCloud(Core.state.aiConfig);
     alert('配置已保存，并同步至云端 ✓');
     const m = $('settings-modal'); if (m) m.classList.remove('active');
 });
@@ -6033,7 +6161,7 @@ bindEvent('#transfer-btn', 'click', async () => {
 bindEvent('#reset-accounts-btn', 'click', async () => {
     if (!confirm('确定清空三账户数据？')) return;
     await sb.from('records').delete().eq('user_id', currentUser.id);
-    accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
+    Core.state.accountsData = { income: 0, incomeRecords: [], balances: { survival: 0, stable: 0, develop: 0 }, expenses: [], transfers: [] };
     saveCache(); RenderBus.emit('accounts');
 });
 bindEvent('#expense-amount', 'keydown', e => { if (e.key === 'Enter') { const b = $('add-btn'); if (b) b.click(); } });
@@ -6068,9 +6196,9 @@ bindEvent('#acne-location', 'change', (e, el) => { const f = $('acne-location-ot
 bindEvent('#ai-analyze-btn', 'click', runAIAnalysis);
 bindEvent('#ai-clear-btn', 'click', async () => {
     if (!confirm('清除今天的 AI 分析？')) return;
-    const list = healthData.aiAnalysis.filter(x => x.date === currentDay);
+    const list = Core.state.healthData.aiAnalysis.filter(x => x.date === currentDay);
     for (const e of list) { await deleteHealthRecord(e.id); }
-    healthData.aiAnalysis = healthData.aiAnalysis.filter(x => x.date !== currentDay);
+    Core.state.healthData.aiAnalysis = Core.state.healthData.aiAnalysis.filter(x => x.date !== currentDay);
     saveCache(); RenderBus.emit('health');
 });
 bindEvent('#posture-chips .chip', 'click', (e, el) => toggleChip(selectedPosture, el));
@@ -6079,15 +6207,15 @@ bindEvent('#signal-chips .chip', 'click', (e, el) => toggleChip(selectedSignals,
 bindEvent('#energy-am .score-btn', 'click', (e, el) => selectScore('energy-am', el));
 bindEvent('#energy-pm .score-btn', 'click', (e, el) => selectScore('energy-pm', el));
 bindEvent('#exercise-week .dot', 'click', (e, el) => setDay(el.dataset.day));
-bindEvent('[data-del-sleep]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSleep); healthData.sleep = healthData.sleep.filter(x => String(x.id) !== String(el.dataset.delSleep)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-energy]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delEnergy); healthData.energy = healthData.energy.filter(x => String(x.id) !== String(el.dataset.delEnergy)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-charge]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delCharge); healthData.charge = healthData.charge.filter(x => String(x.id) !== String(el.dataset.delCharge)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-exercise]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delExercise); healthData.exercise = healthData.exercise.filter(x => String(x.id) !== String(el.dataset.delExercise)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-micro]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMicro); healthData.microExercise = healthData.microExercise.filter(x => String(x.id) !== String(el.dataset.delMicro)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-body]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delBody); healthData.bodySignals = healthData.bodySignals.filter(x => String(x.id) !== String(el.dataset.delBody)); saveCache(); RenderBus.emit('health'); });
-bindEvent('[data-del-meal]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMeal); healthData.meal = healthData.meal.filter(x => String(x.id) !== String(el.dataset.delMeal)); saveCache(); RenderBus.emit('health'); const fa = $('food-analysis'); if (fa) fa.classList.add('hidden'); });
-bindEvent('[data-view-ip]', 'click', (e, el) => { const r = healthData.innerPeace.find(x => String(x.id) === String(el.dataset.viewIp)); if (r) renderIpReport(r); });
-bindEvent('[data-del-ip]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delIp); healthData.innerPeace = healthData.innerPeace.filter(x => String(x.id) !== String(el.dataset.delIp)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-sleep]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSleep); Core.state.healthData.sleep = Core.state.healthData.sleep.filter(x => String(x.id) !== String(el.dataset.delSleep)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-energy]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delEnergy); Core.state.healthData.energy = Core.state.healthData.energy.filter(x => String(x.id) !== String(el.dataset.delEnergy)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-charge]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delCharge); Core.state.healthData.charge = Core.state.healthData.charge.filter(x => String(x.id) !== String(el.dataset.delCharge)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-exercise]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delExercise); Core.state.healthData.exercise = Core.state.healthData.exercise.filter(x => String(x.id) !== String(el.dataset.delExercise)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-micro]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMicro); Core.state.healthData.microExercise = Core.state.healthData.microExercise.filter(x => String(x.id) !== String(el.dataset.delMicro)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-body]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delBody); Core.state.healthData.bodySignals = Core.state.healthData.bodySignals.filter(x => String(x.id) !== String(el.dataset.delBody)); saveCache(); RenderBus.emit('health'); });
+bindEvent('[data-del-meal]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delMeal); Core.state.healthData.meal = Core.state.healthData.meal.filter(x => String(x.id) !== String(el.dataset.delMeal)); saveCache(); RenderBus.emit('health'); const fa = $('food-analysis'); if (fa) fa.classList.add('hidden'); });
+bindEvent('[data-view-ip]', 'click', (e, el) => { const r = Core.state.healthData.innerPeace.find(x => String(x.id) === String(el.dataset.viewIp)); if (r) renderIpReport(r); });
+bindEvent('[data-del-ip]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delIp); Core.state.healthData.innerPeace = Core.state.healthData.innerPeace.filter(x => String(x.id) !== String(el.dataset.delIp)); saveCache(); RenderBus.emit('health'); });
 bindEvent('#ip-start-btn', 'click', startIpSession);
 bindEvent('#ip-restart-btn', 'click', startIpSession);
 bindEvent('[data-opt-idx]', 'click', (e, el) => {
@@ -6140,18 +6268,18 @@ bindEvent('#news-day-today', 'click', () => setDay(todayStr()));
 // 世事（手动记录 / 简报 / RSS / OPML）
 bindEvent('#news-save', 'click', addNewsItem);
 bindEvent('#news-summary-save', 'click', addNewsSummary);
-bindEvent('[data-del-news]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delNews); newsData.items = newsData.items.filter(x => String(x.id) !== String(el.dataset.delNews)); saveCache(); RenderBus.emit('news'); });
-bindEvent('[data-del-summary]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSummary); newsData.summaries = newsData.summaries.filter(x => String(x.id) !== String(el.dataset.delSummary)); saveCache(); RenderBus.emit('news'); });
+bindEvent('[data-del-news]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delNews); Core.state.newsData.items = Core.state.newsData.items.filter(x => String(x.id) !== String(el.dataset.delNews)); saveCache(); RenderBus.emit('news'); });
+bindEvent('[data-del-summary]', 'click', async (e, el) => { await deleteHealthRecord(el.dataset.delSummary); Core.state.newsData.summaries = Core.state.newsData.summaries.filter(x => String(x.id) !== String(el.dataset.delSummary)); saveCache(); RenderBus.emit('news'); });
 bindEvent('[data-del-briefing]', 'click', async (e, el) => {
     const id = el.dataset.delBriefing;
     if (!confirm('删除这份简报？')) return;
-    if (String(id).startsWith('local_')) { newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
-    else { await deleteHealthRecord(id); newsData.briefings = newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
+    if (String(id).startsWith('local_')) { Core.state.newsData.briefings = Core.state.newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
+    else { await deleteHealthRecord(id); Core.state.newsData.briefings = Core.state.newsData.briefings.filter(x => String(x.id) !== String(id)); saveCache(); RenderBus.emit('news'); }
 });
 bindEvent('.mark-read-cb', 'change', async (e, el) => {
     const id = el.dataset.id;
     const isRead = el.checked;
-    const item = newsData.briefings.find(x => String(x.id) === String(id));
+    const item = Core.state.newsData.briefings.find(x => String(x.id) === String(id));
     if (!item) return;
     item.isRead = isRead;
     saveCache(); RenderBus.emit('news');
@@ -6168,9 +6296,9 @@ bindEvent('#rss-optimize-btn', 'click', () => {
     setTimeout(() => { if (statusEl.textContent.includes('优化完成')) statusEl.textContent = ''; }, 6000);
 });
 bindEvent('#rss-clear-btn', 'click', () => {
-    if (!rssFeeds.length) return;
+    if (!Core.state.rssFeeds.length) return;
     if (!confirm('清空所有已保存的 RSS 源？（云端也会清空）')) return;
-    rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
+    Core.state.rssFeeds = []; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss');
     $('rss-fetch-result').innerHTML = ''; $('rss-status').textContent = '';
     clearFetchProgress(); setBriefingStageStatus('');
 });
@@ -6178,8 +6306,8 @@ bindEvent('#rss-url', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 bindEvent('#rss-name', 'keydown', e => { if (e.key === 'Enter') addRssFeed(); });
 bindEvent('#opml-import-btn', 'click', () => { const f = $('opml-file-input'); if (f) f.click(); });
 bindEvent('#opml-file-input', 'change', (e, el) => { const file = el.files && el.files[0]; if (file) handleOpmlFile(file); el.value = ''; });
-bindEvent('[data-del-feed]', 'click', (e, el) => { rssFeeds = rssFeeds.filter(x => x.id !== el.dataset.delFeed); saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); });
-bindEvent('[data-toggle-feed]', 'change', (e, el) => { const f = rssFeeds.find(x => x.id === el.dataset.toggleFeed); if (f) { f.enabled = el.checked; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); } });
+bindEvent('[data-del-feed]', 'click', (e, el) => { Core.state.rssFeeds = Core.state.rssFeeds.filter(x => x.id !== el.dataset.delFeed); saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); });
+bindEvent('[data-toggle-feed]', 'change', (e, el) => { const f = Core.state.rssFeeds.find(x => x.id === el.dataset.toggleFeed); if (f) { f.enabled = el.checked; saveRssFeedsLocal(); pushRssFeedsToCloud(); RenderBus.emit('rss'); } });
 bindEvent('[data-opml-idx]', 'change', (e, el) => {
     const idx = parseInt(el.dataset.opmlIdx, 10);
     if (!opmlPreviewData || !opmlPreviewData[idx]) return;
@@ -6269,10 +6397,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
     buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
 
-    aiConfig = loadAIConfigLocal();
-    $('ai-api-key').value = aiConfig.apiKey || '';
-    $('ai-api-url').value = aiConfig.apiUrl;
-    $('ai-model').value = aiConfig.model;
+    Core.state.aiConfig = loadAIConfigLocal();
+    $('ai-api-key').value = Core.state.aiConfig.apiKey || '';
+    $('ai-api-url').value = Core.state.aiConfig.apiUrl;
+    $('ai-model').value = Core.state.aiConfig.model;
 
     loadRhythmNodesLocal();
     loadRssFeedsLocal();
@@ -6307,7 +6435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    2. 导航：MODULES 注册表加一条 { id:'xxx', icon:'…', label:'…', renders:['xxx'] }（导航按钮自动出现）
    3. 数据：数据区加 let xxxData = …；
       loadAllFromCloud 的 hd.forEach 里加一行：if (r.type === 'xxx') { xxxData = { ...d, _cloudId: r.id }; return; }
-      （按天记录类参考 wardrobe_log；配置类需在 cloudConfigRefs 加引用）
+      （按天记录类参考 wardrobe_log；配置类需在 Core.state.cloudConfigRefs 加引用）
    4. 渲染：写 renderXxx()，然后在渲染调度区注册 RenderBus.on('xxx', renderXxx)
    5. 交互：所有按钮 bindEvent('selector', 'click', handler)（动态列表用 data-action / data-id 属性，天然委托）
    6. 持久化：新建/修改一律 syncRecord('xxx', date, dataObj, dataObj)，删除用 deleteHealthRecord(id)
