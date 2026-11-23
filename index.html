@@ -295,8 +295,6 @@ tr{scroll-margin-top:20px}
 .ex-review-item{background:#f5f5f7;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
 
 /* Goal System Styles */
-.gate-bar{background:#fdf6f0;border:1px solid #f0d9b5;border-radius:var(--rSm);padding:12px 14px;margin-bottom:12px;font-size:13px;color:#8a5a2b;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.gate-bar.active{background:#e8f2ee;border-color:#bcd9cd;color:#2d7d5a}
 .goal-card{background:#fff;border-radius:var(--r);padding:20px;margin-bottom:12px;box-shadow:var(--shadow)}
 .goal-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .goal-title{font-size:18px;font-weight:700}
@@ -317,16 +315,6 @@ tr{scroll-margin-top:20px}
 .gp-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .gp-check{width:22px;height:22px;border-radius:50%;border:2px solid #d4e3dd;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px;cursor:pointer;flex-shrink:0;margin-top:1px}
 .gp-row.done .gp-check{background:var(--accent);border-color:var(--accent);color:#fff}
-.wizard-step{display:none}
-.wizard-step.active{display:block}
-.wizard-nav{display:flex;justify-content:space-between;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
-.smart-check{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f5f5f7;margin-bottom:8px;font-size:13px;cursor:pointer;user-select:none}
-.smart-check.pass{background:#e8f2ee}
-.smart-check .mark{margin-left:auto;font-weight:700}
-.track-option{display:flex;gap:10px;padding:14px;border-radius:10px;background:#f5f5f7;margin-bottom:10px;cursor:pointer;border:2px solid transparent;transition:all .15s}
-.track-option.selected{border-color:var(--accent);background:var(--accentBg)}
-.track-option .t-title{font-weight:700;font-size:14px;margin-bottom:4px}
-.track-option .t-desc{font-size:12px;color:var(--text2);line-height:1.6}
 .kr-edit-row{background:#f5f5f7;border-radius:10px;padding:12px;margin-bottom:10px;position:relative}
 .dept-block{border-left:3px solid #d4e3dd;background:#fafcfb;border-radius:8px;padding:10px 12px;margin-top:8px}
 .dept-block .dept-title{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px}
@@ -334,10 +322,6 @@ tr{scroll-margin-top:20px}
 .gd-input textarea{min-height:44px}
 .daily-feed{background:#fdf6f6;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12px;color:#8a4a4a;line-height:1.6}
 .idea-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;flex-wrap:wrap}
-.gate-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#f5f5f7;margin-bottom:8px;cursor:pointer;font-size:13px}
-.gate-item.selected{background:var(--accentBg);outline:2px solid var(--accent)}
-.gate-item .g-check{width:22px;height:22px;border-radius:50%;border:2px solid #d4e3dd;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px;flex-shrink:0}
-.gate-item.selected .g-check{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* 简洁模式：折叠细节 */
 .goal-kr-fold{background:#fafcfb;border-radius:10px;margin-top:8px;padding:2px 12px 8px}
@@ -347,48 +331,85 @@ tr{scroll-margin-top:20px}
 .goal-kr-fold[open] summary::after{content:'▴'}
 .goal-kr-fold .goal-kr-row{padding:5px 0}
 
-/* 只读模式：模块只展示结果，录入全部走秘书（财务除外） */
-body.readonly #tab-health .field,
-body.readonly #tab-health .score-row,
-body.readonly #tab-health .chip-row,
-body.readonly #tab-health .btn-primary,
-body.readonly #tab-Core.state.habits #habit-add-fold,
-body.readonly #tab-Core.state.habits .habit-action-btn,
-body.readonly #tab-goals [data-action="idea-add"],
-body.readonly #tab-goals [data-action="goal-add"],
-body.readonly #tab-goals [data-action="goal-edit"],
-body.readonly #tab-goals [data-action="goal-kr-add"],
-body.readonly #tab-goals [data-action="goal-kr-edit"],
-body.readonly #tab-goals [data-action="goal-plan-add"],
-body.readonly #tab-goals [data-action="goal-plan-edit"],
-body.readonly #tab-goals [data-action="goal-plan-del"],
-body.readonly #tab-goals [data-action="goal-del"],
-body.readonly #tab-goals [data-action="gp-dept-save"],
-body.readonly #tab-goals .dept-block,
-body.readonly #tab-schedule #sch-add-card,
-body.readonly #tab-schedule [data-action="sch-edit"],
-body.readonly #tab-wardrobe [data-action="wd-add-item"],
-body.readonly #tab-wardrobe [data-action="wd-edit-item"],
-body.readonly #tab-wardrobe [data-action="wd-del-item"],
-body.readonly #tab-wardrobe [data-action="wd-status-toggle"],
-body.readonly #tab-wardrobe [data-action="wd-idle-item"],
-body.readonly #tab-wardrobe [data-action="wd-add-outfit"],
-body.readonly #tab-wardrobe [data-action="wd-edit-outfit"],
-body.readonly #tab-wardrobe [data-action="wd-del-outfit"],
-body.readonly #tab-wardrobe [data-action="wd-add-wish"],
-body.readonly #tab-wardrobe [data-action="wd-edit-wish"],
-body.readonly #tab-wardrobe [data-action="wd-del-wish"],
-body.readonly #tab-news .field,
-body.readonly #tab-news #news-save,
-body.readonly #tab-news #news-summary-save,
-body.readonly #tab-rhythm .rhythm-edit-btn,
-body.readonly #tab-rhythm #rhythm-edit-toggle-btn,
-body.readonly #tab-rhythm #rhythm-add-node-btn,
-body.readonly #tab-rhythm #rhythm-reset-nodes-btn,
-body.readonly #tab-rhythm #rhythm-note-input,
-body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
 
 @media(max-width:500px){body{padding:16px 12px}.page-title{font-size:28px}.grid-3{grid-template-columns:1fr 1fr}.balance-item .value{font-size:17px}.rhythm-header{flex-direction:column;align-items:flex-start;gap:10px}}
+/* ========== 秘书：卡片流（阶段 3） ========== */
+.sec-summary{padding:14px 20px}
+.sec-summary-text{font-size:15px;font-weight:600}
+.sec-summary-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.sec-bubble{max-width:100% !important;background:transparent !important;padding:0 !important;box-shadow:none !important}
+.sec-card{border:1px solid var(--border);background:#fff;border-radius:var(--rSm);padding:12px 14px;margin-top:10px;transition:opacity .2s,filter .2s}
+.sec-card.revoked{opacity:.55;filter:grayscale(1);background:#f5f5f7}
+.sec-card-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.sec-card-title{font-size:14px;font-weight:600;flex:1;min-width:0;word-break:break-word}
+.sec-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0}
+.sec-badge-mod{background:#eaeef6;color:#4a5c8a}
+.sec-badge-pending{background:#fef3e0;color:#b87000}
+.sec-badge-committed{background:#e0f2e8;color:#1a7a4a}
+.sec-badge-auto{background:#e0f2e8;color:#1a7a4a}
+.sec-badge-revoked{background:#e5e5ea;color:#86868b}
+.sec-badge-error{background:#fdeaea;color:#c0392b}
+.sec-card-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sec-field{display:flex;flex-direction:column;gap:4px}
+.sec-field.full{grid-column:1/-1}
+.sec-field label{font-size:11px;color:var(--text2);font-weight:500}
+.sec-field input,.sec-field select,.sec-field textarea{width:100%;padding:8px 10px;border:none;background:#f5f5f7;border-radius:8px;font-size:13px;font-family:inherit;color:var(--text)}
+.sec-field select{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.sec-field input:focus,.sec-field select:focus,.sec-field textarea:focus{outline:none;background:#fff;box-shadow:0 0 0 3px rgba(45,125,90,0.15)}
+.sec-field input:disabled,.sec-field select:disabled,.sec-field textarea:disabled{color:var(--text2);opacity:.85}
+.sec-card-err{font-size:12px;color:#c0392b;margin-top:8px}
+.sec-card-clarify{margin-top:8px;padding:10px 12px;background:#fef7ec;border-radius:8px}
+.sec-card-clarify .sec-clarify-q{font-size:12px;color:#b87000;margin-bottom:6px}
+.sec-card-clarify .sec-clarify-row{display:flex;gap:6px}
+.sec-card-clarify input{flex:1;padding:8px 10px;border:none;background:#fff;border-radius:8px;font-size:13px;font-family:inherit}
+.sec-card-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);font-size:11px;color:var(--text3)}
+.sec-card-foot .sec-src{flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sec-conf{font-weight:600;flex-shrink:0}
+.sec-conf.hi{color:#1a7a4a}
+.sec-conf.mid{color:#b87000}
+.sec-conf.lo{color:#c0392b}
+.sec-card-foot .btn{font-size:11px;padding:5px 10px}
+.sec-foot-msg{width:100%;font-size:11px;color:var(--text2)}
+.sec-foot-msg.ok{color:#1a7a4a}
+.sec-foot-msg.err{color:#c0392b}
+@media(max-width:500px){.sec-card-fields{grid-template-columns:1fr}}
+/* ========== 今天页（阶段 4，只读聚合视图） ========== */
+.td-head{font-size:20px;font-weight:700}
+.td-summary{font-size:13px;color:var(--text2);margin-top:4px}
+.td-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px}
+.td-row:last-child{border-bottom:none}
+.td-row .main{flex:1;min-width:0;cursor:pointer}
+.td-row .meta{color:var(--text2);font-size:12px;margin-top:2px}
+.td-row .side{flex-shrink:0;color:var(--text2);font-size:12px;text-align:right}
+.td-row.done .main{color:var(--text2);text-decoration:line-through}
+.td-anomaly{padding:9px 12px;border-radius:10px;font-size:13px;margin-bottom:8px;background:#fef7ec;color:#8a5a00}
+.td-anomaly.good{background:#e8f2ee;color:#1a7a4a}
+.td-health-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.td-health-row:last-child{border-bottom:none}
+.td-health-row .k{width:52px;color:var(--text2);flex-shrink:0}
+.td-review-status{font-size:12px;color:var(--text2);text-align:center;margin-top:10px}
+.td-pri{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.td-pri.high{background:#c0392b}
+.td-pri.mid{background:#b8860b}
+.td-pri.low{background:#4a5c8a}
+/* ========== 回顾页（阶段 5） ========== */
+.rv-range{font-size:12px;color:var(--text2);margin-left:auto}
+.rv-card{border:1px solid var(--border);border-radius:var(--rSm);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.rv-card:hover{border-color:var(--accent)}
+.rv-card.open{border-color:var(--accent);background:var(--accentBg)}
+.rv-card-head{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:8px}
+.rv-card-head .rv-arrow{margin-left:auto;color:var(--text3);font-size:11px;transition:transform .15s}
+.rv-card.open .rv-arrow{transform:rotate(180deg)}
+.rv-metric-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.rv-metric-row .k{color:var(--text2)}
+.rv-metric-row .v{font-weight:600}
+/* 完整模式：模块录入表单默认隐藏，完整模式下恢复 */
+.legacy-form{display:none !important}
+body.full-mode .legacy-form{display:block !important}
+body.full-mode button.legacy-form,body.full-mode a.legacy-form{display:inline-flex !important}
+body.full-mode .legacy-form.field{display:flex !important}
+body.full-mode .legacy-form.score-row{display:flex !important}
+body.full-mode .legacy-form.chip-row{display:flex !important}
 </style>
 </head>
 <body>
@@ -419,22 +440,114 @@ body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
     <!-- ========== 秘书（对话式入口） ========== -->
     <div id="tab-secretary" class="tab-content active">
         <h1 class="page-title">秘书</h1>
+
+        <!-- 顶部：今日一句话摘要 -->
+        <div class="card sec-summary" id="sec-summary-bar">
+            <div class="sec-summary-text" id="sec-summary-text">今天有 0 件待办</div>
+            <div class="sec-summary-sub" id="sec-summary-sub"></div>
+        </div>
+
+        <!-- 中部：对话流 -->
         <div class="card" style="padding:14px;">
-            <div id="sec-flow-bar" style="font-size:12px;color:var(--text3);margin-bottom:10px;"></div>
             <div id="secretary-chat" class="ip-chat-container" style="max-height:52vh;"></div>
+            <!-- 底部：输入框 + 发送 + 3 个快捷指令 -->
             <div style="display:flex;gap:8px;margin-top:12px;">
-                <input type="text" id="secretary-input" placeholder="说人话：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 这周花了多少…">
+                <input type="text" id="secretary-input" placeholder="说人话：午饭 15 块 / 明天下午 3 点交材料…">
                 <button class="btn btn-primary" id="secretary-send" style="flex:0 0 auto;">发送</button>
             </div>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;" id="secretary-quick"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;" id="secretary-quick">
+                <span class="chip" data-action="sec-quick" data-q="note">✏️ 记一笔</span>
+                <span class="chip" data-action="sec-quick" data-q="schedule">📅 加日程</span>
+                <span class="chip" data-action="sec-quick" data-q="ask">💬 问一句</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 今天（聚合只读视图） ========== -->
+    <div id="tab-today" class="tab-content">
+        <h1 class="page-title">今天</h1>
+
+        <!-- 头部：日期 + 一句话摘要 -->
+        <div class="card">
+            <div class="td-head" id="td-head"></div>
+            <div class="td-summary" id="td-summary"></div>
+        </div>
+
+        <!-- 时间线 -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🕐 时间线</h2>
+            <div id="td-timeline"></div>
+        </div>
+
+        <!-- 待办（按优先级） -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">✅ 待办</h2>
+            <div id="td-todos"></div>
+        </div>
+
+        <!-- 承诺 -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🤝 承诺</h2>
+            <div id="td-promises"></div>
+        </div>
+
+        <!-- 异常提醒 -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">⚠️ 异常提醒</h2>
+            <div id="td-anomalies"></div>
+        </div>
+
+        <!-- 健康简报 -->
+        <div class="card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🌿 健康简报</h2>
+            <div id="td-health"></div>
+        </div>
+
+        <!-- 底部：晚间复盘 -->
+        <button class="btn btn-primary btn-full" id="td-review-btn">🌙 晚间复盘</button>
+        <div class="td-review-status" id="td-review-status"></div>
+    </div>
+
+    <div class="modal-overlay" id="td-review-modal">
+        <div class="modal-box">
+            <div class="modal-title">🌙 晚间复盘</div>
+            <div class="field"><label>今天做得怎么样？（完成 / 未完成 / 明天怎么调整）</label><textarea id="td-review-text" placeholder="例如：数学 10 道题完成，单词没背，明天早上先补。"></textarea></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+                <button class="btn btn-secondary btn-sm" id="td-review-cancel">取消</button>
+                <button class="btn btn-primary btn-sm" id="td-review-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 回顾（周/月聚合） ========== -->
+    <div id="tab-review" class="tab-content">
+        <h1 class="page-title">回顾</h1>
+
+        <!-- 周/月切换 -->
+        <div class="card" style="padding:12px 16px;display:flex;gap:8px;align-items:center;">
+            <span class="chip rv-chip active" data-action="rv-period" data-period="week">本周</span>
+            <span class="chip rv-chip" data-action="rv-period" data-period="month">本月</span>
+            <span class="rv-range" id="rv-range"></span>
+        </div>
+
+        <!-- 6 张模块摘要卡片 -->
+        <div class="card">
+            <div id="rv-cards"></div>
+        </div>
+
+        <!-- 展开的模块详情（DOM 搬移目标） -->
+        <div class="card" id="rv-detail-wrap" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span style="font-size:16px;font-weight:600;" id="rv-detail-title"></span>
+                <button class="btn btn-secondary btn-sm" id="rv-detail-close">收起</button>
+            </div>
+            <div id="rv-detail"></div>
         </div>
     </div>
 
     <!-- ========== 主页 ========== -->
     <div id="tab-execution" class="tab-content">
         <div class="card" style="padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--text2);text-align:center;">直觉选方向 · 理性自律去执行 · 结果的绝对闭环</div>
-
-        <div id="gate-bar"></div>
 
         <div id="home-schedule"></div>
 
@@ -492,7 +605,7 @@ body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
 
         <div class="card">
             <h2 style="font-size:16px;font-weight:600;margin-bottom:12px;">🎯 目标管理</h2>
-            <button class="btn btn-primary btn-full" data-action="goal-add">＋ 添加目标（科学流程）</button>
+            <button class="btn btn-primary btn-full" data-action="goal-add">＋ 添加目标（对秘书说）</button>
             <div id="goal-manage-list" style="margin-top:14px;"></div>
         </div>
     </div>
@@ -932,82 +1045,6 @@ body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
     <div class="footer-note">数据自动同步 · 云端存储</div>
 </div>
 
-<!-- 目标系统 V3 弹窗 -->
-<div class="modal-overlay" id="gate-modal">
-    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
-        <div class="modal-title">🌅 今日门禁 · 勾选后确认，系统才会激活</div>
-        <div id="gate-list"></div>
-        <div id="gate-count" style="font-size:13px;font-weight:600;color:var(--accent);margin:10px 0;"></div>
-        <button class="btn btn-primary btn-full" id="gate-confirm" disabled>✅ 确认，激活今日系统</button>
-        <button class="btn btn-secondary btn-full" id="gate-skip" style="margin-top:8px;">😴 今天先跳过（最低电量，允许休息）</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="goal-wizard-modal">
-    <div class="modal-box" style="max-height:92vh;overflow-y:auto;">
-        <div class="modal-title" id="goal-wizard-title">➕ 添加目标</div>
-        <div id="gw-step-indicator" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
-
-        <div class="wizard-step" id="gw-step-1">
-            <div class="field"><label>① 想法记录：我想实现什么？（定性的、鼓舞人心的方向）</label><textarea id="gw-text" style="min-height:70px;" placeholder="例如：2028 年考入北航 VR 学硕"></textarea></div>
-            <div class="field"><label>为什么想做？（动机）</label><textarea id="gw-why" style="min-height:50px;" placeholder="选填"></textarea></div>
-            <div class="field"><label>期望在多长时间内实现？</label><input type="date" id="gw-deadline-hint"></div>
-            <button class="btn btn-primary btn-full" data-action="gw-auto" id="gw-auto-btn" style="margin-top:14px;">⚡ 一键自动生成全部</button>
-        </div>
-
-        <div class="wizard-step" id="gw-step-2">
-            <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">② SMART 可行性分析——点每一项可切换判定（系统先自动初判）：</div>
-            <div id="gw-smart-list"></div>
-            <div id="gw-smart-score" style="font-size:14px;font-weight:700;margin:10px 0;"></div>
-        </div>
-
-        <div class="wizard-step" id="gw-step-3">
-            <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">③ 筛选决策——得分和理由都在上面，你来拍板：</div>
-            <div id="gw-smart-advice" style="background:#f7fbf9;border-radius:10px;padding:12px;font-size:13px;line-height:1.7;margin-bottom:12px;"></div>
-            <button class="btn btn-primary btn-full" data-action="gw-adopt">✅ 采纳，继续拆解</button>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-                <button class="btn btn-secondary" style="flex:1;" data-action="gw-park">📦 暂存想法库</button>
-                <button class="btn btn-danger" style="flex:1;" data-action="gw-drop">🗑 放弃这个想法</button>
-            </div>
-        </div>
-
-        <div class="wizard-step" id="gw-step-4">
-            <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">④ 分类到回报轨道：</div>
-            <div class="track-option" data-track="long"><div><div class="t-title">🛤️ 长期回报轨道</div><div class="t-desc">对未来有杠杆作用（一次投入长期复用）且具有不可逆性（做了就改变人生轨迹）。例：考研上岸、学历跃迁。</div></div></div>
-            <div class="track-option" data-track="quick"><div><div class="t-title">⚡ 快速回报轨道</div><div class="t-desc">价值兑现速度快，能快速改善当前生活。例：雅思出分、攒下一笔钱、养成运动习惯。</div></div></div>
-        </div>
-
-        <div class="wizard-step" id="gw-step-5">
-            <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">⑤ 拆解关键结果（KR）——定量、可验证，必须引入外部反馈：</div>
-            <div id="gw-kr-list"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" data-action="gw-kr-add">＋ 手动加一条 KR</button>
-                <button class="btn btn-secondary btn-sm" data-action="gw-kr-ai" id="gw-kr-ai-btn" style="display:none;">🤖 AI 自动拆解 KR</button>
-            </div>
-            <div id="gw-kr-ai-status" style="margin-top:8px;"></div>
-        </div>
-
-        <div class="wizard-step" id="gw-step-6">
-            <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">⑥ 时间规划——按 年 → 季 → 月 → 周 → 日 生成关键结果点（工作内容 / 计划完成时间 / 奖惩机制）：</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                <button class="btn btn-secondary btn-sm" data-action="gw-plans-template">📋 模板生成</button>
-                <button class="btn btn-secondary btn-sm" data-action="gw-plans-ai" id="gw-plans-ai-btn" style="display:none;">🤖 AI 生成</button>
-                <button class="btn btn-secondary btn-sm" data-action="gw-plans-clear">清空</button>
-            </div>
-            <div id="gw-plans-preview" style="max-height:240px;overflow-y:auto;"></div>
-            <div style="font-size:12px;color:var(--text3);margin-top:8px;">生成后可保存目标，之后随时在目标详情里增删改执行点，并配置风险管理部 / 资源管理部 / 反馈部 / 优化部。</div>
-        </div>
-
-        <div class="wizard-nav">
-            <button class="btn btn-secondary" id="gw-prev">← 上一步</button>
-            <div style="display:flex;gap:8px;">
-                <button class="btn btn-secondary" id="gw-cancel">关闭</button>
-                <button class="btn btn-primary" id="gw-next">下一步 →</button>
-                <button class="btn btn-primary" id="gw-finish" style="display:none;">✅ 完成，建立目标</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="modal-overlay" id="goal-edit-modal">
     <div class="modal-box">
@@ -1145,19 +1182,10 @@ body.readonly #tab-rhythm #rhythm-save-note-btn { display:none !important; }
             <button class="btn btn-primary" id="ai-save-config">保存</button>
         </div>
         <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
-            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">🔒 只读模式</div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">🗂️ 完整模式</div>
             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;">
-                <input type="checkbox" id="ui-readonly" style="width:18px;height:18px;cursor:pointer;"> 模块只读：所有新增/修改都通过与秘书对话完成（财务除外）
+                <input type="checkbox" id="ui-full-mode" style="width:18px;height:18px;cursor:pointer;"> 显示全部 10 个模块导航，并开放各页直接录入表单
             </label>
-        </div>
-        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
-            <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📐 录入标准（秘书按此要求你补充细节）</div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">创建「目标」时必须确认的细节：</div>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;"><input type="checkbox" id="std-goal-deadline" style="width:16px;height:16px;cursor:pointer;"> 必须确认时限</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-top:6px;"><input type="checkbox" id="std-goal-why" style="width:16px;height:16px;cursor:pointer;"> 必须确认动机</label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-top:6px;"><input type="checkbox" id="std-goal-track" style="width:16px;height:16px;cursor:pointer;"> 必须确认回报轨道</label>
-            <div class="field" style="margin-top:8px;"><label style="font-size:12px;">自定义追问话术（可选，用于补充细节）</label><textarea id="std-goal-ask" style="min-height:40px;" placeholder="例如：这个目标对你 3 年后意味着什么？"></textarea></div>
-            <button class="btn btn-secondary btn-sm" id="std-save">保存标准</button>
         </div>
         <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
             <div style="font-size:14px;font-weight:700;margin-bottom:10px;">📖 操作说明</div>
@@ -1346,7 +1374,7 @@ const RenderBus = (() => {
     const handlers = new Map();
     return {
         on(name, fn) { if (!handlers.has(name)) handlers.set(name, new Set()); handlers.get(name).add(fn); },
-        emit(name) { (handlers.get(name) || []).forEach(fn => { try { fn(); } catch (e) { console.error('[RenderBus:' + name + ']', e); } }); },
+        emit(name) { (handlers.get(name) || []).forEach(fn => { try { fn(); } catch (e) { console.error('[RenderBus:' + name + ']', e); } }); try { legacyFormTag(); } catch (e) {} },
         emitAll(names) { (names || []).forEach(n => this.emit(n)); }
     };
 })();
@@ -1400,7 +1428,8 @@ const Core = (() => {
         },
         cards: {},         // id → 已提交卡片（含 _cloudId/_recordType/_recordDate 内部引用）
         corrections: [],   // 用户修正事件 {t, id, module, type, patch, from, to}
-        debugLogs: []      // {t, action, detail}，最多保留 200 条
+        debugLogs: [],     // {t, action, detail}，最多保留 200 条
+        reviewHistory: []  // 晚间复盘 {date, time, text, ts}（今天页写入，本地缓存持久化）
     };
 
     /* 模块名 → 取数函数（先只做转发，返回与现有渲染同源的数据） */
@@ -1453,7 +1482,8 @@ const Core = (() => {
         },
         goal: {
             plan: ['goalKeyword', 'work', 'due', 'period', 'reward', 'punish'],
-            review: ['done', 'fail', 'adjust']
+            review: ['done', 'fail', 'adjust'],
+            create: ['title', 'why', 'deadline', 'done', 'week']
         },
         health: {
             sleep: ['start', 'end', 'feeling', 'note'],
@@ -1722,6 +1752,7 @@ const Core = (() => {
         if (module === 'goal') {
             if (type === 'plan') { if (!str(f.work)) return { ok: false, error: '请说明执行点内容' }; if (f.due && !isValidDay(f.due)) return { ok: false, error: '日期格式无效' }; return { ok: true }; }
             if (type === 'review') { if (!str(f.done) && !str(f.fail) && !str(f.adjust)) return { ok: false, error: '复盘内容为空' }; return { ok: true }; }
+            if (type === 'create') { if (!str(f.title)) return { ok: false, error: '缺少目标标题' }; if (!str(f.done)) return { ok: false, error: '缺少完成标准' }; return { ok: true }; }
         }
         if (module === 'health') {
             if (type === 'sleep') { if (!str(f.start) || !str(f.end)) return { ok: false, error: '睡眠时间不完整' }; return { ok: true }; }
@@ -1784,6 +1815,26 @@ const Core = (() => {
             await saveGoalsCloud();
             RenderBus.emitAll(['execution', 'goals']);
             return { ok: true, id: 'review_' + r.date, _recordType: 'goal', _recordDate: r.date };
+        }
+        if (type === 'create') {
+            const title = String(f.title || '').trim();
+            const done = String(f.done || '').trim();
+            if (!title || !done) return { ok: false, error: '缺少目标标题或完成标准' };
+            const deadline = String(f.deadline || '').trim() || addDays(todayStr(), 540);
+            const track = (isValidDay(deadline) && deadline > addDays(todayStr(), 365)) ? 'long' : 'quick';
+            const krId = 'gkr_' + Date.now() + Math.random().toString(36).slice(2, 6);
+            const goal = {
+                id: 'gl_' + Date.now() + Math.random().toString(36).slice(2, 6),
+                title: title, why: String(f.why || ''), track: track, status: 'active', createdAt: Date.now(),
+                krs: [{ id: krId, text: done, target: 1, current: 0, unit: '次', deadline: isValidDay(deadline) ? deadline : '', feedback: done }],
+                plans: []
+            };
+            const wk = String(f.week || '').trim();
+            if (wk) goal.plans.push({ id: 'gp_' + Date.now() + '_w' + Math.random().toString(36).slice(2, 4), krId: krId, period: 'week', work: wk, due: addDays(todayStr(), 7), reward: '', punish: '', status: 'next', doneAt: null, risk: { buffer: '', precontrol: '', plan: '', rebuild: '' }, resource: { current: '', match: '', supplement: '' }, feedback: { resistance: '', results: '' }, optimize: { root: '', solution: '', effect: '' } });
+            state.goalData.goals.push(goal);
+            await saveGoalsCloud();
+            RenderBus.emitAll(['execution', 'goals', 'rhythm']);
+            return { ok: true, id: goal.id, _recordType: 'goal' };
         }
         return { ok: false, error: '未知动作：goal/' + type };
     }
@@ -1890,6 +1941,14 @@ const Core = (() => {
                     if (idx !== -1) { g.plans.splice(idx, 1); if (state.goalData.gate && state.goalData.gate.picked) state.goalData.gate.picked = state.goalData.gate.picked.filter(x => x !== card.id); await saveGoalsCloud(); RenderBus.emitAll(['execution', 'goals', 'rhythm']); return { ok: true }; }
                 }
                 return { ok: false, error: '执行点已不存在' };
+            }
+            if (card.type === 'create') {
+                const idx = state.goalData.goals.findIndex(g => g.id === card.id);
+                if (idx === -1) return { ok: false, error: '目标已不存在' };
+                state.goalData.goals.splice(idx, 1);
+                await saveGoalsCloud();
+                RenderBus.emitAll(['execution', 'goals', 'rhythm']);
+                return { ok: true };
             }
             return { ok: false, error: '该类型暂不支持撤销' };
         }
@@ -2028,14 +2087,190 @@ const Core = (() => {
          *  @returns {*} 对应模块数据（与渲染同源引用） */
         query(module, opts) { const fn = QUERY_MAP[module]; return fn ? fn() : null; },
 
-        /** 今日聚合视图：按时间+状态+异常组织（本阶段返回空结构，第 3 阶段填充）。
-         *  @returns {{timeline:Array, todos:Array, promises:Array, anomalies:Array}} */
-        queryToday() { return { timeline: [], todos: [], promises: [], anomalies: [] }; },
+        /** 今日聚合视图：从现有模块数据实时聚合，不新增存储。
+         *  @returns {{date:string, timeline:Array, todos:Array, promises:Array, anomalies:Array, healthBrief:Object}} */
+        queryToday() {
+            const today = todayStr();
+            const yesterday = addDays(today, -1);
+            const r = { date: today, timeline: [], todos: [], promises: [], anomalies: [], healthBrief: { sleep: null, energy: null, exercise: { count: 0, totalMinutes: 0, items: [] } } };
+            const sleepHours = (s) => {
+                if (!s || !s.start_time || !s.end_time) return null;
+                const p = (v) => v.split(':').map(Number);
+                const [sh, sm] = p(s.start_time);
+                const [eh, em] = p(s.end_time);
+                let mins = (eh * 60 + em) - (sh * 60 + sm);
+                if (mins < 0) mins += 24 * 60;
+                return mins > 0 ? Math.round((mins / 60) * 10) / 10 : null;
+            };
+            /* ① 时间线：今天的日程（todo/done，time 升序，无时间排最后） */
+            r.timeline = state.scheduleData.tasks
+                .filter(t => t.date === today)
+                .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
+                .map(t => ({ id: t.id, time: t.time || '', title: t.title, status: t.status, priority: t.priority || 'mid', module: 'schedule' }));
+            /* ② 待办：日程 todo + 目标执行点 + 未打卡习惯，按优先级 high>mid>low */
+            const todos = [];
+            const prio = { high: 0, mid: 1, low: 2 };
+            r.timeline.filter(t => t.status === 'todo').forEach(t => todos.push({ id: t.id, title: t.title, priority: t.priority || 'mid', module: 'schedule' }));
+            state.goalData.goals.forEach(g => {
+                if (g.status !== 'active') return;
+                g.plans.forEach(p => {
+                    if (p.due !== today || (p.status !== 'next' && p.status !== 'doing')) return;
+                    todos.push({ id: p.id, title: p.work, priority: 'mid', module: 'goal' });
+                });
+            });
+            state.habits.forEach(h => {
+                if (!(h.dates || []).includes(today)) todos.push({ id: h.id, title: h.name, priority: 'low', module: 'habit' });
+            });
+            r.todos = todos.sort((a, b) => prio[a.priority] - prio[b.priority]);
+            /* ③ 承诺：活跃目标里带外部验证方式（feedback 非空）且未过期的 KR */
+            state.goalData.goals.forEach(g => {
+                if (g.status !== 'active') return;
+                g.krs.forEach(k => {
+                    if (!String(k.feedback || '').trim()) return;
+                    if (k.deadline && k.deadline < today) return;
+                    r.promises.push({ id: k.id, who: '外部验证', what: g.title + ' · ' + k.text, due: k.deadline || '' });
+                });
+            });
+            r.promises.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+            /* ④ 异常：预算 / 睡眠 / 逾期 / 门禁 / 复盘 */
+            const catOf = (e) => {
+                const probe = String(e.desc || '');
+                for (const [k, v] of Object.entries(state.rules.categoryMap)) { if (probe.indexOf(k) >= 0) return v; }
+                if (/饭|餐|夜宵|吃/.test(probe)) return '餐饮';
+                if (/打车|地铁|公交|交通|油/.test(probe)) return '交通';
+                return '购物';
+            };
+            const weekDays = [], baseDays = [];
+            for (let i = 0; i < 7; i++) weekDays.push(addDays(today, -i));
+            for (let i = 7; i < 35; i++) baseDays.push(addDays(today, -i));
+            const byCat = {};
+            state.accountsData.expenses.forEach(e => {
+                const d = isValidDay(e.day) ? e.day : 'unknown';
+                const c = catOf(e);
+                byCat[c] = byCat[c] || { week: 0, base: 0 };
+                if (weekDays.includes(d)) byCat[c].week += e.amount;
+                if (baseDays.includes(d)) byCat[c].base += e.amount;
+            });
+            Object.keys(byCat).forEach(c => {
+                const b = byCat[c];
+                const baseAvg = b.base / 4;
+                if (baseAvg > 0 && b.week > baseAvg * 1.2) {
+                    const pct = Math.round((b.week / baseAvg - 1) * 100);
+                    r.anomalies.push({ type: 'budget', text: '本周' + c + '支出 ¥' + b.week.toFixed(2) + '，比近 4 周周均高 ' + pct + '%' });
+                }
+            });
+            const sleepRecs = state.healthData.sleep.filter(x => x.date === today || x.date === yesterday);
+            if (sleepRecs.length) {
+                const s = sleepRecs.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+                const h = sleepHours(s);
+                if (h !== null && h < 7) r.anomalies.push({ type: 'sleep', text: '昨晚睡眠 ' + h + 'h（不足 7 小时）' });
+            }
+            const overdue = [];
+            state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) overdue.push({ work: p.work, due: p.due }); }); });
+            if (overdue.length) {
+                overdue.sort((a, b) => a.due.localeCompare(b.due));
+                r.anomalies.push({ type: 'overdue', text: overdue.length + ' 件执行点逾期，最早：「' + overdue[0].work + '」（' + overdue[0].due + '）' });
+            }
+            if (!state.goalData.dailyReviews.some(x => x.date === today)) r.anomalies.push({ type: 'review', text: '今日复盘还没写' });
+            /* ⑤ 健康简报：睡眠 / 能量 / 运动 */
+            const sleepToday = state.healthData.sleep.filter(x => x.date === today);
+            if (sleepToday.length) {
+                const s = sleepToday.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+                r.healthBrief.sleep = { hours: sleepHours(s), feeling: s.feeling || '', note: s.note || '', date: today };
+            } else if (sleepRecs.length) {
+                const s = sleepRecs.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+                r.healthBrief.sleep = { hours: sleepHours(s), feeling: s.feeling || '', note: s.note || '', date: s.date };
+            }
+            const energyToday = state.healthData.energy.filter(x => x.date === today);
+            if (energyToday.length) {
+                const e = energyToday.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+                r.healthBrief.energy = { am: e.am_score, pm: e.pm_score, avg: Math.round(((e.am_score + e.pm_score) / 2) * 10) / 10, note: e.note || '' };
+            }
+            state.healthData.exercise.filter(x => x.date === today).forEach(x => {
+                r.healthBrief.exercise.count++;
+                r.healthBrief.exercise.totalMinutes += parseInt(x.duration, 10) || 0;
+                r.healthBrief.exercise.items.push({ type: x.type, duration: parseInt(x.duration, 10) || 0 });
+            });
+            return r;
+        },
 
-        /** 周/月回顾：模块摘要（本阶段返回空结构，第 3 阶段填充）。
+        /** 周/月回顾：六个模块各 2-3 个摘要指标（从现有数据实时计算）。
          *  @param {('week'|'month')} period 回顾周期
-         *  @returns {{finance:Object, goals:Object, health:Object, habits:Object, wardrobe:Object, news:Object}} */
-        queryReview(period) { return { finance: {}, goals: {}, health: {}, habits: {}, wardrobe: {}, news: {} }; },
+         *  @returns {{period:string, range:{start:string,end:string}, finance:Object, goals:Object, health:Object, habits:Object, wardrobe:Object, news:Object}} */
+        queryReview(period) {
+            const today = todayStr();
+            const isMonth = period === 'month';
+            const days = [];
+            if (isMonth) {
+                const start = today.slice(0, 7) + '-01';
+                const n = new Date(start + 'T00:00:00');
+                const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
+                for (let i = 0; i < dim; i++) days.push(addDays(start, i));
+            } else {
+                for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+            }
+            const elapsedDays = days.filter(d => d <= today).length;
+            const inPeriod = (d) => isValidDay(d) && days.includes(d);
+            const r = {
+                period: isMonth ? 'month' : 'week',
+                range: { start: days[0], end: days[days.length - 1] },
+                finance: { expense: 0, income: 0, net: 0 },
+                goals: { donePlans: 0, overdue: 0, reviews: 0 },
+                health: { avgSleep: null, shortSleepDays: 0, exerciseMinutes: 0 },
+                habits: { totalChecks: 0, avgRate: null, perfectHabits: 0 },
+                wardrobe: { outfitDays: 0, idleItems: 0, topWear: null },
+                news: { items: 0, summaries: 0, briefings: 0 }
+            };
+            /* finance：支出 / 收入 / 结余 */
+            state.accountsData.expenses.forEach(e => { if (inPeriod(e.day)) r.finance.expense += e.amount; });
+            state.accountsData.incomeRecords.forEach(e => { if (inPeriod(e.day)) r.finance.income += e.amount; });
+            r.finance.expense = Math.round(r.finance.expense * 100) / 100;
+            r.finance.income = Math.round(r.finance.income * 100) / 100;
+            r.finance.net = Math.round((r.finance.income - r.finance.expense) * 100) / 100;
+            /* goals：周期内完成 / 当前逾期 / 复盘次数 */
+            state.goalData.goals.forEach(g => {
+                if (g.status !== 'active') return;
+                g.plans.forEach(p => {
+                    if (p.status === 'done' && p.doneAt && inPeriod(p.doneAt)) r.goals.donePlans++;
+                    if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) r.goals.overdue++;
+                });
+            });
+            r.goals.reviews = state.goalData.dailyReviews.filter(x => inPeriod(x.date)).length;
+            /* health：平均睡眠 / 睡眠不足天数 / 运动分钟 */
+            const sleepHoursOf = (s) => {
+                if (!s || !s.start_time || !s.end_time) return null;
+                const p = (v) => v.split(':').map(Number);
+                const [sh, sm] = p(s.start_time);
+                const [eh, em] = p(s.end_time);
+                let mins = (eh * 60 + em) - (sh * 60 + sm);
+                if (mins < 0) mins += 24 * 60;
+                return mins > 0 ? mins / 60 : null;
+            };
+            const hs = state.healthData.sleep.filter(x => inPeriod(x.date)).map(sleepHoursOf).filter(h => h !== null);
+            if (hs.length) r.health.avgSleep = Math.round((hs.reduce((a, b) => a + b, 0) / hs.length) * 10) / 10;
+            r.health.shortSleepDays = hs.filter(h => h < 7).length;
+            state.healthData.exercise.forEach(x => { if (inPeriod(x.date)) r.health.exerciseMinutes += parseInt(x.duration, 10) || 0; });
+            /* habits：打卡总次数 / 平均打卡率 / 全勤习惯 */
+            if (state.habits.length) {
+                state.habits.forEach(h => {
+                    let n = 0;
+                    (h.dates || []).forEach(d => { if (inPeriod(d)) n++; });
+                    r.habits.totalChecks += n;
+                    if (n >= elapsedDays) r.habits.perfectHabits++;
+                });
+                r.habits.avgRate = Math.round((r.habits.totalChecks / (state.habits.length * elapsedDays)) * 100);
+            }
+            /* wardrobe：穿搭确认天数 / 闲置衣物 / 最常穿 */
+            r.wardrobe.outfitDays = state.wardrobeLog.filter(l => l && l.confirmed && inPeriod(l.date)).length;
+            r.wardrobe.idleItems = state.wardrobeData.items.filter(i => i.status === '闲置').length;
+            const top = state.wardrobeData.items.slice().sort((a, b) => (b.wears || 0) - (a.wears || 0))[0];
+            if (top && (top.wears || 0) > 0) r.wardrobe.topWear = top.name + ' ×' + top.wears;
+            /* news：收录 / 摘要 / 简报 */
+            state.newsData.items.forEach(x => { if (inPeriod(x.date)) r.news.items++; });
+            state.newsData.summaries.forEach(x => { if (inPeriod(x.date)) r.news.summaries++; });
+            state.newsData.briefings.forEach(x => { if (inPeriod(x.date)) r.news.briefings++; });
+            return r;
+        },
 
         /** 渲染模块：内部调现有 renderXxx，不重写渲染逻辑。
          *  @param {string} module 模块名（同 QUERY_MAP 键）
@@ -2330,32 +2565,51 @@ Core.state.cloudConfigRefs = { ai: { _cloudId: null }, habits: { _cloudId: null 
 /* 模块注册表：导航按钮与渲染调度都从这里生成 */
 const MODULES = [
     { id: 'secretary', icon: '💬', label: '秘书', renders: ['secretary'] },
-    { id: 'execution', icon: '🏠', label: '主页', renders: ['execution'] },
-    { id: 'schedule', icon: '📅', label: '日程', renders: ['schedule'] },
-    { id: 'goals', icon: '🎯', label: '目标', renders: ['goals'] },
-    { id: 'accounts', icon: '💰', label: '账户', renders: ['accounts'] },
-    { id: 'rhythm', icon: '⏱️', label: '节律', renders: ['rhythm'] },
-    { id: 'health', icon: '🌿', label: '健康', renders: ['health'] },
-    { id: 'habits', icon: '🎯', label: '习惯', renders: ['habits'] },
-    { id: 'wardrobe', icon: '👔', label: '衣橱', renders: ['wardrobe'] },
-    { id: 'news', icon: '📰', label: '世事', renders: ['news', 'rss'] }
+    { id: 'today', icon: '☀️', label: '今天', renders: ['today'] },
+    { id: 'review', icon: '📊', label: '回顾', renders: ['review'] },
+    { id: 'execution', icon: '🏠', label: '主页', legacy: true, renders: ['execution'] },
+    { id: 'schedule', icon: '📅', label: '日程', legacy: true, renders: ['schedule'] },
+    { id: 'goals', icon: '🎯', label: '目标', legacy: true, renders: ['goals'] },
+    { id: 'accounts', icon: '💰', label: '账户', legacy: true, renders: ['accounts'] },
+    { id: 'rhythm', icon: '⏱️', label: '节律', legacy: true, renders: ['rhythm'] },
+    { id: 'health', icon: '🌿', label: '健康', legacy: true, renders: ['health'] },
+    { id: 'habits', icon: '🎯', label: '习惯', legacy: true, renders: ['habits'] },
+    { id: 'wardrobe', icon: '👔', label: '衣橱', legacy: true, renders: ['wardrobe'] },
+    { id: 'news', icon: '📰', label: '世事', legacy: true, renders: ['news', 'rss'] }
 ];
 function buildNav() {
     const seg = qs('.seg');
     if (!seg) return;
     seg.innerHTML = '';
-    MODULES.forEach((m, i) => {
+    const primary = MODULES.filter(m => !m.legacy);
+    const legacy = MODULES.filter(m => m.legacy);
+    primary.forEach((m, i) => {
         const btn = document.createElement('button');
         btn.className = 'seg-item nav-btn' + (i === 0 ? ' active' : '');
         btn.dataset.tab = m.id;
         btn.textContent = m.icon + ' ' + m.label;
         seg.appendChild(btn);
     });
+    const sbtn = document.createElement('button');
+    sbtn.className = 'seg-item';
+    sbtn.id = 'nav-settings-btn';
+    sbtn.textContent = '⚙️ 设置';
+    seg.appendChild(sbtn);
+    if (uiFullMode) legacy.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'seg-item nav-btn';
+        btn.dataset.tab = m.id;
+        btn.textContent = m.icon + ' ' + m.label;
+        seg.appendChild(btn);
+    });
 }
 function switchTab(id) {
+    if (id !== 'review') reviewCloseDetail();
     $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
     $$('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + id));
     if (id === 'wardrobe') { ensureWardrobeWeather(); }
+    if (id === 'today') { renderToday(); }
+    if (id === 'review') { renderReview(); }
 }
 
 /* ================= 工具 ================= */
@@ -2567,7 +2821,7 @@ function loadHabitsLocal() { try { const r = localStorage.getItem(HABITS_KEY); i
 function saveCache() {
     if (!currentUser) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: Core.state.accountsData, health: Core.state.healthData, news: Core.state.newsData, rhythm: Core.state.rhythmDaily, exec: Core.state.goalData, wardrobe: Core.state.wardrobeData, wardrobeLog: Core.state.wardrobeLog, schedule: Core.state.scheduleData }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ uid: currentUser.id, accounts: Core.state.accountsData, health: Core.state.healthData, news: Core.state.newsData, rhythm: Core.state.rhythmDaily, exec: Core.state.goalData, wardrobe: Core.state.wardrobeData, wardrobeLog: Core.state.wardrobeLog, schedule: Core.state.scheduleData, review: Core.state.reviewHistory }));
     } catch (e) { console.warn('localStorage 已满'); }
 }
 function loadCache() {
@@ -2585,6 +2839,7 @@ function loadCache() {
         if (d.wardrobe) { Core.state.wardrobeData = { items: [], outfits: [], wishlist: [], config: Core.state.wardrobeData.config, ...d.wardrobe }; Core.state.wardrobeData.items = Core.state.wardrobeData.items || []; Core.state.wardrobeData.outfits = Core.state.wardrobeData.outfits || []; Core.state.wardrobeData.wishlist = Core.state.wardrobeData.wishlist || []; if (!Core.state.wardrobeData.config) Core.state.wardrobeData.config = { city: '安徽省合肥市长丰县陶楼镇', lat: null, lon: null }; }
         Core.state.wardrobeLog = d.wardrobeLog || Core.state.wardrobeLog;
         if (d.schedule) { Core.state.scheduleData = { tasks: [], ...d.schedule }; Core.state.scheduleData.tasks = Core.state.scheduleData.tasks || []; }
+        if (Array.isArray(d.review)) Core.state.reviewHistory = d.review;
         return true;
     } catch (e) { return false; }
 }
@@ -2686,8 +2941,7 @@ async function loadAllFromCloud(silent = false) {
         saveCache();
         showMainUI();
         renderAll();
-        maybeOpenDailyGate();
-        if (gateDoneToday()) maybeAutoGuide();
+        maybeAutoGuide();
     } catch (err) {
         console.error('❌ 加载数据异常:', err);
         if (!silent) alert('加载云端失败，已展示本地缓存数据。\n错误信息：' + err.message);
@@ -2741,7 +2995,6 @@ function setupRealtime() {
 /* ================= 目标系统 V3（主页 + 目标管理 + 门禁 + 四部门 + 每日复盘） ================= */
 const GOAL_PERIODS = { day: '日', week: '周', month: '月', quarter: '季度', year: '年' };
 const GOAL_TRACK = { long: { tag: '🛤️ 长期回报轨道', cls: 'track-long', desc: '杠杆作用 + 不可逆性' }, quick: { tag: '⚡ 快速回报轨道', cls: 'track-quick', desc: '快速兑现价值、改善当下' } };
-const GW_STEP_NAMES = ['想法记录', 'SMART 分析', '筛选决策', '轨道分类', 'KR 拆解', '时间规划'];
 
 function defaultGoalData() {
     const today = todayStr();
@@ -2776,8 +3029,6 @@ function defaultGoalData() {
 }
 Core.state.goalData = defaultGoalData();
 let gdEditingGoalId = null, gdEditingKrId = null, gdEditingPlanId = null;
-let gw = null;
-let gwGatePicked = new Set();
 
 async function saveGoalsCloud() {
     if (!currentUser) return;
@@ -2795,9 +3046,8 @@ function goalPct(g) {
     }
     return Math.round(g.krs.reduce((s, k) => s + krPct(k), 0) / g.krs.length);
 }
-function gateDoneToday() { return !!(Core.state.goalData.gate && Core.state.goalData.gate.date === todayStr()); }
 
-/* ---------- 今日执行点与门禁 ---------- */
+/* ---------- 今日执行点 ---------- */
 function goalTodayPlans() {
     const today = todayStr();
     const out = [];
@@ -2809,79 +3059,6 @@ function goalTodayPlans() {
         });
     });
     return out;
-}
-function goalGateList() {
-    const seen = new Set();
-    const list = [];
-    const push = (arr) => arr.forEach(x => { if (!seen.has(x.id)) { seen.add(x.id); list.push(x); } });
-    const today = todayStr();
-    push(goalTodayPlans());
-    if (list.length < 3) {
-        const over = [];
-        Core.state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due < today) over.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
-        over.sort((a, b) => a.due.localeCompare(b.due));
-        push(over);
-    }
-    if (list.length < 3) {
-        const cap = addDays(today, 7);
-        const up = [];
-        Core.state.goalData.goals.forEach(g => { if (g.status !== 'active') return; g.plans.forEach(p => { if ((p.status === 'next' || p.status === 'doing') && p.due && p.due > today && p.due <= cap) up.push(Object.assign({ goalId: g.id, goalTitle: g.title }, p)); }); });
-        up.sort((a, b) => a.due.localeCompare(b.due));
-        push(up);
-    }
-    return list;
-}
-function maybeOpenDailyGate() {
-    if (!currentUser) return;
-    if (gateDoneToday()) return;
-    openGateModal();
-}
-function openGateModal() {
-    gwGatePicked = new Set();
-    renderGateModal();
-    const m = $('gate-modal');
-    if (m) m.classList.add('active');
-}
-function renderGateModal() {
-    const el = $('gate-list');
-    if (!el) return;
-    const list = goalGateList();
-    if (!list.length) { el.innerHTML = '<div class="empty-hint">今天还没有执行点——可以先去「目标」页规划，或直接激活系统。</div>'; }
-    else {
-        el.innerHTML = list.map(p => {
-            const overdue = p.due && p.due < todayStr();
-            return '<div class="gate-item ' + (gwGatePicked.has(p.id) ? 'selected' : '') + '" data-action="gate-pick" data-id="' + p.id + '"><div class="g-check">✓</div><div style="flex:1;min-width:0;"><div>' + esc(p.work) + '</div><div class="meta">' + esc(p.goalTitle) + ' · ' + (p.due ? shortDay(p.due) : '无期限') + (overdue ? '（已逾期）' : '') + '</div></div></div>';
-        }).join('');
-    }
-    const need = Math.min(3, list.length);
-    const cnt = $('gate-count');
-    if (cnt) cnt.textContent = list.length ? ('已选 ' + gwGatePicked.size + ' / ' + need) : '今天没有任务，可直接激活';
-    const btn = $('gate-confirm');
-    if (btn) {
-        if (!list.length) { btn.disabled = false; btn.textContent = '✅ 直接激活系统'; }
-        else { btn.disabled = gwGatePicked.size !== need; btn.textContent = need < 3 ? ('✅ 确认（全选 ' + need + ' 个）') : '✅ 确认，激活今日系统'; }
-    }
-}
-async function saveGate() {
-    const list = goalGateList();
-    const need = Math.min(3, list.length);
-    if (gwGatePicked.size < need) return alert(list.length ? ('请勾选 ' + need + ' 个任务') : '请点击「直接激活系统」');
-    Core.state.goalData.gate = { date: todayStr(), picked: Array.from(gwGatePicked), skipped: false };
-    await saveGoalsCloud();
-    const m = $('gate-modal');
-    if (m) m.classList.remove('active');
-    RenderBus.emitAll(['execution', 'goals', 'rhythm']);
-    alert(Core.state.goalData.gate.picked.length ? '✅ 今日系统已激活。先去啃最硬的那块。' : '✅ 今日系统已激活。今天没有任务，好好休息。');
-    maybeAutoGuide();
-}
-async function skipGate() {
-    Core.state.goalData.gate = { date: todayStr(), picked: [], skipped: true };
-    await saveGoalsCloud();
-    const m = $('gate-modal');
-    if (m) m.classList.remove('active');
-    RenderBus.emitAll(['execution', 'goals', 'rhythm']);
-    alert('😴 今日门禁已跳过。允许休息，明天再来。');
-    maybeAutoGuide();
 }
 
 /* ---------- 执行点状态与四部门 ---------- */
@@ -3119,369 +3296,6 @@ async function deleteGoalPlan(goalId, planId) {
     RenderBus.emitAll(['execution', 'goals', 'rhythm']);
 }
 
-/* ---------- 目标向导（想法 → SMART → 筛选 → 轨道 → KR → 时间规划） ---------- */
-function openGoalWizard(ideaId) {
-    const idea = ideaId ? Core.state.goalData.ideas.find(x => x.id === ideaId) : null;
-    gw = {
-        step: 1,
-        ideaId: ideaId || null,
-        text: idea ? idea.text : '',
-        why: idea ? (idea.why || '') : '',
-        deadlineHint: idea ? (idea.deadlineHint || '') : '',
-        smartSet: {},
-        track: null,
-        krs: [],
-        plans: []
-    };
-    $('goal-wizard-modal').classList.add('active');
-    gwRender();
-}
-function gwClose() {
-    const m = $('goal-wizard-modal');
-    if (m) m.classList.remove('active');
-    gw = null;
-}
-function gwRender() {
-    for (let i = 1; i <= 6; i++) { const s = $('gw-step-' + i); if (s) s.classList.toggle('active', gw.step === i); }
-    const ind = $('gw-step-indicator');
-    if (ind) ind.textContent = '步骤 ' + gw.step + ' / 6 · ' + GW_STEP_NAMES[gw.step - 1];
-    const prev = $('gw-prev');
-    if (prev) prev.style.display = gw.step <= 1 ? 'none' : '';
-    const next = $('gw-next');
-    if (next) next.style.display = gw.step >= 3 ? 'none' : '';
-    const finish = $('gw-finish');
-    if (finish) finish.style.display = gw.step === 6 ? '' : 'none';
-    $('gw-text').value = gw.text;
-    $('gw-why').value = gw.why;
-    $('gw-deadline-hint').value = gw.deadlineHint;
-    $('gw-kr-ai-btn').style.display = Core.state.aiConfig.apiKey ? '' : 'none';
-    $('gw-plans-ai-btn').style.display = Core.state.aiConfig.apiKey ? '' : 'none';
-    const autoBtn = $('gw-auto-btn');
-    if (autoBtn && !autoBtn.disabled) autoBtn.textContent = Core.state.aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）';
-    $$('.track-option').forEach(o => o.classList.toggle('selected', gw.track === o.dataset.track));
-    gwRenderSmart();
-    gwRenderKrs();
-    gwRenderPlansPreview();
-}
-function gwSmartChecks() {
-    const text = (gw.text || '').trim();
-    const auto = {
-        s: text.length >= 8,
-        m: /\d|分|次|个|篇|%|通过|达到|考上|考取|攒|读完/.test(text),
-        t: !!gw.deadlineHint,
-        r: /考研|北航|雅思|英语|学习|健康|工作|钱|阅读|运动|读博|选调|学历|成长/.test(text),
-        a: false
-    };
-    gw.smartSet = gw.smartSet || {};
-    gw.smart = {};
-    ['s', 'm', 'a', 'r', 't'].forEach(k => { gw.smart[k] = (k in gw.smartSet) ? gw.smartSet[k] : auto[k]; });
-    return gw.smart;
-}
-function gwSmartScore() {
-    const s = gwSmartChecks();
-    return ['s', 'm', 'a', 'r', 't'].filter(k => s[k]).length;
-}
-function gwRenderSmart() {
-    const el = $('gw-smart-list');
-    if (!el) return;
-    const s = gwSmartChecks();
-    const items = [
-        ['s', 'S · 具体 Specific', '目标是清晰具体的，不是「变优秀」这种空话', '足够具体'],
-        ['m', 'M · 可衡量 Measurable', '能用数字/结果验证（分数、次数、成果物）', '可衡量'],
-        ['a', 'A · 可实现 Achievable', '以当前资源与时间，现实可行（需要你确认）', '现实可行'],
-        ['r', 'R · 相关 Relevant', '与你的大方向（深造/成长/生活）一致', '方向相关'],
-        ['t', 'T · 有时限 Time-bound', '有明确的实现时限', '有时限']
-    ];
-    el.innerHTML = items.map(it => '<div class="smart-check ' + (s[it[0]] ? 'pass' : '') + '" data-action="gw-smart-toggle" data-k="' + it[0] + '"><div><div style="font-weight:600;">' + esc(it[1]) + '</div><div style="font-size:11px;color:var(--text2);">' + esc(it[2]) + '</div></div><span class="mark">' + (s[it[0]] ? '✓ ' + esc(it[3]) : '✗ 点击标记') + '</span></div>').join('');
-    const sc = $('gw-smart-score');
-    if (sc) {
-        const score = gwSmartScore();
-        sc.textContent = 'SMART 得分：' + score + ' / 5';
-        sc.style.color = score >= 4 ? '#2d7d46' : score >= 2 ? '#b8860b' : '#c0392b';
-    }
-    const adv = $('gw-smart-advice');
-    if (adv) {
-        const score = gwSmartScore();
-        adv.innerHTML = score >= 4 ? '✅ 这个想法比较成熟，建议采纳并进入拆解。' : score >= 2 ? '🟡 想法有潜力但还不够成熟：先补上缺失的维度（可衡量、时限），或暂存到想法库以后再打磨。' : '🔴 目前更像一个愿望而非计划：建议暂存想法库，等条件清晰后再启动。';
-    }
-}
-async function gwNext() {
-    if (gw.step === 1) {
-        const text = $('gw-text').value.trim();
-        if (!text) return alert('请先写下你的想法');
-        gw.text = text;
-        gw.why = $('gw-why').value.trim();
-        gw.deadlineHint = $('gw-deadline-hint').value;
-        if (!gw.ideaId) {
-            const idea = { id: 'gi_' + Date.now() + Math.random().toString(36).slice(2, 6), text: gw.text, why: gw.why, deadlineHint: gw.deadlineHint, status: 'pending', createdAt: Date.now(), goalId: null };
-            Core.state.goalData.ideas.push(idea);
-            gw.ideaId = idea.id;
-            await saveGoalsCloud();
-        }
-        gw.step = 2; gwRender(); return;
-    }
-    if (gw.step === 2) { gwSmartChecks(); gw.step = 3; gwRender(); return; }
-    if (gw.step === 4) {
-        if (!gw.track) return alert('请选择回报轨道');
-        gw.step = 5; gwRender(); return;
-    }
-    if (gw.step === 5) {
-        gwCollectKrs();
-        gw.krs = gw.krs.filter(k => (k.text || '').trim());
-        if (!gw.krs.length) return alert('至少拆解 1 条关键结果（KR）');
-        gw.step = 6; gwRender(); return;
-    }
-}
-async function gwPark() {
-    if (gw && gw.ideaId) {
-        const i = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
-        if (i) i.status = 'parked';
-        await saveGoalsCloud();
-        RenderBus.emit('goals');
-    }
-    gwClose();
-    alert('已暂存到想法库，随时可以回来继续分析。');
-}
-async function gwDrop() {
-    if (gw && gw.ideaId) {
-        const i = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
-        if (i) i.status = 'dropped';
-        await saveGoalsCloud();
-        RenderBus.emit('goals');
-    }
-    gwClose();
-}
-function gwRenderKrs() {
-    const el = $('gw-kr-list');
-    if (!el) return;
-    if (!gw.krs.length) { el.innerHTML = '<div class="empty-hint">还没有 KR。手动添加，或用 AI 自动拆解（需配置 API Key）。</div>'; return; }
-    el.innerHTML = gw.krs.map((k, i) => '<div class="kr-edit-row">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b style="font-size:13px;">KR ' + (i + 1) + '</b><button class="btn btn-danger btn-sm" data-action="gw-kr-del" data-idx="' + i + '">✕</button></div>' +
-        '<input type="text" class="gw-kr-input" data-idx="' + i + '" data-field="text" value="' + esc(k.text) + '" placeholder="关键结果（定量可验证）" style="margin-bottom:6px;">' +
-        '<div class="grid-3" style="gap:6px;"><input type="number" class="gw-kr-input" data-idx="' + i + '" data-field="current" value="' + (k.current || 0) + '" step="any" placeholder="当前"><input type="number" class="gw-kr-input" data-idx="' + i + '" data-field="target" value="' + (k.target || '') + '" step="any" placeholder="目标"><input type="text" class="gw-kr-input" data-idx="' + i + '" data-field="unit" value="' + esc(k.unit || '') + '" placeholder="单位"></div>' +
-        '<div class="grid-2" style="gap:6px;"><input type="date" class="gw-kr-input" data-idx="' + i + '" data-field="deadline" value="' + esc(k.deadline || '') + '"><input type="text" class="gw-kr-input" data-idx="' + i + '" data-field="feedback" value="' + esc(k.feedback || '') + '" placeholder="外部反馈来源"></div>' +
-        '</div>').join('');
-}
-function gwCollectKrs() {
-    const inputs = $$('.gw-kr-input');
-    const map = {};
-    inputs.forEach(inp => {
-        const i = parseInt(inp.dataset.idx, 10);
-        map[i] = map[i] || {};
-        map[i][inp.dataset.field] = inp.value;
-    });
-    gw.krs = gw.krs.map((k, i) => {
-        const v = map[i] || {};
-        return {
-            id: k.id,
-            text: v.text !== undefined ? String(v.text).trim() : k.text,
-            target: v.target !== undefined && v.target !== '' ? parseFloat(v.target) : k.target,
-            current: v.current !== undefined && v.current !== '' ? parseFloat(v.current) : k.current,
-            unit: v.unit !== undefined ? v.unit : k.unit,
-            deadline: v.deadline !== undefined ? v.deadline : k.deadline,
-            feedback: v.feedback !== undefined ? v.feedback : k.feedback
-        };
-    });
-}
-async function gwAiKrsGenerate() {
-    if (!Core.state.aiConfig.apiKey) return false;
-    const statusEl = $('gw-kr-ai-status');
-    if (statusEl) statusEl.innerHTML = '⏳ AI 拆解 KR 中…';
-    try {
-        const prompt = '你是一名目标规划教练。用户背景：西部计划基层志愿者，两年后考研（目标北航 VR 学硕），同时备考雅思。\n请把下面的总目标拆解为 2-4 个可量化、可验证的关键结果（KR）。\n总目标：' + gw.text + '\n为什么想做：' + (gw.why || '未填写') + '\n回报轨道：' + (gw.track === 'long' ? '长期回报（杠杆+不可逆）' : '快速回报（快速改善生活）') + '\n要求：1) 每个 KR 必须量化（目标值+单位+建议截止日期 YYYY-MM-DD，从现在约半年到两年内）；2) 必须给出可引入外部反馈的验证方式（如模考分数、导师回复、公开成果、官方公示）。\n输出严格 JSON，不要 Markdown 代码块：{"krs":[{"text":"...","target":7,"unit":"分","deadline":"2027-06-30","feedback":"..."}]}';
-        const content = await callDeepSeekRaw([{ role: 'system', content: '你是严谨的目标规划教练，只输出严格 JSON。' }, { role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 1500, jsonMode: true });
-        const parsed = parseJsonSafe(content);
-        const arr = parsed.krs || [];
-        if (!arr.length) throw new Error('AI 未返回有效 KR');
-        gw.krs = arr.map(k => ({ id: 'gkw_' + Date.now() + Math.random().toString(36).slice(2, 6), text: String(k.text || '').trim(), target: parseFloat(k.target) || 1, current: 0, unit: String(k.unit || '次'), deadline: String(k.deadline || ''), feedback: String(k.feedback || '') }));
-        if (statusEl) statusEl.innerHTML = '✅ AI 已生成 ' + gw.krs.length + ' 条 KR';
-        return true;
-    } catch (err) {
-        console.error(err);
-        if (statusEl) statusEl.innerHTML = '❌ AI 拆解失败，将改用模板：' + esc(err.message);
-        return false;
-    }
-}
-async function gwAiKrs() {
-    gwCollectKrs();
-    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
-    await gwAiKrsGenerate();
-    gwRender();
-}
-function gwGuessTrack() {
-    const text = (gw.text + ' ' + (gw.why || '')).toLowerCase();
-    const horizon = gw.deadlineHint ? (new Date(gw.deadlineHint + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000 : 0;
-    if (horizon > 540) return 'long';
-    if (/考研|学历|读博|博士|转型|习惯|长期|事业|技能|专业|沉淀|积累|储蓄|攒/.test(text)) return 'long';
-    return 'quick';
-}
-function gwTemplateKrs() {
-    gw.krs = [{
-        id: 'gkw_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        text: '达成目标：' + gw.text,
-        target: 1,
-        current: 0,
-        unit: '次',
-        deadline: gw.deadlineHint || addDays(todayStr(), 365),
-        feedback: '请补充外部验证方式（记录 / 照片 / 成绩单等）'
-    }];
-}
-function gwTemplatePlans() {
-    gwCollectKrs();
-    const plans = [];
-    const today = todayStr();
-    gw.krs.forEach((kr, i) => {
-        if (!(kr.text || '').trim()) return;
-        const due = kr.deadline || addDays(today, 90);
-        plans.push({ krIndex: i, period: 'year', work: '年度成果：' + kr.text, due: due, reward: '给自己一次小庆祝', punish: '复盘并重新规划' });
-        let q = new Date(today + 'T00:00:00');
-        let qn = 0;
-        while (qn < 4) { q = new Date(q); q.setMonth(q.getMonth() + 3); if (fmtDay(q) > due) break; plans.push({ krIndex: i, period: 'quarter', work: '季度检查点：' + kr.text + '（外部反馈：' + (kr.feedback || '自查') + '）', due: fmtDay(q), reward: '奖励一次喜欢的活动', punish: '下季度加码 20%' }); qn++; }
-        let md = new Date(today + 'T00:00:00');
-        let mn = 0;
-        while (mn < 6) { md = new Date(md); md.setMonth(md.getMonth() + 1); if (fmtDay(md) > due) break; plans.push({ krIndex: i, period: 'month', work: '月度推进：' + kr.text, due: fmtDay(md), reward: '完成即享一次小确幸', punish: '周末补进度' }); mn++; }
-        plans.push({ krIndex: i, period: 'week', work: '本周推进：' + kr.text + '（至少 3 次）', due: addDays(today, 7), reward: '周末放松半天', punish: '下周加一次' });
-        plans.push({ krIndex: i, period: 'day', work: '今日最小一步：' + kr.text, due: today, reward: '完成即打卡', punish: '明早优先补' });
-    });
-    gw.plans = plans;
-    gwRender();
-}
-async function gwAiPlansGenerate() {
-    if (!Core.state.aiConfig.apiKey) return false;
-    const statusEl = $('gw-plans-preview');
-    if (statusEl) statusEl.innerHTML = '⏳ AI 生成规划中…';
-    try {
-        const krJson = JSON.stringify(gw.krs.map((k, i) => ({ index: i, text: k.text, deadline: k.deadline, feedback: k.feedback })));
-        const prompt = '你是一名执行规划教练。用户背景：西部计划基层志愿者，两年后考研（北航 VR 学硕），同时备考雅思。\n把以下关键结果按 年→季→月→周→日 科学拆解为执行点（关键结果点）。\n关键结果：' + krJson + '\n对每个执行点给出：period（year/quarter/month/week/day）、work（具体工作内容）、due（计划完成时间 YYYY-MM-DD，在今天 ' + todayStr() + ' 之后且不超过 KR 截止日）、reward（完成后的即时小奖励）、punish（未完成的代价）。\n数量限制：每个 KR 每年 1 条、季度 ≤4 条、月度 ≤6 条、周 1 条、日 1 条。\n输出严格 JSON：{"plans":[{"krIndex":0,"period":"month","work":"...","due":"2026-12-31","reward":"...","punish":"..."}]}';
-        const content = await callDeepSeekRaw([{ role: 'system', content: '你是严谨的执行规划教练，只输出严格 JSON。' }, { role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 2500, jsonMode: true });
-        const parsed = parseJsonSafe(content);
-        const arr = (parsed.plans || []).filter(p => gw.krs[p.krIndex]);
-        if (!arr.length) throw new Error('AI 未返回有效规划');
-        gw.plans = arr.map(p => ({ krIndex: p.krIndex, period: ['year', 'quarter', 'month', 'week', 'day'].includes(p.period) ? p.period : 'month', work: String(p.work || '').trim(), due: String(p.due || ''), reward: String(p.reward || ''), punish: String(p.punish || '') }));
-        if (statusEl) statusEl.innerHTML = '✅ AI 已生成 ' + gw.plans.length + ' 个执行点';
-        return true;
-    } catch (err) {
-        console.error(err);
-        if (statusEl) statusEl.innerHTML = '❌ AI 规划失败，将改用模板：' + esc(err.message);
-        return false;
-    }
-}
-async function gwAiPlans() {
-    gwCollectKrs();
-    if (!Core.state.aiConfig.apiKey) return alert('请先在右上角 ⚙️ 设置中配置 API Key');
-    await gwAiPlansGenerate();
-    gwRender();
-}
-function gwRenderPlansPreview() {
-    const el = $('gw-plans-preview');
-    if (!el) return;
-    if (!gw.plans.length) { el.innerHTML = '<div class="empty-hint">还没有执行点——点「模板生成」或「AI 生成」</div>'; return; }
-    el.innerHTML = ['day', 'week', 'month', 'quarter', 'year'].map(pd => {
-        const list = gw.plans.filter(p => p.period === pd);
-        if (!list.length) return '';
-        return '<div class="habit-section-title">' + GOAL_PERIODS[pd] + '（' + list.length + '）</div>' + list.map(p => '<div class="gp-row"><div class="gp-work">' + esc(p.work) + '</div><div class="gp-meta"><span class="wd-mini-tag">' + (p.due ? shortDay(p.due) : '未定') + '</span>' + (p.reward ? '<span class="wd-mini-tag">🎁 ' + esc(p.reward) + '</span>' : '') + (p.punish ? '<span class="wd-mini-tag">⚠️ ' + esc(p.punish) + '</span>' : '') + '</div></div>').join('');
-    }).join('');
-}
-async function gwFinish() {
-    gwCollectKrs();
-    const title = (gw.text || '').trim();
-    if (!title) return alert('请填写目标');
-    if (!gw.track) return alert('请选择回报轨道');
-    gw.krs = gw.krs.filter(k => (k.text || '').trim());
-    if (!gw.krs.length) return alert('至少拆解 1 条关键结果');
-    const goal = {
-        id: 'gl_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        title: title,
-        why: gw.why || '',
-        track: gw.track,
-        status: 'active',
-        createdAt: Date.now(),
-        krs: gw.krs,
-        plans: gw.plans.map((p, idx) => ({
-            id: 'gp_' + Date.now() + '_' + idx + Math.random().toString(36).slice(2, 4),
-            krId: gw.krs[p.krIndex] ? gw.krs[p.krIndex].id : gw.krs[0].id,
-            period: p.period,
-            work: p.work,
-            due: p.due,
-            reward: p.reward || '',
-            punish: p.punish || '',
-            status: 'next',
-            doneAt: null,
-            risk: { buffer: '', precontrol: '', plan: '', rebuild: '' },
-            resource: { current: '', match: '', supplement: '' },
-            feedback: { resistance: '', results: '' },
-            optimize: { root: '', solution: '', effect: '' }
-        }))
-    };
-    Core.state.goalData.goals.push(goal);
-    if (gw.ideaId) {
-        const idea = Core.state.goalData.ideas.find(x => x.id === gw.ideaId);
-        if (idea) { idea.status = 'adopted'; idea.goalId = goal.id; }
-    }
-    await saveGoalsCloud();
-    gwClose();
-    RenderBus.emitAll(['execution', 'goals', 'rhythm']);
-    alert('✅ 目标「' + title + '」已建立\n共 ' + goal.krs.length + ' 条 KR、' + goal.plans.length + ' 个执行点。\n按流程执行，你一定能抵达它。');
-}
-
-/* ---------- 一键自动生成（懒人模式） ---------- */
-async function gwAutoRun() {
-    if (!gw) return;
-    const text = $('gw-text').value.trim();
-    if (!text) return alert('请先写下你的想法');
-    gw.text = text;
-    gw.why = $('gw-why').value.trim();
-    gw.deadlineHint = $('gw-deadline-hint').value;
-    if (!gw.ideaId) {
-        const idea = { id: 'gi_' + Date.now() + Math.random().toString(36).slice(2, 6), text: gw.text, why: gw.why, deadlineHint: gw.deadlineHint, status: 'pending', createdAt: Date.now(), goalId: null };
-        Core.state.goalData.ideas.push(idea);
-        gw.ideaId = idea.id;
-        await saveGoalsCloud();
-    }
-    const btn = $('gw-auto-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ 自动生成中…'; }
-    try {
-        gwSmartChecks();
-        gw.track = gw.track || gwGuessTrack();
-        gw.step = 6;
-        gwRender();
-        if (Core.state.aiConfig.apiKey) {
-            const krOk = await gwAiKrsGenerate();
-            if (!krOk || !gw.krs.length) gwTemplateKrs();
-            const plOk = await gwAiPlansGenerate();
-            if (!plOk || !gw.plans.length) gwTemplatePlans();
-        } else {
-            gwTemplateKrs();
-            gwTemplatePlans();
-        }
-        gwRender();
-        await gwFinish();
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = Core.state.aiConfig.apiKey ? '🚀 AI 一键生成全部' : '⚡ 一键生成全部（模板）'; }
-    }
-}
-
-/* ---------- 渲染 ---------- */
-function renderGateBar() {
-    const el = $('gate-bar');
-    if (!el) return;
-    if (gateDoneToday()) {
-        if (Core.state.goalData.gate.skipped) {
-            el.className = 'gate-bar';
-            el.innerHTML = '<span>😴 今日门禁已跳过（最低电量，允许休息）。明天见。</span>';
-        } else if (Core.state.goalData.gate.picked && Core.state.goalData.gate.picked.length) {
-            const picked = Core.state.goalData.gate.picked.map(id => planLocate(id)).filter(Boolean);
-            el.className = 'gate-bar active';
-            el.innerHTML = '<span>✅ 今日系统已激活：' + picked.map(x => esc(x.plan.work)).join('、') + '</span>';
-        } else {
-            el.className = 'gate-bar active';
-            el.innerHTML = '<span>✅ 今日系统已激活（今天没有安排任务，休息或去「目标」页规划）。</span>';
-        }
-    } else {
-        el.className = 'gate-bar';
-        el.innerHTML = '<span>🌅 今日门禁未通过：选择 3 个「最重要但最不想做」的任务，系统才会被激活。</span><button class="btn btn-primary btn-sm" data-action="gate-open">去选择</button>';
-    }
-}
 function renderGoalOverview() {
     const el = $('goal-overview-list');
     if (!el) return;
@@ -3493,7 +3307,7 @@ function renderGoalOverview() {
         const trackShort = g.track === 'long' ? '🛤️ 长期' : '⚡ 快速';
         const krHtml = g.krs.map(k => '<div class="goal-kr-row"><span style="flex:0 0 auto;max-width:52%;">' + esc(k.text) + '</span><span class="kr-bar"><span class="kr-fill" style="width:' + krPct(k) + '%"></span></span><span style="font-size:11px;color:var(--text2);">' + k.current + '/' + k.target + esc(k.unit) + ' · ' + krPct(k) + '%</span></div>').join('');
         const todayPlans = goalTodayPlans().filter(p => p.goalId === g.id);
-        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + ((Core.state.goalData.gate && Core.state.goalData.gate.picked.includes(p.id)) ? ' <span class="tag tag-warn">⭐</span>' : '') + '</div></div>').join('') : '<div class="empty-hint" style="padding:6px 0;">今天没有安排</div>';
+        const todayHtml = todayPlans.length ? todayPlans.map(p => '<div class="gp-row ' + (p.status === 'done' ? 'done' : '') + '"><div class="gp-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div class="gp-work">' + esc(p.work) + '</div></div>').join('') : '<div class="empty-hint" style="padding:6px 0;">今天没有安排</div>';
         return '<div class="goal-card" style="padding:16px;">' +
             '<div class="goal-card-head"><div style="min-width:0;flex:1;"><span class="goal-title" style="font-size:16px;">' + esc(g.title) + '</span><span class="track-tag ' + track.cls + '">' + trackShort + '</span></div>' +
             '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;"><b style="color:var(--accent);font-size:15px;">' + pct + '%</b><button class="btn btn-secondary btn-sm" data-action="goto-goals">管理</button></div></div>' +
@@ -3580,18 +3394,15 @@ function renderDailyReviewHistory() {
 function renderExecTodayStrip() {
     const el = $('exec-today-strip');
     if (!el) return;
-    const pickedIds = gateDoneToday() ? Core.state.goalData.gate.picked : [];
-    const picked = pickedIds.map(id => planLocate(id)).filter(Boolean);
     const today = goalTodayPlans();
-    if (!today.length && !picked.length) {
+    if (!today.length) {
         el.innerHTML = '<div style="font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:8px;"><span>今天还没有执行点</span><button class="btn btn-secondary btn-sm" data-action="goto-goals">去「目标」规划 →</button></div>';
         return;
     }
-    const row = (p, isPicked) => '<div class="ex-today-item ' + (p.status === 'done' ? 'done' : '') + '"><div class="ex-today-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div style="flex:1;min-width:0;font-size:14px;">' + esc(p.work) + (isPicked ? ' <span class="tag tag-warn" style="font-size:10px;">⭐ 门禁</span>' : '') + '</div></div>';
-    el.innerHTML = picked.map(x => row(x.plan, true)).join('') + today.filter(p => !pickedIds.includes(p.id)).map(p => row(p, false)).join('');
+    const row = (p) => '<div class="ex-today-item ' + (p.status === 'done' ? 'done' : '') + '"><div class="ex-today-check" data-action="gp-done" data-id="' + p.id + '">✓</div><div style="flex:1;min-width:0;font-size:14px;">' + esc(p.work) + '</div></div>';
+    el.innerHTML = today.map(p => row(p)).join('');
 }
 function renderHome() {
-    renderGateBar();
     renderHomeSchedule();
     renderGoalOverview();
     renderDailyTrend();
@@ -6140,54 +5951,59 @@ function renderSchedule() {
     renderSchAll();
 }
 
-/* ================= 只读模式与录入标准 ================= */
-const UI_READONLY_KEY = 'ui_readonly_v1';
-const STD_KEY = 'sec_standards_v1';
-let uiReadonly = true;
-let secStandards = { goal: { requireDeadline: true, requireWhy: false, requireTrack: true, ask: '' } };
-function loadUiPrefs() { try { uiReadonly = localStorage.getItem(UI_READONLY_KEY) !== '0'; } catch (e) { uiReadonly = true; } }
-function applyUiPrefs() {
-    document.body.classList.toggle('readonly', uiReadonly);
-    const cb = $('ui-readonly');
-    if (cb) cb.checked = uiReadonly;
+/* ================= 完整模式 ================= */
+const UI_FULL_MODE_KEY = 'ui_full_mode_v1';
+let uiFullMode = false;
+function loadUiPrefs() {
+    try { uiFullMode = localStorage.getItem(UI_FULL_MODE_KEY) === '1'; } catch (e) { uiFullMode = false; }
 }
-function loadStdPrefs() { try { const s = JSON.parse(localStorage.getItem(STD_KEY) || '{}'); secStandards = { goal: { ...secStandards.goal, ...(s.goal || {}) } }; } catch (e) {} }
-function saveStdPrefs() { try { localStorage.setItem(STD_KEY, JSON.stringify(secStandards)); } catch (e) {} }
-function stdSyncUI() {
-    const d = $('std-goal-deadline'); if (d) d.checked = secStandards.goal.requireDeadline;
-    const w = $('std-goal-why'); if (w) w.checked = secStandards.goal.requireWhy;
-    const t = $('std-goal-track'); if (t) t.checked = secStandards.goal.requireTrack;
-    const a = $('std-goal-ask'); if (a) a.value = secStandards.goal.ask || '';
+function applyUiPrefs() {
+    document.body.classList.toggle('full-mode', uiFullMode);
+    const fb = $('ui-full-mode');
+    if (fb) fb.checked = uiFullMode;
+    buildNav();
+    if (!uiFullMode) {
+        const act = document.querySelector('.tab-content.active');
+        if (act && act.id && act.id !== 'tab-secretary' && act.id !== 'tab-today' && act.id !== 'tab-review') switchTab('secretary');
+    }
 }
 
-/* ================= 秘书（对话式入口：记录分发 + 主动提醒 + 关键点请示） ================= */
+/* 完整模式：所有模块的录入表单/新增/编辑/删除按钮加 legacy-form（默认隐藏，完整模式显示）。
+   静态元素初始化打一次标；动态列表按钮靠 RenderBus.emit 钩子重打。秘书/今天/回顾不打标。 */
+const LEGACY_FORM_SELECTORS = [
+    '#sch-add-card',
+    '#tab-health .field', '#tab-health .score-row', '#tab-health .chip-row', '#tab-health .btn-primary',
+    '#tab-goals [data-action="idea-add"]', '#tab-goals [data-action="goal-add"]',
+    '[data-action="goal-edit"]', '[data-action="goal-kr-add"]', '[data-action="goal-kr-edit"]', '[data-action="goal-plan-add"]',
+    '[data-action="goal-plan-edit"]', '[data-action="goal-plan-del"]', '[data-action="goal-del"]', '[data-action="gp-dept-save"]', '.dept-block',
+    '[data-action="sch-edit"]',
+    '[data-action="wd-add-item"]', '[data-action="wd-edit-item"]', '[data-action="wd-del-item"]', '[data-action="wd-status-toggle"]',
+    '[data-action="wd-idle-item"]', '[data-action="wd-add-outfit"]', '[data-action="wd-edit-outfit"]', '[data-action="wd-del-outfit"]',
+    '[data-action="wd-add-wish"]', '[data-action="wd-edit-wish"]', '[data-action="wd-del-wish"]',
+    '#tab-news .field', '#news-save', '#news-summary-save',
+    '.rhythm-edit-btn', '#rhythm-edit-toggle-btn', '#rhythm-add-node-btn', '#rhythm-reset-nodes-btn', '#rhythm-note-input', '#rhythm-save-note-btn',
+    '#habit-add-fold', '.habit-action-btn'
+];
+function legacyFormTag() {
+    try {
+        LEGACY_FORM_SELECTORS.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => el.classList.add('legacy-form'));
+        });
+        /* 账户：三张记账卡（支出/收入/转账），按输入框定位最近容器 */
+        ['expense-amount', 'income-amount', 'transfer-amount'].forEach(id => {
+            const el = $(id);
+            if (!el) return;
+            const card = el.closest('.card') || el.closest('.fold');
+            if (card) card.classList.add('legacy-form');
+        });
+    } catch (e) {}
+}
+
+/* ================= 秘书（对话式入口：Core.parse 卡片流） ================= */
 let secretaryChat = [];
-let secGoalDraft = null;
-let secPending = {};
-const SEC_SYSTEM_PROMPT = '你是「个人管理系统」的 AI 秘书。用户是西部计划基层志愿者（工资微薄，备考北航 VR 考研与雅思）。你的职责：把用户口语化的请求转成结构化动作或追问。规则：1) 只能依据用户原话提取信息，绝不能编造数字、日期、金额；2) 信息不足时必须用 ask 动作追问，一次最多 2 个问题；3) 创建目标必须用 create_goal_draft 动作输出已提取字段，不要用其他动作建目标；4) 每次用一两句话汇报。输出严格 JSON：{"actions":[...],"reply":"..."}。';
-const SECRETARY_ACTIONS_SPEC = '你可以调用以下动作（JSON 数组）：' +
-    '{"action":"create_goal_draft","title":"目标","why":"动机","deadline":"YYYY-MM-DD","track":"long|quick"}（只填写用户明确给出的字段，未知留空字符串）' +
-    ' / {"action":"record_expense","amount":15,"account":"survival|stable|develop","subCategory":"rigid|emotional|once(仅生存账户)","desc":"用途"}' +
-    ' / {"action":"record_income","amount":100}' +
-    ' / {"action":"record_sleep","start":"23:00","end":"07:00","feeling":"refreshed|ok|tired|groggy","note":"..."}' +
-    ' / {"action":"record_exercise","type":"walk|run|cycling|strength|yoga|ball|swim|other","duration":30,"note":"..."}' +
-    ' / {"action":"record_meal","breakfast":"...","lunch":"...","dinner":"...","snack":"...","water":6}' +
-    ' / {"action":"record_charge","type":"rest|nature|social|hobby|exercise|food|other","delta":2,"note":"..."}' +
-    ' / {"action":"complete_plan","keyword":"执行点名称关键词"}' +
-    ' / {"action":"add_plan","goalKeyword":"目标关键词","period":"day|week|month","work":"具体内容","due":"YYYY-MM-DD","reward":"...","punish":"..."}' +
-    ' / {"action":"update_kr","goalKeyword":"目标关键词","krKeyword":"KR关键词","current":数字}' +
-    ' / {"action":"add_feedback","planKeyword":"执行点关键词","resistance":"阻力","results":"反馈结果"}' +
-    ' / {"action":"save_review","done":"...","fail":"...","adjust":"..."}' +
-    ' / {"action":"add_task","title":"任务内容","date":"YYYY-MM-DD","time":"HH:MM"}（安排日程，date/time 可空，空 date 默认今天）' +
-    ' / {"action":"complete_task","keyword":"日程任务关键词"}' +
-    ' / {"action":"set_gate","keywords":["执行点关键词1","关键词2","关键词3"]}（最多3个）' +
-    ' / {"action":"toggle_low_mode"}' +
-    ' / {"action":"ask","questions":["需要你确认的问题"]}。' +
-    '规则：金额、时间等数字只能来自用户原话，绝不能编造；关键信息缺失或含糊时必须用 ask 请示用户；没有合适动作时 actions 为空数组；每次执行后在 reply 中用一两句话向用户汇报结果。';
 
 function secretaryFacts() {
     const today = todayStr();
-    const gateOk = gateDoneToday();
     const todayPlans = goalTodayPlans();
     const openToday = todayPlans.filter(p => p.status !== 'done');
     const overdue = [];
@@ -6205,379 +6021,551 @@ function secretaryFacts() {
             if (mins < 7 * 60) sleepShort++;
         }
     });
-    return { gateOk, gate: Core.state.goalData.gate, todayPlans, openToday, overdue, reviewDone, sleepShort, sleepRecs };
+    return { todayPlans, openToday, overdue, reviewDone, sleepShort, sleepRecs };
 }
-function secretaryGreetingText() {
-    const f = secretaryFacts();
-    const lines = ['我是你的秘书，先汇报今天的情况：'];
-    if (f.gateOk) {
-        if (f.gate.skipped) lines.push('· 门禁：今天你选择了跳过（允许休息）');
-        else if (f.gate.picked && f.gate.picked.length) {
-            const names = f.gate.picked.map(id => { const l = planLocate(id); return l ? l.plan.work : ''; }).filter(Boolean).join('、');
-            lines.push('· 门禁已通过，今日三件事：' + names);
-        } else lines.push('· 门禁已通过（今天没有安排任务）');
-    } else lines.push('· ⚠️ 今日门禁还没通过——去主页点「去选择」，或直接对我说「帮我选 3 件事」');
-    if (f.openToday.length) lines.push('· 今日待完成 ' + f.openToday.length + ' 件：' + f.openToday.slice(0, 3).map(p => p.work).join('、'));
-    if (f.overdue.length) lines.push('· ⚠️ 逾期未完成 ' + f.overdue.length + ' 件，最早的是：「' + f.overdue[0].work + '」（' + shortDay(f.overdue[0].due) + '）');
-    if (!f.reviewDone) lines.push('· 今日复盘还没写，晚上对我说「写复盘」');
-    if (f.sleepRecs >= 2 && f.sleepShort >= 2) lines.push('· 💤 近 3 天有 ' + f.sleepShort + ' 天睡眠不足 7 小时，考虑让我「切最低电量模式」');
-    if (Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok && Core.state.wardrobeWeather.date === todayStr()) lines.push('· 天气：' + Math.round(Core.state.wardrobeWeather.temp) + '°C ' + Core.state.wardrobeWeather.text + '，穿搭方案在「衣橱」页');
-    const schToday = Core.state.scheduleData.tasks.filter(t => t.date === todayStr() && t.status === 'todo');
-    if (schToday.length) lines.push('· 📅 今日日程 ' + schToday.length + ' 件：' + schToday.map(t => (t.time ? t.time + ' ' : '') + t.title).join('、'));
-    lines.push('对我说人话就行，比如：午饭 15 块 / 跑了 3 公里 / 背完 50 个单词 / 明天上午看百度世界大会 / 这周花了多少。');
-    return lines.join('\n');
+function secPush(m) { secretaryChat.push(m); renderSecretary(); }
+
+/* —— 卡片字段渲染规格 —— */
+const SEC_ACCOUNT_OPTS = [['survival', '生存'], ['stable', '稳定'], ['develop', '发展']];
+const SEC_SUB_OPTS = [['rigid', '刚性生存'], ['emotional', '情绪消费'], ['once', '一次性支出']];
+const SEC_PRIORITY_OPTS = [['high', '高'], ['mid', '中'], ['low', '低']];
+const SEC_PERIOD_OPTS = [['day', '日'], ['week', '周'], ['month', '月'], ['quarter', '季'], ['year', '年']];
+const SEC_FEELING_OPTS = [['refreshed', '清醒'], ['ok', '一般'], ['tired', '疲劳'], ['groggy', '昏沉']];
+const SEC_EXERCISE_OPTS = [['walk', '散步'], ['run', '跑步'], ['cycling', '骑行'], ['strength', '力量'], ['yoga', '瑜伽'], ['ball', '球类'], ['swim', '游泳'], ['other', '其他']];
+const SEC_CHARGE_OPTS = [['rest', '休息'], ['nature', '大自然'], ['social', '社交'], ['hobby', '爱好'], ['exercise', '运动'], ['food', '美食'], ['other', '其他']];
+/* k=字段键 kind=控件 list=数组字段(逗号分隔) locked=提交后只读 showIf=显示条件 */
+const SEC_FIELD_SPECS = {
+    'finance/expense': [
+        { k: 'amount', label: '金额', kind: 'num', step: '0.01' },
+        { k: 'account', label: '账户', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
+        { k: 'subCategory', label: '分类', kind: 'sel', opts: SEC_SUB_OPTS, showIf: (f) => f.account === 'survival' },
+        { k: 'desc', label: '用途', kind: 'text', full: true }
+    ],
+    'finance/income': [
+        { k: 'amount', label: '金额', kind: 'num', step: '0.01' },
+        { k: 'desc', label: '来源', kind: 'text', full: true }
+    ],
+    'finance/transfer': [
+        { k: 'amount', label: '金额', kind: 'num', step: '0.01' },
+        { k: 'from', label: '转出', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
+        { k: 'to', label: '转入', kind: 'sel', opts: SEC_ACCOUNT_OPTS, locked: true },
+        { k: 'desc', label: '备注', kind: 'text', full: true }
+    ],
+    'schedule/event': [
+        { k: 'title', label: '标题', kind: 'text', full: true },
+        { k: 'date', label: '日期', kind: 'date' },
+        { k: 'time', label: '时间', kind: 'time' },
+        { k: 'priority', label: '优先级', kind: 'sel', opts: SEC_PRIORITY_OPTS },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'schedule/done': [{ k: 'title', label: '任务', kind: 'text', full: true }],
+    'goal/plan': [
+        { k: 'goalKeyword', label: '目标关键词', kind: 'text' },
+        { k: 'work', label: '执行内容', kind: 'text', full: true },
+        { k: 'due', label: '截止', kind: 'date' },
+        { k: 'period', label: '周期', kind: 'sel', opts: SEC_PERIOD_OPTS },
+        { k: 'reward', label: '奖励', kind: 'text' },
+        { k: 'punish', label: '惩罚', kind: 'text' }
+    ],
+    'goal/review': [
+        { k: 'done', label: '完成', kind: 'area', full: true },
+        { k: 'fail', label: '未完成', kind: 'area', full: true },
+        { k: 'adjust', label: '调整', kind: 'area', full: true }
+    ],
+    'goal/create': [
+        { k: 'title', label: '目标', kind: 'text', full: true },
+        { k: 'why', label: '为什么', kind: 'text', full: true },
+        { k: 'deadline', label: '时限', kind: 'text' },
+        { k: 'done', label: '完成标准', kind: 'text', full: true },
+        { k: 'week', label: '这周做什么', kind: 'text', full: true }
+    ],
+    'health/sleep': [
+        { k: 'start', label: '入睡', kind: 'time' },
+        { k: 'end', label: '起床', kind: 'time' },
+        { k: 'feeling', label: '感受', kind: 'sel', opts: SEC_FEELING_OPTS },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/energy': [
+        { k: 'am_score', label: '上午分', kind: 'num' },
+        { k: 'pm_score', label: '下午分', kind: 'num' },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/exercise': [
+        { k: 'type', label: '类型', kind: 'sel', opts: SEC_EXERCISE_OPTS },
+        { k: 'duration', label: '时长(分)', kind: 'num' },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/meal': [
+        { k: 'breakfast', label: '早餐', kind: 'text' },
+        { k: 'lunch', label: '午餐', kind: 'text' },
+        { k: 'dinner', label: '晚餐', kind: 'text' },
+        { k: 'snack', label: '加餐', kind: 'text' },
+        { k: 'water', label: '水(杯)', kind: 'num' }
+    ],
+    'health/charge': [
+        { k: 'type', label: '类型', kind: 'sel', opts: SEC_CHARGE_OPTS },
+        { k: 'delta', label: '能量变化', kind: 'num' },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/body': [
+        { k: 'signals', label: '身体信号(逗号分隔)', kind: 'text', full: true, list: true },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/micro': [
+        { k: 'posture', label: '姿势(逗号分隔)', kind: 'text', full: true, list: true },
+        { k: 'habits', label: '习惯(逗号分隔)', kind: 'text', full: true, list: true },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'health/innerPeace': [
+        { k: 'feeling', label: '感受', kind: 'text', full: true },
+        { k: 'note', label: '备注', kind: 'text', full: true }
+    ],
+    'habit/check': [
+        { k: 'habitKeyword', label: '习惯关键词', kind: 'text' },
+        { k: 'date', label: '日期', kind: 'date' }
+    ],
+    'wardrobe/confirm_outfit': [{ k: 'date', label: '日期', kind: 'date' }],
+    'news/item': [
+        { k: 'title', label: '标题', kind: 'text', full: true },
+        { k: 'category', label: '分类', kind: 'text' },
+        { k: 'content', label: '内容', kind: 'area', full: true }
+    ]
+};
+const SEC_MODULE_BADGE = { finance: '💰 账户', schedule: '📅 日程', goal: '🎯 目标', health: '❤️ 健康', habit: '✅ 习惯', wardrobe: '👕 衣橱', news: '📰 世事' };
+
+/* —— 今日摘要 —— */
+function secUpdateSummary() {
+    const txt = $('sec-summary-text');
+    const sub = $('sec-summary-sub');
+    if (!txt) return;
+    Core.queryToday(); // 目前为空结构，后续阶段填充；先按 Core.state 兜底统计
+    const today = todayStr();
+    const plans = Core.state.goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans);
+    const n = plans.filter(p => (p.status === 'next' || p.status === 'doing') && p.due === today).length +
+        Core.state.scheduleData.tasks.filter(t => t.status === 'todo' && t.date === today).length;
+    txt.textContent = '今天有 ' + n + ' 件待办';
+    let subLine = '';
+    const overdue = plans.filter(p => (p.status === 'next' || p.status === 'doing') && p.due && p.due < today).length;
+    if (overdue) subLine = '⚠️ 逾期 ' + overdue + ' 件';
+    if (secSchedule.enabled) {
+        const doneCount = secSchedule.slots.filter(s => secFired.date === today && secFired.slots[s.id]).length;
+        const total = secSchedule.slots.filter(s => s.on !== false).length;
+        subLine += (subLine ? ' · ' : '') + '⏰ 今日提醒 ' + doneCount + '/' + total;
+    } else {
+        subLine += (subLine ? ' · ' : '') + '⏰ 定时提醒未启用（设置页可开启）';
+    }
+    if (sub) sub.textContent = subLine;
 }
-function secPush(m) {
-    secretaryChat.push(m);
-    renderSecretary();
+
+/* —— 一句话解释 —— */
+function secSummarizeCards(cards) {
+    if (!cards || !cards.length) return '收到。';
+    if (cards.length > 1) return '解析出 ' + cards.length + ' 张卡片，请逐张确认：';
+    const c = cards[0];
+    const f = c.fields || {};
+    if (c.module === 'finance') {
+        if (c.type === 'expense') return '我理解成：记一笔支出「' + (c.title || '') + '」' + (f.amount !== undefined ? ' ' + f.amount + ' 元' : '') + '，记入' + (ACCOUNT_LABEL[f.account] || '生存') + '账户。';
+        if (c.type === 'income') return '我理解成：记一笔收入 ' + (f.amount !== undefined ? f.amount + ' 元' : '') + (f.desc ? '（' + f.desc + '）' : '') + '。';
+        if (c.type === 'transfer') return '我理解成：转账 ' + (f.amount !== undefined ? f.amount + ' 元' : '') + '，从' + (ACCOUNT_LABEL[f.from] || '?') + ' 转到 ' + (ACCOUNT_LABEL[f.to] || '?') + '。';
+    }
+    if (c.module === 'goal' && c.type === 'create') return '我理解成：创建目标「' + (f.title || '') + '」，完成标准「' + (f.done || '') + '」。';
+    if (c.module === 'schedule' && c.type === 'event') return '我理解成：' + (f.date || '某天') + (f.time ? ' ' + f.time : '') + '「' + (f.title || '') + '」。';
+    return '我理解成：' + (c.title || c.module || '一条记录') + '。';
 }
+
+/* —— 卡片渲染 —— */
+function secFieldValue(card, k) {
+    const v = card.fields && card.fields[k];
+    if (v === undefined || v === null) return '';
+    return Array.isArray(v) ? v.join('，') : String(v);
+}
+function renderCard(card, mi, ci) {
+    const spec = SEC_FIELD_SPECS[card.module + '/' + card.type];
+    const locked = card.status === 'committed';
+    const disabledAll = card.status === 'revoked';
+    const isAuto = card.status === 'committed' && card.autoRecorded;
+    let badge = '';
+    if (card.status === 'pending') badge = '<span class="sec-badge sec-badge-pending">待确认</span>';
+    else if (isAuto) badge = '<span class="sec-badge sec-badge-auto">已自动记录 · 可撤销</span>';
+    else if (card.status === 'committed') badge = '<span class="sec-badge sec-badge-committed">已记录</span>';
+    else if (card.status === 'revoked') badge = '<span class="sec-badge sec-badge-revoked">已撤销</span>';
+    else if (card.status === 'error') badge = '<span class="sec-badge sec-badge-error">记录失败</span>';
+    let fieldsHtml = '';
+    if (spec) {
+        fieldsHtml = '<div class="sec-card-fields">' + spec.map(def => {
+            const show = def.showIf ? def.showIf(card.fields || {}) : true;
+            if (!show) return '';
+            const val = secFieldValue(card, def.k);
+            const dis = (disabledAll || (locked && def.locked)) ? ' disabled' : '';
+            let control = '';
+            if (def.kind === 'sel') {
+                control = '<select data-sec-field="' + def.k + '"' + dis + '>' + def.opts.map(o => '<option value="' + o[0] + '"' + (String(val) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select>';
+            } else if (def.kind === 'area') {
+                control = '<textarea rows="2" data-sec-field="' + def.k + '"' + dis + '>' + esc(val) + '</textarea>';
+            } else {
+                const t = def.kind === 'num' ? 'number' : (def.kind === 'date' ? 'date' : (def.kind === 'time' ? 'time' : 'text'));
+                control = '<input type="' + t + '"' + (def.step ? ' step="' + def.step + '"' : '') + ' data-sec-field="' + def.k + '"' + dis + ' value="' + esc(val) + '">';
+            }
+            return '<div class="sec-field' + (def.full ? ' full' : '') + '"><label>' + esc(def.label) + '</label>' + control + '</div>';
+        }).join('') + '</div>';
+    } else {
+        const pairs = Object.entries(card.fields || {});
+        fieldsHtml = '<div class="sec-card-err">暂不支持编辑该卡片类型（' + esc(card.module) + '/' + esc(card.type) + '）' + (pairs.length ? '<br>字段：' + pairs.map(p => esc(p[0]) + '=' + esc(String(p[1]))).join('、') : '') + '</div>';
+    }
+    const confPct = Math.round(Math.max(0, Math.min(1, card.confidence || 0)) * 100);
+    const confCls = confPct >= 85 ? 'hi' : (confPct >= 60 ? 'mid' : 'lo');
+    let clarifyHtml = '';
+    if (card.needClarify && card.status === 'pending') {
+        clarifyHtml = '<div class="sec-card-clarify"><div class="sec-clarify-q">🤔 ' + esc(card.clarifyQuestion || '这条信息不够完整，能补充一下吗？') + '</div>' +
+            '<div class="sec-clarify-row"><input type="text" data-sec-clarify-input placeholder="补充说明…"><button class="btn btn-primary btn-sm" data-action="sec-card-clarify" data-mi="' + mi + '" data-ci="' + ci + '">提交澄清</button></div></div>';
+    }
+    let errHtml = '';
+    if (card.status === 'error' && card.error) errHtml = '<div class="sec-card-err">' + esc(card.error) + '</div>';
+    const canConfirm = card.status === 'pending' || card.status === 'error';
+    const canModify = card.status === 'committed' && !disabledAll;
+    const canRevoke = (card.status === 'pending' || card.status === 'committed' || card.status === 'error') && !disabledAll;
+    let footNote = '';
+    if (card.tip) footNote += '<div class="sec-foot-msg ' + (card.tipOk ? 'ok' : 'err') + '">' + esc(card.tip) + '</div>';
+    if (card.status === 'committed' && !disabledAll && card.module === 'finance' && (card.type === 'expense' || card.type === 'transfer')) footNote += '<div class="sec-foot-msg">已提交的账户不可改，改账户请先撤销重记。</div>';
+    return '<div class="sec-card' + (card.status === 'revoked' ? ' revoked' : '') + '" data-mi="' + mi + '" data-ci="' + ci + '">' +
+        '<div class="sec-card-head"><span class="sec-badge sec-badge-mod">' + (SEC_MODULE_BADGE[card.module] || esc(card.module)) + '</span><span class="sec-card-title">' + esc(card.title || '') + '</span>' + badge + '</div>' +
+        fieldsHtml + clarifyHtml + errHtml +
+        '<div class="sec-card-foot"><span class="sec-src">来源：' + esc(card.sourceText || '') + '</span><span class="sec-conf ' + confCls + '">置信度 ' + confPct + '%</span>' +
+        '<button class="btn btn-primary" data-action="sec-card-confirm" data-mi="' + mi + '" data-ci="' + ci + '"' + (canConfirm ? '' : ' disabled') + '>' + (card.status === 'error' ? '重试' : '确认') + '</button>' +
+        '<button class="btn btn-secondary" data-action="sec-card-modify" data-mi="' + mi + '" data-ci="' + ci + '"' + (canModify ? '' : ' disabled') + '>修改</button>' +
+        '<button class="btn btn-danger" data-action="sec-card-revoke" data-mi="' + mi + '" data-ci="' + ci + '"' + (canRevoke ? '' : ' disabled') + '>撤销</button></div>' +
+        footNote +
+        '</div>';
+}
+
+/* —— 对话流渲染 —— */
 function renderSecretary() {
     const el = $('secretary-chat');
     if (!el) return;
-    if (!secretaryChat.length) secretaryChat.push({ role: 'sys', text: secretaryGreetingText() });
-    el.innerHTML = secretaryChat.map(m => '<div class="ip-msg ' + (m.role === 'user' ? 'user' : 'sys') + '"><div class="ip-bubble">' + (m.html ? m.text : esc(m.text).replace(/\n/g, '<br>')) + '</div></div>').join('');
+    if (!secretaryChat.length) secretaryChat.push({ role: 'sys', text: '我是你的秘书。要记什么直接说人话，或点下面的快捷指令试试：午饭 15 块 / 明天下午 3 点交材料。' });
+    el.innerHTML = secretaryChat.map((m, mi) => {
+        if (m.role === 'user') return '<div class="ip-msg user"><div class="ip-bubble">' + esc(m.text) + '</div></div>';
+        let inner = '<div class="ip-bubble">' + esc(m.text || '').replace(/\n/g, '<br>') + '</div>';
+        if (m.cards && m.cards.length) inner = '<div class="ip-bubble sec-bubble">' + esc(m.text || '').replace(/\n/g, '<br>') + m.cards.map((c, ci) => renderCard(c, mi, ci)).join('') + '</div>';
+        return '<div class="ip-msg sys">' + inner + '</div>';
+    }).join('');
     el.scrollTop = el.scrollHeight;
-    const flow = $('sec-flow-bar');
-    if (flow) {
-        if (secSchedule.enabled) {
-            const doneCount = secSchedule.slots.filter(s => secFired.date === todayStr() && secFired.slots[s.id]).length;
-            const total = secSchedule.slots.filter(s => s.on !== false).length;
-            const nextSlot = secSchedule.slots.find(s => s.on !== false && !(secFired.date === todayStr() && secFired.slots[s.id]));
-            flow.textContent = '⏰ 今日流程：已提醒 ' + doneCount + '/' + total + (nextSlot ? ' · 下一点位：' + nextSlot.label + ' ' + nextSlot.time : ' · 今日全部完成 ✓');
-        } else {
-            flow.textContent = '⏰ 定时提醒未启用（右上角 ⚙️ 设置 → 秘书日程开启，共 12 个点位覆盖全部模块）';
-        }
-    }
-    const quick = $('secretary-quick');
-    if (quick && quick.dataset.ready !== '1') {
-        quick.dataset.ready = '1';
-        quick.innerHTML = ['今天有什么安排', '有什么逾期没做的', '本周花了多少钱', '目标进度怎么样'].map(q => '<span class="chip" data-action="sec-quick" data-q="' + q + '">' + q + '</span>').join('');
-    }
+    secUpdateSummary();
 }
-/* 规则版问答（无 API Key 也能用的提醒与查询） */
-function secretaryRuleAnswer(text) {
-    const t = String(text || '').trim();
-    if (/新增|创建|建立|设定|制定|想要|想学|想考|想练|加一个|建一个|安排一|帮我.*目标|定一个目标/.test(t)) return null; // 创建类意图交给 AI 对话处理
-    const f = secretaryFacts();
-    if (/安排|今天做|今日/.test(t)) {
-        const lines = [];
-        lines.push(f.gateOk && f.gate.picked && f.gate.picked.length ? '今日三件事：' + f.gate.picked.map(id => { const l = planLocate(id); return l ? l.plan.work : ''; }).filter(Boolean).join('、') : '门禁未通过，去主页选 3 件事。');
-        lines.push('今日待完成 ' + f.openToday.length + ' 件' + (f.openToday.length ? '：' + f.openToday.map(p => p.work).join('、') : ''));
-        return lines.join('\n');
-    }
-    if (/逾期|没做|未完成/.test(t)) {
-        if (!f.overdue.length) return '没有逾期任务，干得漂亮。';
-        return '逾期 ' + f.overdue.length + ' 件：\n' + f.overdue.slice(0, 8).map(o => '· ' + o.work + '（' + shortDay(o.due) + '）').join('\n');
-    }
-    if (/花|支出|账/.test(t)) {
-        const today = todayStr();
-        const week = [];
-        for (let i = 0; i < 7; i++) week.push(addDays(today, -i));
-        const wk = week;
-        const isWeek = /本周|这周|一周/.test(t);
-        const list = Core.state.accountsData.expenses.filter(e => isWeek ? wk.includes(recordDay(e)) : recordMonth(e) === today.slice(0, 7));
-        const sum = list.reduce((s, e) => s + e.amount, 0);
-        return (isWeek ? '本周' : '本月') + '支出 ¥' + sum.toFixed(2) + '（' + list.length + ' 笔）' + (list.length ? '\n最近：' + list.slice(0, 3).map(e => e.desc + ' ¥' + e.amount.toFixed(2)).join('、') : '');
-    }
-    if (/进度|目标|K[Rr]/.test(t)) {
-        const gs = Core.state.goalData.goals.filter(g => g.status === 'active');
-        if (!gs.length) return '还没有进行中的目标，去「目标」页建一个。';
-        return gs.map(g => '· ' + g.title + '：' + goalPct(g) + '%').join('\n');
-    }
-    if (/复盘/.test(t)) {
-        openDailyReviewModal();
-        return '已为你打开每日复盘弹窗 ✓';
-    }
-    if (/低电量/.test(t)) {
-        const r = getTodayRhythm();
-        r.mode = r.mode === 'low' ? 'normal' : 'low';
-        saveRhythmCloud();
-        RenderBus.emit('rhythm');
-        return r.mode === 'low' ? '已切换为 🔋 最低电量模式，任务降级，允许自己累。' : '已切回正常模式。';
-    }
-    return null;
+
+/* —— 卡片操作 —— */
+function secGetCard(mi, ci) {
+    const m = secretaryChat[mi];
+    return m && m.cards ? m.cards[ci] : null;
 }
-async function secretaryExecuteActions(actions) {
-    const results = [];
-    for (const a of actions || []) {
-        try {
-            if (a.action === 'record_expense') {
-                const amount = parseFloat(a.amount);
-                if (!(amount > 0)) { results.push('支出金额无效，请再确认'); continue; }
-                const ok = await addExpense(amount, ['survival', 'stable', 'develop'].includes(a.account) ? a.account : 'survival', a.desc || '秘书记录', todayStr(), a.subCategory || null);
-                results.push(ok ? ('已记支出 ¥' + amount + '（' + ACCOUNT_LABEL[a.account || 'survival'] + '）') : '支出记录失败（可能余额不足）');
-            } else if (a.action === 'record_income') {
-                const amount = parseFloat(a.amount);
-                if (!(amount > 0)) { results.push('收入金额无效'); continue; }
-                const ok = await addIncome(amount, todayStr());
-                results.push(ok ? ('已记收入 ¥' + amount) : '收入记录失败');
-            } else if (a.action === 'record_sleep') {
-                if (!a.start || !a.end) { results.push('睡眠时间不完整，请告诉我几点睡几点起'); continue; }
-                const rec = { date: todayStr(), ts: Date.now(), start_time: a.start, end_time: a.end, feeling: a.feeling || 'ok', note: a.note || '' };
-                const item = await syncRecord('sleep', todayStr(), rec, rec);
-                if (item) { Core.state.healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记睡眠 ' + a.start + '→' + a.end); } else results.push('睡眠记录失败');
-            } else if (a.action === 'record_exercise') {
-                const dur = parseInt(a.duration, 10);
-                if (!(dur > 0)) { results.push('运动时长无效'); continue; }
-                const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', duration: dur, note: a.note || '' };
-                const item = await syncRecord('exercise', todayStr(), rec, rec);
-                if (item) { Core.state.healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记运动 ' + (a.type || '其他') + ' ' + dur + ' 分钟'); } else results.push('运动记录失败');
-            } else if (a.action === 'record_meal') {
-                const rec = { date: todayStr(), ts: Date.now(), breakfast: a.breakfast || '', lunch: a.lunch || '', dinner: a.dinner || '', snack: a.snack || '', water: parseInt(a.water, 10) || 0 };
-                if (!rec.breakfast && !rec.lunch && !rec.dinner && !rec.snack) { results.push('饮食内容为空'); continue; }
-                const item = await syncRecord('meal', todayStr(), rec, rec);
-                if (item) { Core.state.healthData.meal.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记饮食'); } else results.push('饮食记录失败');
-            } else if (a.action === 'record_charge') {
-                const rec = { date: todayStr(), ts: Date.now(), type: a.type || 'other', delta: parseInt(a.delta, 10) || 0, note: a.note || '' };
-                const item = await syncRecord('charge', todayStr(), rec, rec);
-                if (item) { Core.state.healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); results.push('已记充电（能量' + (rec.delta > 0 ? '+' : '') + rec.delta + '）'); } else results.push('充电记录失败');
-            } else if (a.action === 'complete_plan') {
-                const kw = String(a.keyword || '').trim();
-                let found = null;
-                for (const g of Core.state.goalData.goals) { const p = g.plans.find(x => (x.status === 'next' || x.status === 'doing') && x.work.indexOf(kw) >= 0); if (p) { found = p; break; } }
-                if (!found) { results.push('没找到「' + kw + '」对应的执行点，请换个说法'); continue; }
-                found.status = 'done'; found.doneAt = todayStr();
-                await saveGoalsCloud();
-                results.push('已完成执行点「' + found.work + '」✅');
-            } else if (a.action === 'add_plan') {
-                const gkw = String(a.goalKeyword || '').trim();
-                const goal = Core.state.goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0) || Core.state.goalData.goals.find(g => g.status === 'active');
-                if (!goal) { results.push('没有进行中的目标可添加执行点'); continue; }
-                if (!a.work) { results.push('请说明执行点内容'); continue; }
-                goal.plans.push({ id: 'gp_' + Date.now() + Math.random().toString(36).slice(2, 6), krId: goal.krs[0] ? goal.krs[0].id : null, period: ['day', 'week', 'month'].includes(a.period) ? a.period : 'day', work: a.work, due: a.due || todayStr(), reward: a.reward || '', punish: a.punish || '', status: 'next', doneAt: null, risk: {}, resource: {}, feedback: {}, optimize: {} });
-                await saveGoalsCloud();
-                results.push('已为「' + goal.title + '」添加执行点：' + a.work);
-            } else if (a.action === 'update_kr') {
-                const gkw = String(a.goalKeyword || '').trim();
-                const goal = Core.state.goalData.goals.find(g => g.status === 'active' && g.title.indexOf(gkw) >= 0);
-                if (!goal) { results.push('没找到目标「' + gkw + '」'); continue; }
-                const kr = goal.krs.find(k => k.text.indexOf(String(a.krKeyword || '')) >= 0);
-                if (!kr) { results.push('没找到 KR「' + a.krKeyword + '」'); continue; }
-                kr.current = parseFloat(a.current) || 0;
-                await saveGoalsCloud();
-                results.push('KR「' + kr.text + '」进度已更新为 ' + kr.current + '/' + kr.target);
-            } else if (a.action === 'add_feedback') {
-                const kw = String(a.planKeyword || '').trim();
-                let loc = null;
-                for (const g of Core.state.goalData.goals) { const p = g.plans.find(x => x.work.indexOf(kw) >= 0); if (p) { loc = { goal: g, plan: p }; break; } }
-                if (!loc) { results.push('没找到执行点「' + kw + '」'); continue; }
-                loc.plan.feedback = loc.plan.feedback || {};
-                loc.plan.feedback.resistance = a.resistance || loc.plan.feedback.resistance || '';
-                loc.plan.feedback.results = a.results || loc.plan.feedback.results || '';
-                const text = [a.resistance ? '阻力：' + a.resistance : '', a.results ? '反馈：' + a.results : ''].filter(Boolean).join('；');
-                if (text) todayDailyReview().autoFeed.push({ time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), goal: loc.goal.title, plan: loc.plan.work, text: text });
-                await saveGoalsCloud();
-                results.push('反馈已记录并自动流入今日复盘');
-            } else if (a.action === 'save_review') {
-                const r = todayDailyReview();
-                r.answers.done = a.done || '';
-                r.answers.fail = a.fail || '';
-                r.answers.adjust = a.adjust || '';
-                await saveGoalsCloud();
-                results.push('今日复盘已保存 ✓');
-            } else if (a.action === 'add_task') {
-                if (!a.title) { results.push('请说明任务内容'); continue; }
-                const parsed = schParseTitle(a.title);
-                const date = a.date || (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
-                const time = a.time || parsed.time || '';
-                Core.state.scheduleData.tasks.push({ id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6), title: a.title, date: date, time: time, period: parsed.period, note: '', priority: 'mid', status: 'todo', doneAt: null, smart: schSmart(a.title, date, time), createdAt: Date.now() });
-                await saveScheduleCloud();
-                results.push('已安排日程：' + a.title + '（' + shortDay(date) + (time ? ' ' + time : '') + '）');
-            } else if (a.action === 'complete_task') {
-                const kw = String(a.keyword || '').trim();
-                const t = Core.state.scheduleData.tasks.find(x => x.status === 'todo' && x.title.indexOf(kw) >= 0);
-                if (!t) { results.push('没找到日程「' + kw + '」'); continue; }
-                t.status = 'done'; t.doneAt = todayStr();
-                await saveScheduleCloud();
-                results.push('日程「' + t.title + '」已完成 ✓');
-            } else if (a.action === 'set_gate') {
-                const kws = (a.keywords || []).map(String);
-                const picked = [];
-                for (const kw of kws) {
-                    const l = planLocate(goalGateList().find(x => x.work.indexOf(kw) >= 0) ? goalGateList().find(x => x.work.indexOf(kw) >= 0).id : null);
-                    if (l) picked.push(l.plan.id);
-                }
-                if (!picked.length) { results.push('没匹配到今天可选的执行点'); continue; }
-                Core.state.goalData.gate = { date: todayStr(), picked: picked.slice(0, 3), skipped: false };
-                await saveGoalsCloud();
-                results.push('门禁已激活，今日三件事已定');
-            } else if (a.action === 'toggle_low_mode') {
-                const r = getTodayRhythm();
-                r.mode = r.mode === 'low' ? 'normal' : 'low';
-                await saveRhythmCloud();
-                RenderBus.emit('rhythm');
-                results.push(r.mode === 'low' ? '已切换最低电量模式' : '已切回正常模式');
-            } else {
-                results.push('动作不支持：' + a.action);
-            }
-        } catch (err) {
-            console.error('[秘书] 动作执行失败', a, err);
-            results.push('「' + (a.action || '') + '」执行出错：' + (err.message || err));
-        }
-    }
-    return results;
-}
-async function secCallWithRetry(prompt) {
-    const sys = { role: 'system', content: SEC_SYSTEM_PROMPT + SECRETARY_ACTIONS_SPEC };
-    let content;
-    try {
-        content = await callDeepSeekRaw([sys, { role: 'user', content: prompt }], { temperature: 0.2, max_tokens: 1200, jsonMode: true });
-    } catch (e) {
-        throw new Error('网络或 API 错误：' + (e.message || e));
-    }
-    try {
-        return parseJsonSafe(content);
-    } catch (e1) {
-        try {
-            content = await callDeepSeekRaw([sys, { role: 'user', content: prompt + '\n\n注意：你上一次的输出不是合法 JSON。请重新输出严格 JSON，只包含 {"actions":[...],"reply":"..."} 两个字段。' }], { temperature: 0.1, max_tokens: 1200, jsonMode: true });
-            return parseJsonSafe(content);
-        } catch (e2) {
-            throw new Error('AI 返回无法解析，请换个说法再试');
-        }
-    }
-}
-function handleGoalDraft(a) {
-    secGoalDraft = secGoalDraft || { title: '', why: '', deadline: '', track: '' };
-    if (a.title) secGoalDraft.title = a.title;
-    if (a.why) secGoalDraft.why = a.why;
-    if (a.deadline) secGoalDraft.deadline = a.deadline;
-    if (a.track) secGoalDraft.track = a.track;
-    const st = secStandards.goal;
-    const missing = [];
-    if (!secGoalDraft.title.trim()) missing.push(st.ask || '目标是什么？一句话告诉我');
-    if (st.requireDeadline && !secGoalDraft.deadline) missing.push('希望多久达成？（例如：2027-06-30）');
-    if (st.requireWhy && !secGoalDraft.why.trim()) missing.push('为什么想做它？');
-    if (st.requireTrack && !secGoalDraft.track) missing.push('归入哪个轨道？🛤️长期回报（杠杆+不可逆）还是 ⚡快速回报（快速改善当下）');
-    if (missing.length) return ['待补充：' + missing.join(' / ')];
-    const id = 'pg_' + Date.now();
-    secPending[id] = { type: 'goal', payload: { ...secGoalDraft } };
-    secGoalDraft = null;
-    const p = secPending[id].payload;
-    const card = '📋 即将创建目标：<br>· 总目标：<b>' + esc(p.title) + '</b><br>· 动机：' + (esc(p.why) || '未填写') + '<br>· 时限：' + (esc(p.deadline) || '未定') + '<br>· 轨道：' + (p.track === 'quick' ? '⚡ 快速回报' : '🛤️ 长期回报') + '<br><div style="margin-top:8px;"><button class="btn btn-primary btn-sm" data-action="sec-confirm" data-id="' + id + '">✅ 确认创建</button> <button class="btn btn-secondary btn-sm" data-action="sec-cancel" data-id="' + id + '">❌ 取消</button></div>';
-    secPush({ role: 'sys', text: card, html: true });
-    return ['确认卡片已生成，请点「✅ 确认创建」或「❌ 取消」'];
-}
-async function secAiKrs(title, why, track) {
-    const prompt = '你是一名目标规划教练。用户背景：西部计划基层志愿者，两年后考研（目标北航 VR 学硕），同时备考雅思。\n请把下面的总目标拆解为 2-4 个可量化、可验证的关键结果（KR）。\n总目标：' + title + '\n为什么想做：' + (why || '未填写') + '\n回报轨道：' + (track === 'long' ? '长期回报（杠杆+不可逆）' : '快速回报（快速改善生活）') + '\n要求：1) 每个 KR 必须量化（目标值+单位+建议截止日期 YYYY-MM-DD）；2) 必须给出可引入外部反馈的验证方式。\n输出严格 JSON：{"krs":[{"text":"...","target":7,"unit":"分","deadline":"2027-06-30","feedback":"..."}]}';
-    const content = await callDeepSeekRaw([{ role: 'system', content: '你是严谨的目标规划教练，只输出严格 JSON。' }, { role: 'user', content: prompt }], { temperature: 0.4, max_tokens: 1500, jsonMode: true });
-    const parsed = parseJsonSafe(content);
-    return (parsed.krs || []).map(k => ({ id: 'gkr_' + Date.now() + Math.random().toString(36).slice(2, 6), text: String(k.text || '').trim(), target: parseFloat(k.target) || 1, current: 0, unit: String(k.unit || '次'), deadline: String(k.deadline || ''), feedback: String(k.feedback || '') })).filter(k => k.text);
-}
-function secTemplateKrs(title, deadline) {
-    return [{ id: 'gkr_' + Date.now() + Math.random().toString(36).slice(2, 6), text: '达成目标：' + title, target: 1, current: 0, unit: '次', deadline: deadline, feedback: '请补充外部验证方式（记录 / 照片 / 成绩单等）' }];
-}
-function secTemplatePlans(krs, deadline) {
-    const plans = [];
-    const today = todayStr();
-    krs.forEach((kr, i) => {
-        if (!(kr.text || '').trim()) return;
-        const due = kr.deadline || deadline || addDays(today, 365);
-        plans.push({ krIndex: i, period: 'year', work: '年度成果：' + kr.text, due: due, reward: '给自己一次小庆祝', punish: '复盘并重新规划' });
-        let q = new Date(today + 'T00:00:00');
-        let qn = 0;
-        while (qn < 4) { q = new Date(q); q.setMonth(q.getMonth() + 3); if (fmtDay(q) > due) break; plans.push({ krIndex: i, period: 'quarter', work: '季度检查点：' + kr.text + '（外部反馈：' + (kr.feedback || '自查') + '）', due: fmtDay(q), reward: '奖励一次喜欢的活动', punish: '下季度加码 20%' }); qn++; }
-        let md = new Date(today + 'T00:00:00');
-        let mn = 0;
-        while (mn < 6) { md = new Date(md); md.setMonth(md.getMonth() + 1); if (fmtDay(md) > due) break; plans.push({ krIndex: i, period: 'month', work: '月度推进：' + kr.text, due: fmtDay(md), reward: '完成即享一次小确幸', punish: '周末补进度' }); mn++; }
-        plans.push({ krIndex: i, period: 'week', work: '本周推进：' + kr.text + '（至少 3 次）', due: addDays(today, 7), reward: '周末放松半天', punish: '下周加一次' });
-        plans.push({ krIndex: i, period: 'day', work: '今日最小一步：' + kr.text, due: today, reward: '完成即打卡', punish: '明早优先补' });
+function secCardEl(mi, ci) { return document.querySelector('.sec-card[data-mi="' + mi + '"][data-ci="' + ci + '"]'); }
+function secReadFields(card, cardEl) {
+    const spec = SEC_FIELD_SPECS[card.module + '/' + card.type];
+    if (!spec || !cardEl) return {};
+    const out = {};
+    cardEl.querySelectorAll('[data-sec-field]').forEach(inp => {
+        const k = inp.getAttribute('data-sec-field');
+        const def = spec.find(d => d.k === k);
+        if (!def) return;
+        const raw = inp.value;
+        if (def.kind === 'num') { const n = parseFloat(raw); if (!isNaN(n)) out[k] = n; }
+        else if (def.list) { const arr = raw.split(/[，,、\s]+/).map(s => s.trim()).filter(Boolean); if (arr.length) out[k] = arr; }
+        else out[k] = raw.trim();
     });
-    return plans;
+    return out;
 }
-async function secCreateGoalExecute(p) {
-    const title = (p.title || '').trim();
-    const deadline = p.deadline || addDays(todayStr(), 540);
-    const track = p.track === 'quick' ? 'quick' : 'long';
-    let krs = [];
-    if (Core.state.aiConfig.apiKey) {
-        try { krs = await secAiKrs(title, p.why || '', track); } catch (e) { console.warn('[秘书] AI 拆解 KR 失败，用模板', e); }
+function secDiffFields(card, vals) {
+    const diff = {};
+    Object.keys(vals).forEach(k => { if (JSON.stringify(vals[k]) !== JSON.stringify(card.fields[k])) diff[k] = vals[k]; });
+    return diff;
+}
+async function secAutoCommitCards(cards) {
+    for (const card of cards || []) {
+        if (!(card.autoConfirm && !card.needClarify)) continue;
+        const res = await Core.commit(card);
+        if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.autoRecorded = true; }
+        else { card.status = 'error'; card.error = res.error || '记录失败'; }
+        renderSecretary();
     }
-    if (!krs.length) krs = secTemplateKrs(title, deadline);
-    const plansRaw = secTemplatePlans(krs, deadline);
-    const goal = {
-        id: 'gl_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        title: title,
-        why: p.why || '',
-        track: track,
-        status: 'active',
-        createdAt: Date.now(),
-        krs: krs,
-        plans: plansRaw.map((x, idx) => ({
-            id: 'gp_' + Date.now() + '_' + idx + Math.random().toString(36).slice(2, 4),
-            krId: krs[x.krIndex] ? krs[x.krIndex].id : krs[0].id,
-            period: x.period,
-            work: x.work,
-            due: x.due,
-            reward: x.reward || '',
-            punish: x.punish || '',
-            status: 'next',
-            doneAt: null,
-            risk: { buffer: '', precontrol: '', plan: '', rebuild: '' },
-            resource: { current: '', match: '', supplement: '' },
-            feedback: { resistance: '', results: '' },
-            optimize: { root: '', solution: '', effect: '' }
-        }))
+}
+async function secCardConfirm(mi, ci) {
+    const card = secGetCard(mi, ci);
+    if (!card) return;
+    const el = secCardEl(mi, ci);
+    Object.assign(card.fields, secReadFields(card, el));
+    card.tip = '';
+    card.tipOk = false;
+    const res = await Core.commit(card);
+    if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.error = ''; }
+    else { card.status = 'error'; card.error = res.error || '记录失败'; }
+    renderSecretary();
+}
+async function secCardModify(mi, ci) {
+    const card = secGetCard(mi, ci);
+    if (!card || card.status !== 'committed') return;
+    const vals = secReadFields(card, secCardEl(mi, ci));
+    const diff = secDiffFields(card, vals);
+    if (!Object.keys(diff).length) { card.tip = '没有改动'; card.tipOk = false; renderSecretary(); return; }
+    const res = await Core.update(card.id, { fields: diff });
+    if (res.ok) { Object.assign(card.fields, diff); card.tip = '✓ 已修改，记入修正记录'; card.tipOk = true; card.error = ''; }
+    else { card.tip = res.error || '修改失败'; card.tipOk = false; }
+    renderSecretary();
+}
+async function secCardRevoke(mi, ci) {
+    const card = secGetCard(mi, ci);
+    if (!card) return;
+    if (card.status === 'pending' || card.status === 'error') { card.status = 'revoked'; card.revokedAt = Date.now(); renderSecretary(); return; }
+    if (card.status === 'committed') {
+        const res = await Core.revoke(card.id);
+        if (res.ok) { card.status = 'revoked'; card.revokedAt = Date.now(); card.error = ''; }
+        else { card.tip = res.error || '撤销失败'; card.tipOk = false; }
+        renderSecretary();
+    }
+}
+async function secCardClarify(mi, ci, btnEl) {
+    const card = secGetCard(mi, ci);
+    if (!card) return;
+    const cardEl = btnEl ? btnEl.closest('.sec-card') : secCardEl(mi, ci);
+    const inp = cardEl ? cardEl.querySelector('[data-sec-clarify-input]') : null;
+    const val = inp ? inp.value.trim() : '';
+    if (!val) { card.tip = '请先输入补充说明'; card.tipOk = false; renderSecretary(); return; }
+    const combined = (card.sourceText ? card.sourceText + '，' : '') + val;
+    const r = await Core.parse(combined);
+    const m = secretaryChat[mi];
+    if (!m || !m.cards) return;
+    const idx = m.cards.indexOf(card);
+    if (idx === -1) return;
+    if (r.cards && r.cards.length) {
+        m.cards.splice(idx, 1, ...r.cards);
+        m.text = secSummarizeCards(m.cards);
+    } else {
+        m.cards.splice(idx, 1);
+        m.text = r.question || '还是没太明白，能再说具体一点吗？';
+    }
+    renderSecretary();
+    await secAutoCommitCards(r.cards || []);
+}
+
+/* —— 目标访谈（替代 6 步向导：一次一问，纯规则，无 API 也能用） —— */
+let secGoalInterview = null;
+const SEC_GOAL_INTENT_RE = /^(我)?(想|要|准备|打算|计划|决定)(成为|考上|考入|考研|考|学会|学习|学|练|健身|攒|存下|存|写|读|开|建|做|达到|达成|实现|拿下|通过|拿到|升职|转行|创业)|(想|要|准备|打算|计划|决定).{0,10}(目标|梦想|愿望)/;
+const SEC_GOAL_RECORD_GUARD = /记账|记一笔|花(了|费)?|买|安排|提醒|日程|午饭|晚饭|早餐|打车|地铁|公交/;
+function secGoalParseDeadline(t) {
+    const v = String(t || '').trim();
+    if (isValidDay(v)) return v;
+    let m = v.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/);
+    if (m) return m[1] + '-' + pad2(parseInt(m[2], 10)) + '-01';
+    m = v.match(/(\d{4})\s*年/);
+    if (m) return m[1] + '-12-31';
+    m = v.match(/(\d+)\s*(个)?月/);
+    if (m) { const d = new Date(); d.setMonth(d.getMonth() + parseInt(m[1], 10)); return fmtDay(d); }
+    m = v.match(/(\d+)\s*年/);
+    if (m) { const d = new Date(); d.setFullYear(d.getFullYear() + parseInt(m[1], 10)); return fmtDay(d); }
+    return v;
+}
+function secGoalNextQuestion() {
+    const g = secGoalInterview;
+    if (!g) return '';
+    if (!g.title) return '好的，先告诉我：你想实现什么目标？';
+    if (!g.why) return '为什么想做「' + g.title + '」？';
+    if (!g.deadline) return '希望多久达成？给我一个日期（如 2027-06-30）或时长（如 6 个月）。';
+    if (!g.done) return '怎么算完成？给出一个可量化的标准（如：初试过线 / 雅思 7 分）。';
+    if (!g.week) return '最后一步：这周先做什么？';
+    return '';
+}
+function secGoalFinishInterview() {
+    const g = secGoalInterview;
+    if (!g || !g.title || !g.why || !g.deadline || !g.done || !g.week) return;
+    const card = {
+        module: 'goal', type: 'create', title: g.title,
+        fields: { title: g.title, why: g.why, deadline: g.deadline, done: g.done, week: g.week },
+        time: todayStr(), confidence: 0.9, sourceText: '我想创建目标「' + g.title + '」', status: 'pending'
     };
-    Core.state.goalData.goals.push(goal);
-    await saveGoalsCloud();
-    RenderBus.emitAll(['execution', 'goals', 'secretary']);
-    return '✅ 目标「' + title + '」已建立：' + krs.length + ' 条 KR、' + goal.plans.length + ' 个执行点（' + (track === 'long' ? '🛤️ 长期回报轨道' : '⚡ 快速回报轨道') + '）。\n去主页看进度，或对我说「目标进度」。';
+    const th = Core.state.rules && Core.state.rules.confidence ? Core.state.rules.confidence : { autoConfirm: 0.85 };
+    card.autoConfirm = card.confidence >= th.autoConfirm;
+    card.id = 'pc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    secGoalInterview = null;
+    secretaryChat.push({ role: 'sys', text: '信息齐了，确认一下这个目标卡片：', cards: [card] });
+    renderSecretary();
 }
+
+/* —— 发送流程 —— */
 async function secretaryAsk(text) {
-    if (!text || !text.trim()) return;
-    secretaryChat.push({ role: 'user', text: text.trim() });
+    const t = String(text || '').trim();
+    if (!t) return;
+    secretaryChat.push({ role: 'user', text: t });
     renderSecretary();
-    const rule = secretaryRuleAnswer(text);
-    if (rule !== null) {
-        secretaryChat.push({ role: 'sys', text: rule });
+    /* 目标访谈进行中：逐问收集，一次一个问题 */
+    if (secGoalInterview) {
+        if (/^(算了|取消|不弄了|退出|不用了)$/.test(t)) { secGoalInterview = null; secretaryChat.push({ role: 'sys', text: '好，先不创建目标。' }); renderSecretary(); return; }
+        const g = secGoalInterview;
+        if (!g.title) g.title = t;
+        else if (!g.why) g.why = t;
+        else if (!g.deadline) g.deadline = secGoalParseDeadline(t);
+        else if (!g.done) g.done = t;
+        else if (!g.week) g.week = t;
+        const next = secGoalNextQuestion();
+        if (next) { secretaryChat.push({ role: 'sys', text: next }); renderSecretary(); return; }
+        secGoalFinishInterview();
+        return;
+    }
+    let r;
+    try { r = await Core.parse(t); }
+    catch (err) {
+        console.error('[秘书] parse 失败', err);
+        secretaryChat.push({ role: 'sys', text: '⚠️ 解析出错了：' + (err.message || err) + '\n换个说法试试。' });
         renderSecretary();
         return;
     }
-    if (!Core.state.aiConfig.apiKey) {
-        let hint = '🤖 完整对话能力需要配置 DeepSeek API Key（右上角 ⚙️ 设置）。\n没配 Key 时，我支持这些指令：\n· 今天有什么安排 / 有什么逾期没做的\n· 本周花了多少钱（也可问「本月」）\n· 目标进度怎么样\n· 写复盘 / 切低电量模式';
-        if (/目标|goal/.test(text)) hint = '🤖 对话式创建目标需要 AI 提取细节，请先在设置配置 API Key；或临时关掉「只读模式」去目标页用向导。';
-        secretaryChat.push({ role: 'sys', text: hint });
-        renderSecretary();
-        return;
-    }
-    secretaryChat.push({ role: 'sys', text: '⏳ 处理中…' });
-    renderSecretary();
-    try {
-        const f = secretaryFacts();
-        const context = {
-            gateOk: f.gateOk,
-            gatePicked: f.gate ? f.gate.picked : [],
-            openToday: f.openToday.slice(0, 8).map(p => ({ id: p.id, work: p.work })),
-            overdue: f.overdue.slice(0, 8),
-            goals: Core.state.goalData.goals.filter(g => g.status === 'active').map(g => ({ title: g.title, pct: goalPct(g), krs: g.krs.map(k => ({ text: k.text, current: k.current, target: k.target, unit: k.unit })) })),
-            plans: Core.state.goalData.goals.filter(g => g.status === 'active').flatMap(g => g.plans.filter(p => p.status === 'next' || p.status === 'doing').slice(0, 15).map(p => ({ id: p.id, goal: g.title, work: p.work, due: p.due }))),
-            schedules: Core.state.scheduleData.tasks.filter(t => t.status === 'todo').slice(0, 10).map(t => ({ title: t.title, date: t.date, time: t.time })),
-            balances: Core.state.accountsData.balances
-        };
-        const history = secretaryChat.slice(-6).map(m => m.role + '：' + (m.text || '').replace(/<[^>]*>/g, ' ')).join('\n');
-        const prompt = '【今日事实】' + JSON.stringify(context) + '\n【最近对话】\n' + history + '\n【用户说】' + text.trim() + '\n请输出严格 JSON：{"actions":[...],"reply":"你的回复"}';
-        const parsed = await secCallWithRetry(prompt);
-        const reply = String(parsed.reply || '收到。');
-        const actions = Array.isArray(parsed.actions) ? parsed.actions : [];
-        const results = [];
-        for (const a of actions) {
-            if (a.action === 'create_goal_draft') {
-                results.push(...handleGoalDraft(a));
-            } else if (a.action === 'ask') {
-                results.push('请你确认：' + (a.questions || []).join('；'));
-            } else {
-                results.push(...await secretaryExecuteActions([a]));
-            }
+    if (r.cards && r.cards.length) secretaryChat.push({ role: 'sys', text: secSummarizeCards(r.cards), cards: r.cards });
+    else if (r.needClarify && r.question) {
+        /* 目标创建意图 → 进入 4 问访谈 */
+        if (SEC_GOAL_INTENT_RE.test(t) && !SEC_GOAL_RECORD_GUARD.test(t)) {
+            const extracted = t.replace(/^(我)?(想|要|准备|打算|计划|决定)/, '').replace(/^(一个|个|创建|新建|建立|添加|定)/, '').replace(/[。！!？?]+$/, '').trim();
+            secGoalInterview = (extracted && !/^(目标|梦想|愿望|一个目标)$/.test(extracted)) ? { title: extracted } : {};
+            secretaryChat.push({ role: 'sys', text: secGoalNextQuestion() });
+            renderSecretary();
+            return;
         }
-        RenderBus.emitAll(['execution', 'goals', 'accounts', 'health', 'rhythm', 'schedule']);
-        let msg = reply;
-        if (results.length) msg += '\n\n' + results.map(r => '· ' + r).join('\n');
-        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: msg };
-    } catch (err) {
-        console.error('[秘书] AI 失败', err);
-        secretaryChat[secretaryChat.length - 1] = { role: 'sys', text: '⚠️ ' + esc(err.message || err) + '\n换个说法试试；创建目标类请求我会先补齐细节再请你确认。' };
+        secretaryChat.push({ role: 'sys', text: r.question });
     }
+    else secretaryChat.push({ role: 'sys', text: '收到。' });
     renderSecretary();
+    await secAutoCommitCards(r.cards || []);
+}
+
+/* ================= 今天页（聚合只读视图） ================= */
+const TD_EXERCISE_LABEL = { walk: '散步', run: '跑步', cycling: '骑行', strength: '力量', yoga: '瑜伽', ball: '球类', swim: '游泳', other: '其他' };
+function tdJumpSecretary(text) {
+    switchTab('secretary');
+    const inp = $('secretary-input');
+    if (inp) { inp.value = text; inp.focus(); }
+}
+function tdSummaryText(q) {
+    const parts = ['今天有 ' + q.todos.length + ' 件待办'];
+    parts.push(q.timeline.length ? q.timeline.length + ' 项日程' : '暂无日程');
+    if (q.anomalies.length) parts.push(q.anomalies.length + ' 条提醒');
+    return parts.join(' · ');
+}
+function renderToday() {
+    const q = Core.queryToday();
+    const head = $('td-head');
+    if (head) head.textContent = fullDayLabel(q.date) + ' · ' + weekdayLabel(q.date);
+    const sum = $('td-summary');
+    if (sum) sum.textContent = tdSummaryText(q);
+    const tl = $('td-timeline');
+    if (tl) {
+        if (!q.timeline.length) tl.innerHTML = '<div class="empty-hint">今天没有日程安排</div>';
+        else tl.innerHTML = q.timeline.map(t => '<div class="td-row' + (t.status === 'done' ? ' done' : '') + '"><div class="main" data-action="td-jump" data-text="修改 ' + esc(t.title) + '"><b>' + (t.time ? esc(t.time) : '·') + '</b> ' + esc(t.title) + (t.status === 'done' ? ' ✓' : '') + '</div><div class="side">日程</div></div>').join('');
+    }
+    const todos = $('td-todos');
+    if (todos) {
+        if (!q.todos.length) todos.innerHTML = '<div class="empty-hint">没有待办</div>';
+        else {
+            const labels = { high: '高', mid: '中', low: '低' };
+            const mods = { schedule: '日程', goal: '目标', habit: '习惯' };
+            todos.innerHTML = q.todos.map(t => '<div class="td-row"><div class="main" data-action="td-jump" data-text="修改 ' + esc(t.title) + '"><span class="td-pri ' + t.priority + '"></span>' + esc(t.title) + '</div><div class="side">' + labels[t.priority] + ' · ' + (mods[t.module] || t.module) + '</div></div>').join('');
+        }
+    }
+    const pro = $('td-promises');
+    if (pro) {
+        if (!q.promises.length) pro.innerHTML = '<div class="empty-hint">暂无承诺</div>';
+        else pro.innerHTML = q.promises.map(p => '<div class="td-row"><div class="main" data-action="td-jump" data-text="修改目标「' + esc(p.what) + '」"><b>' + esc(p.who) + '</b> · ' + esc(p.what) + '</div><div class="side">' + (p.due ? esc(p.due) : '未定') + '</div></div>').join('');
+    }
+    const ano = $('td-anomalies');
+    if (ano) {
+        if (!q.anomalies.length) ano.innerHTML = '<div class="td-anomaly good">一切正常 ✓</div>';
+        else ano.innerHTML = q.anomalies.map(a => '<div class="td-anomaly">' + esc(a.text) + '</div>').join('');
+    }
+    const hb = $('td-health');
+    if (hb) {
+        const b = q.healthBrief;
+        const rows = [];
+        rows.push('<div class="td-health-row"><span class="k">睡眠</span><span>' + (b.sleep ? (b.sleep.hours !== null ? b.sleep.hours + 'h' : '已记录') + (b.sleep.feeling ? ' · ' + esc(b.sleep.feeling) : '') + (b.sleep.date !== q.date ? '（昨晚）' : '') : '未记录') + '</span></div>');
+        rows.push('<div class="td-health-row"><span class="k">能量</span><span>' + (b.energy ? '上午 ' + b.energy.am + ' · 下午 ' + b.energy.pm + ' · 均 ' + b.energy.avg : '未记录') + '</span></div>');
+        rows.push('<div class="td-health-row"><span class="k">运动</span><span>' + (b.exercise.count ? b.exercise.totalMinutes + ' 分钟（' + b.exercise.items.map(x => (TD_EXERCISE_LABEL[x.type] || x.type) + ' ' + x.duration).join('、') + '）' : '今天还没运动') + '</span></div>');
+        hb.innerHTML = rows.join('');
+    }
+    const st = $('td-review-status');
+    const revs = Core.state.reviewHistory.filter(x => x.date === q.date);
+    if (st) st.textContent = revs.length ? '今日已复盘 ' + revs.length + ' 条，最新：' + revs[revs.length - 1].text.slice(0, 40) : '';
+}
+function tdOpenReview() {
+    const m = $('td-review-modal');
+    if (m) m.classList.add('active');
+}
+function tdCloseReview() {
+    const m = $('td-review-modal');
+    if (m) m.classList.remove('active');
+}
+function tdSaveReview() {
+    const ta = $('td-review-text');
+    const text = ta ? ta.value.trim() : '';
+    if (!text) { alert('写点什么再保存'); return; }
+    Core.state.reviewHistory.push({ date: todayStr(), time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), text: text, ts: Date.now() });
+    saveCache();
+    if (ta) ta.value = '';
+    tdCloseReview();
+    renderToday();
+}
+
+/* ================= 回顾页（周/月聚合 + 模块详情 DOM 搬移） ================= */
+let rvPeriod = 'week';
+let rvOpenModule = null;
+const RV_MODULES = [
+    { id: 'finance', icon: '💰', label: '财务', tab: 'accounts' },
+    { id: 'goals', icon: '🎯', label: '目标', tab: 'goals' },
+    { id: 'health', icon: '🌿', label: '健康', tab: 'health' },
+    { id: 'habits', icon: '✅', label: '习惯', tab: 'habits' },
+    { id: 'wardrobe', icon: '👔', label: '衣橱', tab: 'wardrobe' },
+    { id: 'news', icon: '📰', label: '世事', tab: 'news' }
+];
+function rvMetricRows(id, d) {
+    const row = (k, v) => '<div class="rv-metric-row"><span class="k">' + k + '</span><span class="v">' + esc(String(v)) + '</span></div>';
+    if (id === 'finance') return row('支出', '¥' + d.expense.toFixed(2)) + row('收入', '¥' + d.income.toFixed(2)) + row('结余', (d.net >= 0 ? '+' : '') + '¥' + d.net.toFixed(2));
+    if (id === 'goals') return row('完成执行点', d.donePlans) + row('当前逾期', d.overdue) + row('复盘次数', d.reviews);
+    if (id === 'health') return row('平均睡眠', d.avgSleep === null ? '—' : d.avgSleep + 'h') + row('睡眠不足天数', d.shortSleepDays) + row('运动分钟', d.exerciseMinutes);
+    if (id === 'habits') return row('打卡总次数', d.totalChecks) + row('平均打卡率', d.avgRate === null ? '—' : d.avgRate + '%') + row('全勤习惯', d.perfectHabits);
+    if (id === 'wardrobe') return row('穿搭确认天数', d.outfitDays) + row('闲置衣物', d.idleItems) + row('最常穿', d.topWear || '—');
+    if (id === 'news') return row('收录条数', d.items) + row('摘要次数', d.summaries) + row('简报次数', d.briefings);
+    return '';
+}
+function renderReview() {
+    const q = Core.queryReview(rvPeriod);
+    const range = $('rv-range');
+    if (range) range.textContent = q.range.start + ' ~ ' + q.range.end;
+    $$('.rv-chip').forEach(c => c.classList.toggle('active', c.dataset.period === rvPeriod));
+    const cards = $('rv-cards');
+    if (cards) cards.innerHTML = RV_MODULES.map(m => '<div class="rv-card' + (rvOpenModule === m.id ? ' open' : '') + '" data-action="rv-toggle" data-module="' + m.id + '"><div class="rv-card-head">' + m.icon + ' ' + m.label + '<span class="rv-arrow">▼</span></div>' + rvMetricRows(m.id, q[m.id]) + '</div>').join('');
+    const wrap = $('rv-detail-wrap');
+    if (wrap) wrap.style.display = rvOpenModule ? '' : 'none';
+}
+function reviewCloseDetail() {
+    if (!rvOpenModule) return;
+    const m = RV_MODULES.find(x => x.id === rvOpenModule);
+    const detail = $('rv-detail');
+    const tab = m ? $('tab-' + m.tab) : null;
+    if (tab && detail) { while (detail.firstChild) tab.appendChild(detail.firstChild); }
+    rvOpenModule = null;
+    const wrap = $('rv-detail-wrap');
+    if (wrap) wrap.style.display = 'none';
+}
+function reviewToggleDetail(moduleId) {
+    const m = RV_MODULES.find(x => x.id === moduleId);
+    if (!m) return;
+    if (rvOpenModule === moduleId) { reviewCloseDetail(); renderReview(); return; }
+    reviewCloseDetail();
+    const tab = $('tab-' + m.tab);
+    const detail = $('rv-detail');
+    const title = $('rv-detail-title');
+    if (!tab || !detail) return;
+    while (tab.firstChild) detail.appendChild(tab.firstChild);
+    rvOpenModule = moduleId;
+    if (title) title.textContent = m.icon + ' ' + m.label + ' 详情';
+    Core.render(m.id, detail);
+    const wrap = $('rv-detail-wrap');
+    if (wrap) wrap.style.display = '';
+    renderReview();
 }
 
 /* ================= 秘书日程（全模块固定时间点提醒） ================= */
@@ -6636,8 +6624,6 @@ function secMessageFor(slot) {
     const id = slot.id;
     if (id === 'morning') {
         const lines = ['早上好，今日安排如下：'];
-        if (!f.gateOk) lines.push('· 先去主页把门禁 3 件事选了（或对我说「帮我选 3 件事」）');
-        else if (f.gate.picked && f.gate.picked.length) lines.push('· 今日三件事：' + f.gate.picked.map(pid => { const l = planLocate(pid); return l ? l.plan.work : ''; }).filter(Boolean).join('、'));
         if (f.openToday.length) lines.push('· 今日待完成：' + f.openToday.map(p => p.work).join('、'));
         if (f.overdue.length) lines.push('· ⚠️ 逾期：' + f.overdue.slice(0, 3).map(o => o.work).join('、'));
         if (Core.state.wardrobeWeather && Core.state.wardrobeWeather.ok && Core.state.wardrobeWeather.date === today) lines.push('· 天气 ' + Math.round(Core.state.wardrobeWeather.temp) + '°C ' + Core.state.wardrobeWeather.text + '，穿搭去「衣橱」确认');
@@ -6781,7 +6767,7 @@ Object.assign(Core, {
     _addExpenseCore, _addIncomeCore, _addTransferCore, _deleteLogCore, _confirmOutfitCore,
     syncRecord, deleteHealthRecord,
     /* 数据读取 */
-    goalById, krLocate, planLocate, krPct, goalPct, gateDoneToday, goalTodayPlans, goalGateList,
+    goalById, krLocate, planLocate, krPct, goalPct, goalTodayPlans,
     todayDailyReview, dailyReviewStats,
     getTodayRhythm, calcStreak,
     filterByDay, collectDayData,
@@ -6801,6 +6787,8 @@ function renderAll() {
 RenderBus.on('execution', renderHome);
 RenderBus.on('goals', renderGoals);
 RenderBus.on('secretary', renderSecretary);
+RenderBus.on('today', renderToday);
+RenderBus.on('review', renderReview);
 RenderBus.on('schedule', renderSchedule);
 RenderBus.on('accounts', renderAccounts);
 RenderBus.on('rhythm', renderRhythm);
@@ -6835,7 +6823,14 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
-bindEvent('#open-settings-btn', 'click', () => { const m = $('settings-modal'); const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled; secSyncSettingsUI(); applyUiPrefs(); stdSyncUI(); if (m) m.classList.add('active'); });
+function openSettingsModal() {
+    const m = $('settings-modal');
+    const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled;
+    secSyncSettingsUI(); applyUiPrefs();
+    if (m) m.classList.add('active');
+}
+bindEvent('#open-settings-btn', 'click', openSettingsModal);
+bindEvent('#nav-settings-btn', 'click', openSettingsModal);
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#ai-save-config', 'click', async () => {
     Core.state.aiConfig.apiKey = $('ai-api-key').value.trim();
@@ -6863,21 +6858,17 @@ bindEvent('#register-btn', 'click', async () => {
 bindEvent('#logout-btn', 'click', signOut);
 
 // 目标系统 V3
-bindEvent('[data-action="gate-open"]', 'click', openGateModal);
-bindEvent('[data-action="gate-pick"]', 'click', (e, el) => { const id = el.dataset.id; if (gwGatePicked.has(id)) gwGatePicked.delete(id); else gwGatePicked.add(id); renderGateModal(); });
-bindEvent('#gate-confirm', 'click', saveGate);
-bindEvent('#gate-skip', 'click', skipGate);
 bindEvent('[data-action="gp-done"]', 'click', (e, el) => { e.preventDefault(); gpToggleDone(el.dataset.id); });
 bindEvent('[data-action="gp-someday"]', 'click', (e, el) => { e.preventDefault(); gpToggleSomeday(el.dataset.id); });
 bindEvent('[data-action="gp-dept-save"]', 'click', (e, el) => gpSaveDept(el.dataset.id));
 bindEvent('[data-action="daily-review-start"]', 'click', openDailyReviewModal);
 bindEvent('#daily-review-save', 'click', saveDailyReview);
 bindEvent('#daily-review-cancel', 'click', () => { const m = $('daily-review-modal'); if (m) m.classList.remove('active'); });
-bindEvent('[data-action="idea-add"]', 'click', () => openGoalWizard(null));
-bindEvent('[data-action="idea-adopt"]', 'click', (e, el) => openGoalWizard(el.dataset.id));
+bindEvent('[data-action="idea-add"]', 'click', () => { switchTab('secretary'); const inp = $('secretary-input'); if (inp) { inp.value = '我想创建一个目标'; inp.focus(); } });
+bindEvent('[data-action="idea-adopt"]', 'click', (e, el) => { const idea = Core.state.goalData.ideas.find(x => x.id === el.dataset.id); switchTab('secretary'); const inp = $('secretary-input'); if (inp) { inp.value = '我想创建目标「' + (idea ? idea.text : '') + '」'; inp.focus(); } });
 bindEvent('[data-action="idea-restore"]', 'click', (e, el) => ideaRestore(el.dataset.id));
 bindEvent('[data-action="idea-del"]', 'click', (e, el) => ideaDelete(el.dataset.id));
-bindEvent('[data-action="goal-add"]', 'click', () => openGoalWizard(null));
+bindEvent('[data-action="goal-add"]', 'click', () => { switchTab('secretary'); const inp = $('secretary-input'); if (inp) { inp.value = '我想创建一个目标'; inp.focus(); } });
 bindEvent('[data-action="goal-edit"]', 'click', (e, el) => openGoalEditModal(el.dataset.id));
 bindEvent('[data-action="goal-del"]', 'click', (e, el) => deleteGoal(el.dataset.id));
 bindEvent('[data-action="goto-goals"]', 'click', () => switchTab('goals'));
@@ -6895,22 +6886,6 @@ bindEvent('#goal-kr-del', 'click', () => { const gid = gdEditingGoalId, kid = gd
 bindEvent('#goal-plan-save', 'click', saveGoalPlan);
 bindEvent('#goal-plan-cancel', 'click', () => { const m = $('goal-plan-modal'); if (m) m.classList.remove('active'); gdEditingGoalId = null; gdEditingPlanId = null; });
 bindEvent('#goal-plan-del', 'click', () => { const gid = gdEditingGoalId, pid = gdEditingPlanId; const m = $('goal-plan-modal'); if (m) m.classList.remove('active'); gdEditingGoalId = null; gdEditingPlanId = null; if (gid && pid) deleteGoalPlan(gid, pid); });
-bindEvent('#gw-prev', 'click', () => { if (gw && gw.step > 1) { gw.step--; gwRender(); } });
-bindEvent('#gw-next', 'click', gwNext);
-bindEvent('#gw-finish', 'click', gwFinish);
-bindEvent('#gw-cancel', 'click', gwClose);
-bindEvent('[data-action="gw-adopt"]', 'click', () => { if (gw) { gw.step = 4; gwRender(); } });
-bindEvent('[data-action="gw-park"]', 'click', gwPark);
-bindEvent('[data-action="gw-drop"]', 'click', gwDrop);
-bindEvent('.track-option', 'click', (e, el) => { if (gw) { gw.track = el.dataset.track; gwRender(); } });
-bindEvent('[data-action="gw-smart-toggle"]', 'click', (e, el) => { if (!gw) return; gw.smartSet = gw.smartSet || {}; const k = el.dataset.k; const cur = gwSmartChecks()[k]; gw.smartSet[k] = !cur; gwRenderSmart(); });
-bindEvent('[data-action="gw-kr-add"]', 'click', () => { if (!gw) return; gw.krs.push({ id: 'gkw_' + Date.now() + Math.random().toString(36).slice(2, 6), text: '', target: 1, current: 0, unit: '次', deadline: '', feedback: '' }); gwRender(); });
-bindEvent('[data-action="gw-kr-del"]', 'click', (e, el) => { if (!gw) return; gwCollectKrs(); gw.krs.splice(parseInt(el.dataset.idx, 10), 1); gwRender(); });
-bindEvent('[data-action="gw-kr-ai"]', 'click', gwAiKrs);
-bindEvent('[data-action="gw-plans-template"]', 'click', gwTemplatePlans);
-bindEvent('[data-action="gw-plans-ai"]', 'click', gwAiPlans);
-bindEvent('[data-action="gw-plans-clear"]', 'click', () => { if (gw) { gw.plans = []; gwRender(); } });
-bindEvent('[data-action="gw-auto"]', 'click', gwAutoRun);
 bindEvent('.mark-read-label', 'click', (e) => e.preventDefault());
 
 // 操作说明（新手引导）
@@ -6923,7 +6898,39 @@ bindEvent('#guide-enable', 'change', (e, el) => { guideEnabled = el.checked; sav
 // 秘书
 bindEvent('#secretary-send', 'click', () => { const inp = $('secretary-input'); const v = inp ? inp.value : ''; if (!v.trim()) return; inp.value = ''; secretaryAsk(v); });
 bindEvent('#secretary-input', 'keydown', (e) => { if (e.key === 'Enter') { const v = $('secretary-input').value; if (v.trim()) { $('secretary-input').value = ''; secretaryAsk(v); } } });
-bindEvent('[data-action="sec-quick"]', 'click', (e, el) => secretaryAsk(el.dataset.q));
+bindEvent('[data-action="sec-quick"]', 'click', (e, el) => {
+    const inp = $('secretary-input');
+    if (!inp) return;
+    const q = el.dataset.q;
+    if (q === 'note') { inp.value = '午饭 15 块'; inp.focus(); }
+    else if (q === 'schedule') { inp.value = '明天下午 3 点交材料'; inp.focus(); }
+    else { inp.focus(); }
+});
+// 秘书卡片操作（事件委托）
+bindEvent('[data-action="sec-card-confirm"]', 'click', (e, el) => secCardConfirm(parseInt(el.dataset.mi, 10), parseInt(el.dataset.ci, 10)));
+bindEvent('[data-action="sec-card-modify"]', 'click', (e, el) => secCardModify(parseInt(el.dataset.mi, 10), parseInt(el.dataset.ci, 10)));
+bindEvent('[data-action="sec-card-revoke"]', 'click', (e, el) => secCardRevoke(parseInt(el.dataset.mi, 10), parseInt(el.dataset.ci, 10)));
+bindEvent('[data-action="sec-card-clarify"]', 'click', (e, el) => secCardClarify(parseInt(el.dataset.mi, 10), parseInt(el.dataset.ci, 10), el));
+bindEvent('[data-sec-clarify-input]', 'keydown', (e, el) => {
+    if (e.key !== 'Enter') return;
+    const box = el.closest('.sec-card-clarify');
+    const b = box ? box.querySelector('[data-action="sec-card-clarify"]') : null;
+    if (b) secCardClarify(parseInt(b.dataset.mi, 10), parseInt(b.dataset.ci, 10), b);
+});
+
+// 今天页
+bindEvent('[data-action="td-jump"]', 'click', (e, el) => tdJumpSecretary(el.dataset.text));
+bindEvent('#td-review-btn', 'click', tdOpenReview);
+bindEvent('#td-review-cancel', 'click', tdCloseReview);
+bindEvent('#td-review-save', 'click', tdSaveReview);
+
+// 回顾页
+bindEvent('[data-action="rv-period"]', 'click', (e, el) => { rvPeriod = el.dataset.period === 'month' ? 'month' : 'week'; reviewCloseDetail(); renderReview(); });
+bindEvent('[data-action="rv-toggle"]', 'click', (e, el) => reviewToggleDetail(el.dataset.module));
+bindEvent('#rv-detail-close', 'click', () => { reviewCloseDetail(); renderReview(); });
+
+// 完整模式
+bindEvent('#ui-full-mode', 'change', (e, el) => { uiFullMode = el.checked; try { localStorage.setItem(UI_FULL_MODE_KEY, uiFullMode ? '1' : '0'); } catch (err) {} applyUiPrefs(); });
 
 // 秘书日程
 bindEvent('#sec-enable', 'change', (e, el) => { secSchedule.enabled = el.checked; saveSecPrefs(); });
@@ -6954,32 +6961,6 @@ bindEvent('#sch-save', 'click', saveSchModal);
 bindEvent('#sch-cancel', 'click', () => { const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; });
 bindEvent('#sch-del', 'click', () => { const id = schEditingId; const m = $('sch-modal'); if (m) m.classList.remove('active'); schEditingId = null; if (id) schDelete(id); });
 
-// 只读模式与录入标准
-bindEvent('#ui-readonly', 'change', (e, el) => { uiReadonly = el.checked; try { localStorage.setItem(UI_READONLY_KEY, uiReadonly ? '1' : '0'); } catch (err) {} applyUiPrefs(); });
-bindEvent('#std-save', 'click', () => {
-    secStandards.goal.requireDeadline = $('std-goal-deadline').checked;
-    secStandards.goal.requireWhy = $('std-goal-why').checked;
-    secStandards.goal.requireTrack = $('std-goal-track').checked;
-    secStandards.goal.ask = $('std-goal-ask').value.trim();
-    saveStdPrefs();
-    alert('录入标准已保存 ✓ 秘书会按此要求你补充细节');
-});
-
-// 秘书确认卡片
-bindEvent('[data-action="sec-confirm"]', 'click', async (e, el) => {
-    const id = el.dataset.id;
-    const p = secPending[id];
-    delete secPending[id];
-    if (!p) return;
-    if (p.type === 'goal') {
-        const r = await secCreateGoalExecute(p.payload);
-        secPush({ role: 'sys', text: r });
-    }
-});
-bindEvent('[data-action="sec-cancel"]', 'click', (e, el) => {
-    delete secPending[el.dataset.id];
-    secPush({ role: 'sys', text: '已取消创建，需要时说一声。' });
-});
 
 // 习惯（静态按钮 + 列表内 data-action 委托）
 bindEvent('#add-habit-btn', 'click', addNewHabit);
@@ -7229,7 +7210,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadGuidePrefs();
     loadSecPrefs();
     loadUiPrefs();
-    loadStdPrefs();
     applyUiPrefs();
 
     $('expense-date').value = todayStr();
@@ -7274,7 +7254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (res.error) throw res.error;
         if (res.data.session) {
             currentUser = res.data.session.user;
-            if (loadCache()) { console.log('🚀 使用本地缓存渲染'); showMainUI(); renderAll(); maybeOpenDailyGate(); if (gateDoneToday()) maybeAutoGuide(); }
+            if (loadCache()) { console.log('🚀 使用本地缓存渲染'); showMainUI(); renderAll(); maybeAutoGuide(); }
             else { showLoadingUI(); }
             await loadAllFromCloud(true);
             setupRealtime();
