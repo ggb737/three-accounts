@@ -2250,7 +2250,9 @@ const Core = (() => {
                 const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
                 for (let i = 0; i < dim; i++) days.push(addDays(start, i));
             } else {
-                for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+                const weekday = new Date(today + 'T00:00:00').getDay();
+                const start = addDays(today, -((weekday + 6) % 7));
+                for (let i = 0; i < 7; i++) days.push(addDays(start, i));
             }
             const elapsedDays = days.filter(d => d <= today).length;
             const inPeriod = (d) => isValidDay(d) && days.includes(d);
@@ -2674,11 +2676,6 @@ function buildNav() {
         btn.textContent = m.icon + ' ' + m.label;
         seg.appendChild(btn);
     });
-    const sbtn = document.createElement('button');
-    sbtn.className = 'seg-item';
-    sbtn.id = 'nav-settings-btn';
-    sbtn.textContent = '⚙️ 设置';
-    seg.appendChild(sbtn);
     if (uiFullMode) legacy.forEach(m => {
         const btn = document.createElement('button');
         btn.className = 'seg-item nav-btn' + (m.id === activeId ? ' active' : '');
@@ -7137,7 +7134,6 @@ function openSettingsModal() {
     if (m) m.classList.add('active');
 }
 bindEvent('#open-settings-btn', 'click', openSettingsModal);
-bindEvent('#nav-settings-btn', 'click', openSettingsModal);
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
 bindEvent('#rules-save', 'click', saveCoreRulesPanel);
 bindEvent('#ai-save-config', 'click', async () => {
