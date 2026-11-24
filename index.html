@@ -378,7 +378,7 @@ tr{scroll-margin-top:20px}
 .td-summary{font-size:13px;color:var(--text2);margin-top:4px}
 .td-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px}
 .td-row:last-child{border-bottom:none}
-.td-row .main{flex:1;min-width:0;cursor:pointer}
+.td-row .main{flex:1;min-width:0;cursor:default}
 .td-row .meta{color:var(--text2);font-size:12px;margin-top:2px}
 .td-row .side{flex-shrink:0;color:var(--text2);font-size:12px;text-align:right}
 .td-row.done .main{color:var(--text2);text-decoration:line-through}
@@ -392,9 +392,19 @@ tr{scroll-margin-top:20px}
 .td-pri.high{background:#c0392b}
 .td-pri.mid{background:#b8860b}
 .td-pri.low{background:#4a5c8a}
+.td-start-card{background:var(--accentBg)}
+.td-start-title{font-size:18px;font-weight:700;line-height:1.5}
+.td-start-meta{font-size:13px;color:var(--text2);margin-top:5px}
+.td-brief-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.td-brief-section:first-child{margin-top:0;padding-top:0;border-top:none}
+.td-brief-title{font-size:13px;font-weight:600;margin-bottom:6px}
+.td-news-content{font-size:14px;line-height:1.75;color:var(--text)}
+.td-news-content strong{font-weight:600}
 /* ========== 回顾页（阶段 5） ========== */
 .rv-range{font-size:12px;color:var(--text2);margin-left:auto}
-.rv-card{border:1px solid var(--border);border-radius:var(--rSm);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.rv-card{display:block;width:100%;text-align:left;font:inherit;color:var(--text);background:transparent;border:1px solid var(--border);border-radius:var(--rSm);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.rv-card:focus-visible,.rv-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rv-chip{min-width:44px;min-height:44px}
 .rv-card:hover{border-color:var(--accent)}
 .rv-card.open{border-color:var(--accent);background:var(--accentBg)}
 .rv-card-head{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:8px}
@@ -463,49 +473,29 @@ body.full-mode .legacy-form.chip-row{display:flex !important}
         </div>
     </div>
 
-    <!-- ========== 今天（聚合只读视图） ========== -->
+    <!-- ========== 今天（只读：建议起点 / 待做事项 / 今日简报） ========== -->
     <div id="tab-today" class="tab-content">
         <h1 class="page-title">今天</h1>
 
-        <!-- 头部：日期 + 一句话摘要 -->
         <div class="card">
             <div class="td-head" id="td-head"></div>
             <div class="td-summary" id="td-summary"></div>
         </div>
 
-        <!-- 时间线 -->
-        <div class="card">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🕐 时间线</h2>
-            <div id="td-timeline"></div>
+        <div class="card td-start-card">
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">从哪件事做起</h2>
+            <div id="td-start"></div>
         </div>
 
-        <!-- 待办（按优先级） -->
         <div class="card">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">✅ 待办</h2>
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">今天要做哪些事</h2>
             <div id="td-todos"></div>
         </div>
 
-        <!-- 承诺 -->
         <div class="card">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🤝 承诺</h2>
-            <div id="td-promises"></div>
+            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">今日简报</h2>
+            <div id="td-briefing"></div>
         </div>
-
-        <!-- 异常提醒 -->
-        <div class="card">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">⚠️ 异常提醒</h2>
-            <div id="td-anomalies"></div>
-        </div>
-
-        <!-- 健康简报 -->
-        <div class="card">
-            <h2 style="font-size:16px;font-weight:600;margin-bottom:10px;">🌿 健康简报</h2>
-            <div id="td-health"></div>
-        </div>
-
-        <!-- 底部：晚间复盘 -->
-        <button class="btn btn-primary btn-full" id="td-review-btn">🌙 晚间复盘</button>
-        <div class="td-review-status" id="td-review-status"></div>
     </div>
 
     <div class="modal-overlay" id="td-review-modal">
@@ -523,10 +513,11 @@ body.full-mode .legacy-form.chip-row{display:flex !important}
     <div id="tab-review" class="tab-content">
         <h1 class="page-title">回顾</h1>
 
-        <!-- 周/月切换 -->
+        <!-- 日/周/月切换 -->
         <div class="card" style="padding:12px 16px;display:flex;gap:8px;align-items:center;">
-            <span class="chip rv-chip active" data-action="rv-period" data-period="week">本周</span>
-            <span class="chip rv-chip" data-action="rv-period" data-period="month">本月</span>
+            <button type="button" class="chip rv-chip" data-action="rv-period" data-period="day">日</button>
+            <button type="button" class="chip rv-chip active" data-action="rv-period" data-period="week">周</button>
+            <button type="button" class="chip rv-chip" data-action="rv-period" data-period="month">月</button>
             <span class="rv-range" id="rv-range"></span>
         </div>
 
@@ -2131,11 +2122,11 @@ const Core = (() => {
         query(module, opts) { const fn = QUERY_MAP[module]; return fn ? fn() : null; },
 
         /** 今日聚合视图：从现有模块数据实时聚合，不新增存储。
-         *  @returns {{date:string, timeline:Array, todos:Array, promises:Array, anomalies:Array, healthBrief:Object}} */
+         *  @returns {{date:string, timeline:Array, todos:Array, startWith:Object|null, promises:Array, anomalies:Array, healthBrief:Object, newsBriefing:Object|null}} */
         queryToday() {
             const today = todayStr();
             const yesterday = addDays(today, -1);
-            const r = { date: today, timeline: [], todos: [], promises: [], anomalies: [], healthBrief: { sleep: null, energy: null, exercise: { count: 0, totalMinutes: 0, items: [] } } };
+            const r = { date: today, timeline: [], todos: [], startWith: null, promises: [], anomalies: [], healthBrief: { sleep: null, energy: null, exercise: { count: 0, totalMinutes: 0, items: [] } }, newsBriefing: null };
             const sleepHours = (s) => {
                 if (!s || !s.start_time || !s.end_time) return null;
                 const p = (v) => v.split(':').map(Number);
@@ -2153,7 +2144,7 @@ const Core = (() => {
             /* ② 待办：日程 todo + 目标执行点 + 未打卡习惯，按优先级 high>mid>low */
             const todos = [];
             const prio = { high: 0, mid: 1, low: 2 };
-            r.timeline.filter(t => t.status === 'todo').forEach(t => todos.push({ id: t.id, title: t.title, priority: t.priority || 'mid', module: 'schedule' }));
+            r.timeline.filter(t => t.status === 'todo').forEach(t => todos.push({ id: t.id, title: t.title, time: t.time || '', priority: t.priority || 'mid', module: 'schedule' }));
             state.goalData.goals.forEach(g => {
                 if (g.status !== 'active') return;
                 g.plans.forEach(p => {
@@ -2165,6 +2156,7 @@ const Core = (() => {
                 if (!(h.dates || []).includes(today)) todos.push({ id: h.id, title: h.name, priority: 'low', module: 'habit' });
             });
             r.todos = todos.sort((a, b) => prio[a.priority] - prio[b.priority]);
+            r.startWith = r.todos[0] || null;
             /* ③ 承诺：活跃目标里带外部验证方式（feedback 非空）且未过期的 KR */
             state.goalData.goals.forEach(g => {
                 if (g.status !== 'active') return;
@@ -2234,17 +2226,23 @@ const Core = (() => {
                 r.healthBrief.exercise.totalMinutes += parseInt(x.duration, 10) || 0;
                 r.healthBrief.exercise.items.push({ type: x.type, duration: parseInt(x.duration, 10) || 0 });
             });
+            /* ⑥ 今日简报：复用今天最新的一份世事简报，不触发生成或网络请求 */
+            const newsBrief = state.newsData.briefings.filter(x => x.date === today).sort((a, b) => (b.ts || 0) - (a.ts || 0))[0];
+            if (newsBrief) r.newsBriefing = { id: newsBrief.id, content: newsBrief.content || '', ts: newsBrief.ts || 0 };
             return r;
         },
 
-        /** 周/月回顾：六个模块各 2-3 个摘要指标（从现有数据实时计算）。
-         *  @param {('week'|'month')} period 回顾周期
+        /** 日/周/月回顾：六个模块各 2-3 个摘要指标（从现有数据实时计算）。
+         *  @param {('day'|'week'|'month')} period 回顾周期
          *  @returns {{period:string, range:{start:string,end:string}, finance:Object, goals:Object, health:Object, habits:Object, wardrobe:Object, news:Object}} */
         queryReview(period) {
             const today = todayStr();
+            const isDay = period === 'day';
             const isMonth = period === 'month';
             const days = [];
-            if (isMonth) {
+            if (isDay) {
+                days.push(today);
+            } else if (isMonth) {
                 const start = today.slice(0, 7) + '-01';
                 const n = new Date(start + 'T00:00:00');
                 const dim = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
@@ -2257,11 +2255,11 @@ const Core = (() => {
             const elapsedDays = days.filter(d => d <= today).length;
             const inPeriod = (d) => isValidDay(d) && days.includes(d);
             const r = {
-                period: isMonth ? 'month' : 'week',
+                period: isDay ? 'day' : (isMonth ? 'month' : 'week'),
                 range: { start: days[0], end: days[days.length - 1] },
                 finance: { expense: 0, income: 0, net: 0 },
                 goals: { donePlans: 0, overdue: 0, reviews: 0 },
-                health: { avgSleep: null, shortSleepDays: 0, exerciseMinutes: 0 },
+                health: { avgSleep: null, avgBattery: null, dailyAvgEnergy: null, shortSleepDays: 0, exerciseMinutes: 0 },
                 habits: { totalChecks: 0, avgRate: null, perfectHabits: 0 },
                 wardrobe: { outfitDays: 0, idleItems: 0, topWear: null },
                 news: { items: 0, summaries: 0, briefings: 0 }
@@ -2281,7 +2279,7 @@ const Core = (() => {
                 });
             });
             r.goals.reviews = state.goalData.dailyReviews.filter(x => inPeriod(x.date)).length;
-            /* health：平均睡眠 / 睡眠不足天数 / 运动分钟 */
+            /* health：平均睡眠 / 平均电量 / 每日平均能量（保留旧指标供内部兼容） */
             const sleepHoursOf = (s) => {
                 if (!s || !s.start_time || !s.end_time) return null;
                 const p = (v) => v.split(':').map(Number);
@@ -2294,6 +2292,26 @@ const Core = (() => {
             const hs = state.healthData.sleep.filter(x => inPeriod(x.date)).map(x => ({ date: x.date, hours: sleepHoursOf(x) })).filter(x => x.hours !== null);
             if (hs.length) r.health.avgSleep = Math.round((hs.reduce((a, b) => a + b.hours, 0) / hs.length) * 10) / 10;
             r.health.shortSleepDays = new Set(hs.filter(x => x.hours < 7).map(x => x.date)).size;
+            /* 电量：先求每天充电记录的 delta 合计，再对有记录的天数取平均；未记录不记 0 */
+            const chargeByDay = {};
+            state.healthData.charge.filter(x => inPeriod(x.date)).forEach(x => {
+                const delta = parseFloat(x.delta);
+                if (!Number.isFinite(delta)) return;
+                chargeByDay[x.date] = (chargeByDay[x.date] || 0) + delta;
+            });
+            const batteryDays = Object.values(chargeByDay);
+            if (batteryDays.length) r.health.avgBattery = Math.round((batteryDays.reduce((a, b) => a + b, 0) / batteryDays.length) * 10) / 10;
+            /* 能量：先求每天上午/下午记录的平均分，再对有记录的天数取平均 */
+            const energyByDay = {};
+            state.healthData.energy.filter(x => inPeriod(x.date)).forEach(x => {
+                const am = parseFloat(x.am_score), pm = parseFloat(x.pm_score);
+                if (!Number.isFinite(am) || !Number.isFinite(pm)) return;
+                const d = energyByDay[x.date] || (energyByDay[x.date] = { total: 0, count: 0 });
+                d.total += (am + pm) / 2;
+                d.count++;
+            });
+            const energyDays = Object.values(energyByDay).map(x => x.total / x.count);
+            if (energyDays.length) r.health.dailyAvgEnergy = Math.round((energyDays.reduce((a, b) => a + b, 0) / energyDays.length) * 10) / 10;
             state.healthData.exercise.forEach(x => { if (inPeriod(x.date)) r.health.exerciseMinutes += parseInt(x.duration, 10) || 0; });
             /* habits：打卡总次数 / 平均打卡率 / 全勤习惯 */
             if (state.habits.length) {
@@ -6633,48 +6651,43 @@ function tdSummaryText(q) {
 }
 function renderToday() {
     const q = Core.queryToday();
+    const labels = { high: '高', mid: '中', low: '低' };
+    const mods = { schedule: '日程', goal: '目标', habit: '习惯' };
     const head = $('td-head');
     if (head) head.textContent = fullDayLabel(q.date) + ' · ' + weekdayLabel(q.date);
     const sum = $('td-summary');
     if (sum) sum.textContent = tdSummaryText(q);
-    const tl = $('td-timeline');
-    if (tl) {
-        if (!q.timeline.length) tl.innerHTML = '<div class="empty-hint">今天没有日程安排</div>';
-        else tl.innerHTML = q.timeline.map(t => '<div class="td-row' + (t.status === 'done' ? ' done' : '') + '"><div class="main" data-action="td-jump" data-text="修改 ' + esc(t.title) + '"><b>' + (t.time ? esc(t.time) : '·') + '</b> ' + esc(t.title) + (t.status === 'done' ? ' ✓' : '') + '</div><div class="side">日程</div></div>').join('');
-    }
-    const todos = $('td-todos');
-    if (todos) {
-        if (!q.todos.length) todos.innerHTML = '<div class="empty-hint">没有待办</div>';
+
+    const start = $('td-start');
+    if (start) {
+        if (!q.startWith) start.innerHTML = '<div class="empty-hint">今天暂无待办，可以休息一下或规划下一件事</div>';
         else {
-            const labels = { high: '高', mid: '中', low: '低' };
-            const mods = { schedule: '日程', goal: '目标', habit: '习惯' };
-            todos.innerHTML = q.todos.map(t => '<div class="td-row"><div class="main" data-action="td-jump" data-text="修改 ' + esc(t.title) + '"><span class="td-pri ' + t.priority + '"></span>' + esc(t.title) + '</div><div class="side">' + labels[t.priority] + ' · ' + (mods[t.module] || t.module) + '</div></div>').join('');
+            const t = q.startWith;
+            const meta = [];
+            if (t.time) meta.push(t.time);
+            meta.push((labels[t.priority] || '中') + '优先级', mods[t.module] || t.module);
+            start.innerHTML = '<div class="td-start-title">' + esc(t.title) + '</div><div class="td-start-meta">建议先做 · ' + esc(meta.join(' · ')) + '</div>';
         }
     }
-    const pro = $('td-promises');
-    if (pro) {
-        if (!q.promises.length) pro.innerHTML = '<div class="empty-hint">暂无承诺</div>';
-        else pro.innerHTML = q.promises.map(p => '<div class="td-row"><div class="main" data-action="td-jump" data-text="修改目标「' + esc(p.what) + '」"><b>' + esc(p.who) + '</b> · ' + esc(p.what) + '</div><div class="side">' + (p.due ? esc(p.due) : '未定') + '</div></div>').join('');
+
+    const todos = $('td-todos');
+    if (todos) {
+        if (!q.todos.length) todos.innerHTML = '<div class="empty-hint">今天没有待办事项</div>';
+        else todos.innerHTML = q.todos.map((t, i) => '<div class="td-row"><div class="main"><b>' + (i + 1) + '.</b> <span class="td-pri ' + t.priority + '"></span>' + (t.time ? esc(t.time) + ' · ' : '') + esc(t.title) + '</div><div class="side">' + (labels[t.priority] || '中') + ' · ' + (mods[t.module] || t.module) + '</div></div>').join('');
     }
-    const ano = $('td-anomalies');
-    if (ano) {
-        if (!q.anomalies.length) ano.innerHTML = '<div class="td-anomaly good">一切正常 ✓</div>';
-        else ano.innerHTML = q.anomalies.map(a => '<div class="td-anomaly">' + esc(a.text) + '</div>').join('');
-    }
-    const hb = $('td-health');
-    if (hb) {
+
+    const brief = $('td-briefing');
+    if (brief) {
         const b = q.healthBrief;
         const rows = [];
         rows.push('<div class="td-health-row"><span class="k">睡眠</span><span>' + (b.sleep ? (b.sleep.hours !== null ? b.sleep.hours + 'h' : '已记录') + (b.sleep.feeling ? ' · ' + esc(b.sleep.feeling) : '') + (b.sleep.date !== q.date ? '（昨晚）' : '') : '未记录') + '</span></div>');
         rows.push('<div class="td-health-row"><span class="k">能量</span><span>' + (b.energy ? '上午 ' + b.energy.am + ' · 下午 ' + b.energy.pm + ' · 均 ' + b.energy.avg : '未记录') + '</span></div>');
         rows.push('<div class="td-health-row"><span class="k">运动</span><span>' + (b.exercise.count ? b.exercise.totalMinutes + ' 分钟（' + b.exercise.items.map(x => (TD_EXERCISE_LABEL[x.type] || x.type) + ' ' + x.duration).join('、') + '）' : '今天还没运动') + '</span></div>');
-        hb.innerHTML = rows.join('');
+        let html = '<div class="td-brief-section"><div class="td-brief-title">今日状态</div>' + rows.join('') + '</div>';
+        if (q.anomalies.length) html += '<div class="td-brief-section"><div class="td-brief-title">需要留意</div>' + q.anomalies.map(a => '<div class="td-anomaly">' + esc(a.text) + '</div>').join('') + '</div>';
+        html += '<div class="td-brief-section"><div class="td-brief-title">世事简报</div>' + (q.newsBriefing && q.newsBriefing.content ? '<div class="td-news-content">' + md2html(q.newsBriefing.content) + '</div>' : '<div class="empty-hint">今日简报尚未生成</div>') + '</div>';
+        brief.innerHTML = html;
     }
-    const st = $('td-review-status');
-    const review = Core.state.goalData.dailyReviews.find(x => x.date === q.date);
-    const answers = review && review.answers ? review.answers : {};
-    const reviewText = [answers.done, answers.fail, answers.adjust].map(x => String(x || '').trim()).filter(Boolean).join('；');
-    if (st) st.textContent = reviewText ? '今日已复盘，最新：' + reviewText.slice(0, 40) : '';
 }
 function tdOpenReview() {
     const m = $('td-review-modal');
@@ -6711,10 +6724,10 @@ const RV_MODULES = [
     { id: 'news', icon: '📰', label: '世事', tab: 'news' }
 ];
 function rvMetricRows(id, d) {
-    const row = (k, v) => '<div class="rv-metric-row"><span class="k">' + k + '</span><span class="v">' + esc(String(v)) + '</span></div>';
-    if (id === 'finance') return row('支出', '¥' + d.expense.toFixed(2)) + row('收入', '¥' + d.income.toFixed(2)) + row('结余', (d.net >= 0 ? '+' : '') + '¥' + d.net.toFixed(2));
+    const row = (k, v) => '<span class="rv-metric-row"><span class="k">' + k + '</span><span class="v">' + esc(String(v)) + '</span></span>';
+    if (id === 'finance') return row('支出', '¥' + d.expense.toFixed(2));
     if (id === 'goals') return row('完成执行点', d.donePlans) + row('当前逾期', d.overdue) + row('复盘次数', d.reviews);
-    if (id === 'health') return row('平均睡眠', d.avgSleep === null ? '—' : d.avgSleep + 'h') + row('睡眠不足天数', d.shortSleepDays) + row('运动分钟', d.exerciseMinutes);
+    if (id === 'health') return row('平均睡眠', d.avgSleep === null ? '—' : d.avgSleep + 'h') + row('平均电量', d.avgBattery === null ? '—' : (d.avgBattery > 0 ? '+' : '') + d.avgBattery.toFixed(1) + ' 点') + row('每日平均能量', d.dailyAvgEnergy === null ? '—' : d.dailyAvgEnergy.toFixed(1) + ' / 10');
     if (id === 'habits') return row('打卡总次数', d.totalChecks) + row('平均打卡率', d.avgRate === null ? '—' : d.avgRate + '%') + row('全勤习惯', d.perfectHabits);
     if (id === 'wardrobe') return row('穿搭确认天数', d.outfitDays) + row('闲置衣物', d.idleItems) + row('最常穿', d.topWear || '—');
     if (id === 'news') return row('收录条数', d.items) + row('摘要次数', d.summaries) + row('简报次数', d.briefings);
@@ -6723,10 +6736,14 @@ function rvMetricRows(id, d) {
 function renderReview() {
     const q = Core.queryReview(rvPeriod);
     const range = $('rv-range');
-    if (range) range.textContent = q.range.start + ' ~ ' + q.range.end;
-    $$('.rv-chip').forEach(c => c.classList.toggle('active', c.dataset.period === rvPeriod));
+    if (range) range.textContent = q.range.start === q.range.end ? q.range.start : q.range.start + ' ~ ' + q.range.end;
+    $$('.rv-chip').forEach(c => {
+        const active = c.dataset.period === rvPeriod;
+        c.classList.toggle('active', active);
+        c.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
     const cards = $('rv-cards');
-    if (cards) cards.innerHTML = RV_MODULES.map(m => '<div class="rv-card' + (rvOpenModule === m.id ? ' open' : '') + '" data-action="rv-toggle" data-module="' + m.id + '"><div class="rv-card-head">' + m.icon + ' ' + m.label + '<span class="rv-arrow">▼</span></div>' + rvMetricRows(m.id, q[m.id]) + '</div>').join('');
+    if (cards) cards.innerHTML = RV_MODULES.map(m => '<button type="button" class="rv-card' + (rvOpenModule === m.id ? ' open' : '') + '" data-action="rv-toggle" data-module="' + m.id + '" aria-expanded="' + (rvOpenModule === m.id ? 'true' : 'false') + '"><span class="rv-card-head">' + m.icon + ' ' + m.label + '<span class="rv-arrow">▼</span></span>' + rvMetricRows(m.id, q[m.id]) + '</button>').join('');
     const wrap = $('rv-detail-wrap');
     if (wrap) wrap.style.display = rvOpenModule ? '' : 'none';
 }
@@ -7229,7 +7246,7 @@ bindEvent('#td-review-cancel', 'click', tdCloseReview);
 bindEvent('#td-review-save', 'click', tdSaveReview);
 
 // 回顾页
-bindEvent('[data-action="rv-period"]', 'click', (e, el) => { rvPeriod = el.dataset.period === 'month' ? 'month' : 'week'; reviewCloseDetail(); renderReview(); });
+bindEvent('[data-action="rv-period"]', 'click', (e, el) => { rvPeriod = ['day', 'week', 'month'].includes(el.dataset.period) ? el.dataset.period : 'week'; reviewCloseDetail(); renderReview(); });
 bindEvent('[data-action="rv-toggle"]', 'click', (e, el) => reviewToggleDetail(el.dataset.module));
 bindEvent('#rv-detail-close', 'click', () => { reviewCloseDetail(); renderReview(); });
 
