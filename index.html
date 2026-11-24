@@ -1171,7 +1171,7 @@ body.full-mode .legacy-form.chip-row{display:flex !important}
 </div>
 
 <div class="modal-overlay" id="settings-modal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
         <div class="modal-title">⚙️ 设置</div>
         <div class="field"><label>API Key</label><input type="password" id="ai-api-key" placeholder="sk-..."></div>
         <div class="field"><label>API 地址</label><input type="text" id="ai-api-url" value="https://api.deepseek.com/chat/completions"></div>
@@ -1205,6 +1205,31 @@ body.full-mode .legacy-form.chip-row{display:flex !important}
             <div id="sec-slots-list" style="margin-top:10px;max-height:230px;overflow-y:auto;"></div>
             <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;">每个点位可单独关闭/改时间。提醒需要页面保持打开（静态站无法后台推送）；当天打开晚于点位，会依次补发全部提醒。</p>
         </div>
+        <details id="rules-panel" style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <summary style="font-size:14px;font-weight:700;cursor:pointer;">🎛️ 解析规则</summary>
+            <div style="margin-top:14px;">
+                <div class="field"><label>分类映射（JSON：关键词 → 分类）</label><textarea id="rules-category-map" style="min-height:92px;font-family:monospace;font-size:12px;"></textarea></div>
+                <div class="field"><label>默认账户（JSON：分类 → survival / stable / develop）</label><textarea id="rules-account-map" style="min-height:76px;font-family:monospace;font-size:12px;"></textarea></div>
+                <div class="field"><label>日程 / 目标 / 世事未给日期时</label><select id="rules-no-time"><option value="today">默认补为今天</option><option value="">保留空日期</option></select></div>
+                <div class="grid-2">
+                    <div class="field"><label>自动确认阈值（0～1）</label><input type="number" id="rules-auto-confirm" min="0" max="1" step="0.01"></div>
+                    <div class="field"><label>强制澄清阈值（0～1）</label><input type="number" id="rules-must-confirm" min="0" max="1" step="0.01"></div>
+                </div>
+                <button class="btn btn-secondary btn-full" id="rules-save">保存解析规则</button>
+                <div id="rules-save-status" role="status" style="font-size:12px;margin-top:8px;text-align:center;"></div>
+                <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;">规则同时作用于本地解析和 AI 提示词；财务、健康、习惯仍按既有契约使用当天日期。</p>
+            </div>
+        </details>
+        <details id="debug-panel" style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <summary style="font-size:14px;font-weight:700;cursor:pointer;">🛠️ 调试日志 <span id="debug-count" style="font-weight:400;color:var(--text3);"></span></summary>
+            <div id="debug-log-list" style="margin-top:12px;max-height:260px;overflow-y:auto;"></div>
+            <p style="font-size:11px;color:var(--text3);margin-top:8px;">仅显示当前会话已有日志，最多展示最近 20 条。</p>
+        </details>
+        <details id="corrections-panel" style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
+            <summary style="font-size:14px;font-weight:700;cursor:pointer;">✏️ 修正统计 <span id="correction-count" style="font-weight:400;color:var(--text3);"></span></summary>
+            <div id="correction-stats" style="margin-top:12px;"></div>
+            <div id="correction-list" style="margin-top:10px;max-height:260px;overflow-y:auto;"></div>
+        </details>
     </div>
 </div>
 
@@ -1633,7 +1658,11 @@ const Core = (() => {
         const wl = FIELD_WHITELIST[card.module] && FIELD_WHITELIST[card.module][card.type];
         if (!wl) { card.invalid = true; return card; }
         const clean = {};
-        wl.forEach(k => { const v = card.fields[k]; if (v !== undefined && v !== null && v !== '') clean[k] = v; });
+        wl.forEach(k => {
+            const v = card.fields[k];
+            /* date/time 的空字符串表示“原话未给出”，是澄清流程需要保留的契约状态。 */
+            if (v !== undefined && v !== null && (v !== '' || k === 'date' || k === 'time')) clean[k] = v;
+        });
         card.fields = clean;
         ['amount', 'duration', 'delta', 'water', 'am_score', 'pm_score'].forEach(k => {
             if (card.fields[k] !== undefined) { const n = parseFloat(card.fields[k]); if (!isNaN(n)) card.fields[k] = n; else delete card.fields[k]; }
@@ -1679,9 +1708,9 @@ const Core = (() => {
 2. module 只能是：finance / schedule / goal / health / habit / wardrobe / news。每个 module 允许的 type 与 fields 白名单如下，fields 只允许白名单键，多一个都不要：
    finance: expense{amount,account,subCategory,desc} / income{amount,desc} / transfer{amount,from,to,desc}
    schedule: event{title,date,time,priority,note} / done{title}
-   goal: plan{goalKeyword,work,due,period,reward,punish} / review{done,fail,adjust}
-   health: sleep{start,end,feeling,note} / energy{am_score,pm_score,note} / exercise{type,duration,note} / meal{breakfast,lunch,dinner,snack,water} / charge{type,delta,note} / body{signals,note} / micro{posture,habits,note}
-   habit: check{habitKeyword,date}
+   goal: plan{goalKeyword,work,due,period,reward,punish} / review{done,fail,adjust} / create{title,why,deadline,done,week}
+   health: sleep{start,end,feeling,note} / energy{am_score,pm_score,note} / exercise{type,duration,note} / meal{breakfast,lunch,dinner,snack,water} / charge{type,delta,note} / body{signals,note} / micro{posture,habits,note} / innerPeace{feeling,note}
+   habit: check{habitKeyword,habitId,date}
    wardrobe: confirm_outfit{date}
    news: item{title,content,category}
    其中：amount/duration/delta/water/am_score/pm_score 是数字；account ∈ survival|stable|develop；subCategory ∈ rigid|emotional|once（仅生存账户）；date 格式 YYYY-MM-DD；time 格式 HH:MM。
@@ -1778,12 +1807,8 @@ const Core = (() => {
     async function commitSchedule(type, f) {
         const today = todayStr();
         if (type === 'event') {
-            const parsed = schParseTitle(f.title || '');
-            const task = { id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6), title: f.title, date: f.date || today, time: f.time || '', period: parsed.period, note: f.note || '', priority: f.priority || 'mid', status: 'todo', doneAt: null, smart: schSmart(f.title, f.date || today, f.time || ''), createdAt: Date.now() };
-            state.scheduleData.tasks.push(task);
-            await saveScheduleCloud();
-            RenderBus.emitAll(['schedule', 'execution', 'secretary']);
-            return { ok: true, id: task.id, _recordType: 'schedule' };
+            const r = await _addScheduleCore({ ...f, preserveTitle: true });
+            return r.ok ? { ok: true, id: r.id, _recordType: 'schedule' } : r;
         }
         if (type === 'done') {
             const t = state.scheduleData.tasks.find(x => x.status === 'todo' && (x.title === f.title || x.title.indexOf(f.title) >= 0));
@@ -1840,23 +1865,7 @@ const Core = (() => {
     }
 
     async function commitHealth(type, f, date) {
-        const listKey = HEALTH_LIST_MAP_INNER[type];
-        if (!listKey) return { ok: false, error: '未知动作：health/' + type };
-        const rec = { date, ts: Date.now() };
-        if (type === 'sleep') { rec.start_time = f.start; rec.end_time = f.end; rec.feeling = f.feeling || 'ok'; rec.note = f.note || ''; }
-        else if (type === 'energy') { rec.am_score = parseInt(f.am_score, 10) || 5; rec.pm_score = parseInt(f.pm_score, 10) || 5; rec.note = f.note || ''; }
-        else if (type === 'exercise') { rec.type = f.type || 'other'; rec.duration = parseInt(f.duration, 10); rec.note = f.note || ''; }
-        else if (type === 'meal') { rec.breakfast = f.breakfast || ''; rec.lunch = f.lunch || ''; rec.dinner = f.dinner || ''; rec.snack = f.snack || ''; rec.water = parseInt(f.water, 10) || 0; }
-        else if (type === 'charge') { rec.type = f.type || 'other'; rec.delta = parseInt(f.delta, 10) || 0; rec.note = f.note || ''; }
-        else if (type === 'body') { rec.signals = f.signals; rec.note = f.note || ''; }
-        else if (type === 'micro') { rec.posture = f.posture || []; rec.habits = f.habits || []; rec.note = f.note || ''; }
-        else if (type === 'innerPeace') { rec.feeling = f.feeling || ''; rec.note = f.note || ''; rec.answers = {}; rec.conversation = []; rec.createdAt = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }); }
-        const item = await syncRecord(type, date, rec, rec);
-        if (!item && currentUser) return { ok: false, error: '云端写入失败' };
-        const id = item ? item.id : ('local_' + rec.ts);
-        state.healthData[listKey].unshift({ id, ...rec });
-        saveCache(); RenderBus.emit('health');
-        return { ok: true, id, _cloudId: id, _recordType: 'health', _recordDate: date };
+        return _addHealthCore(type, { ...f, date });
     }
 
     async function commitHabit(f) {
@@ -2280,9 +2289,9 @@ const Core = (() => {
                 if (mins < 0) mins += 24 * 60;
                 return mins > 0 ? mins / 60 : null;
             };
-            const hs = state.healthData.sleep.filter(x => inPeriod(x.date)).map(sleepHoursOf).filter(h => h !== null);
-            if (hs.length) r.health.avgSleep = Math.round((hs.reduce((a, b) => a + b, 0) / hs.length) * 10) / 10;
-            r.health.shortSleepDays = hs.filter(h => h < 7).length;
+            const hs = state.healthData.sleep.filter(x => inPeriod(x.date)).map(x => ({ date: x.date, hours: sleepHoursOf(x) })).filter(x => x.hours !== null);
+            if (hs.length) r.health.avgSleep = Math.round((hs.reduce((a, b) => a + b.hours, 0) / hs.length) * 10) / 10;
+            r.health.shortSleepDays = new Set(hs.filter(x => x.hours < 7).map(x => x.date)).size;
             state.healthData.exercise.forEach(x => { if (inPeriod(x.date)) r.health.exerciseMinutes += parseInt(x.duration, 10) || 0; });
             /* habits：打卡总次数 / 平均打卡率 / 全勤习惯 */
             if (state.habits.length) {
@@ -2336,19 +2345,21 @@ const Core = (() => {
                         content = await callDeepSeekRaw([sys, { role: 'user', content: prompt + '\n\n注意：你上一次的输出不是合法 JSON，请严格按格式重新输出。' }], { temperature: 0.1, max_tokens: 1600, jsonMode: true });
                         parsed = parseJsonSafe(content);
                     }
-                    aiCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+                    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.cards)) throw new Error('AI 返回缺少 cards 数组');
+                    aiCards = parsed.cards;
                     aiNeed = !!parsed.needClarify;
                     aiQuestion = String(parsed.question || '');
                 } catch (e) { aiErr = e.message || String(e); }
             }
             let cards = [], needClarify = false, question = '';
-            if (aiCards && aiCards.length) { cards = aiCards; needClarify = aiNeed; question = aiQuestion; }
+            /* AI 已给出合法响应时，空卡 + needClarify 也是有效结果，不能被本地兜底覆盖。 */
+            if (aiCards !== null) { cards = aiCards; needClarify = aiNeed; question = aiQuestion; }
             else { cards = local.cards; needClarify = local.needClarify; question = local.question; }
             const rulesHit = [];
             for (const [k] of Object.entries(state.rules.categoryMap)) { if (src.indexOf(k) >= 0) rulesHit.push(k); }
             cards = cards.map(c => applyRulesToCard(c, src)).filter(c => c && !c.invalid && MODULE_SET.has(c.module));
             if (!cards.length && !needClarify && !question && !local.trivial) { needClarify = true; question = '「' + src + '」没太听懂：金额、时间这些具体信息能再说清楚一点吗？'; }
-            debug('parse', { text: src, cards: cards.length, rulesHit, aiUsed: !!state.aiConfig.apiKey, aiErr: aiErr || null, ms: Date.now() - t0 });
+            debug('parse', { text: src, cards: cards.length, rulesHit, aiUsed: aiCards !== null, aiErr: aiErr || null, ms: Date.now() - t0 });
             return { cards, needClarify, question };
         },
 
@@ -2490,13 +2501,13 @@ const Core = (() => {
             });
             await case_('T8 月底前看完这本书→date留空+needClarify（模糊时间不推断）', async () => {
                 const r = await Core.parse('月底前看完这本书');
-                if (r.cards.length === 0 && r.needClarify !== true) throw new Error('unexpected');
-                for (const c of r.cards) {
-                    if (c.module === 'schedule') {
-                        if (c.fields.date) throw new Error('date should be empty, got ' + c.fields.date);
-                        if (c.needClarify !== true) throw new Error('card needClarify');
-                    }
-                }
+                const c = r.cards.find(x => x.module === 'schedule');
+                if (!c) throw new Error('no schedule card');
+                if (c.fields.date !== '') throw new Error('date should be an empty string, got ' + c.fields.date);
+                if (c.needClarify !== true) throw new Error('card needClarify');
+                if (!c.clarifyQuestion) throw new Error('clarifyQuestion missing');
+                if (!(c.confidence <= 0.5)) throw new Error('confidence=' + c.confidence);
+                if (c.autoConfirm !== false) throw new Error('autoConfirm should be false');
                 wlCheck(r.cards);
             });
             await case_('T9 fields键⊆白名单（上述各例已逐卡校验）', async () => {});
@@ -2538,6 +2549,43 @@ const Core = (() => {
                 const cr = await Core.commit({ module: 'finance', type: 'expense', title: 'x', fields: { amount: -5, account: 'survival', subCategory: 'rigid', desc: 'x' }, time: todayStr(), confidence: 0.9, sourceText: 'x' });
                 if (cr.ok !== false || !cr.error) throw new Error('should fail');
                 if (state.accountsData.expenses.length !== n0) throw new Error('state changed');
+            });
+            await case_('T14 明天3点开会→timeConf=0.75且不自动确认', async () => {
+                const r = await Core.parse('明天 3 点开会');
+                const c = r.cards.find(x => x.module === 'schedule');
+                if (!c) throw new Error('no schedule card');
+                if (c.fields.time !== '15:00') throw new Error('time=' + c.fields.time);
+                if (c.confidence !== 0.75) throw new Error('confidence=' + c.confidence);
+                if (c.autoConfirm !== false) throw new Error('autoConfirm should be false');
+                if (c.needClarify) throw new Error('needClarify should be false');
+                wlCheck(r.cards);
+            });
+            await case_('T15 Prompt与FIELD_WHITELIST新增契约完全对齐', async () => {
+                const expected = [
+                    ['goal', 'create', 'title,why,deadline,done,week', 'create{title,why,deadline,done,week}'],
+                    ['health', 'energy', 'am_score,pm_score,note', 'energy{am_score,pm_score,note}'],
+                    ['health', 'innerPeace', 'feeling,note', 'innerPeace{feeling,note}'],
+                    ['habit', 'check', 'habitKeyword,habitId,date', 'habit: check{habitKeyword,habitId,date}']
+                ];
+                expected.forEach(([module, type, fields, promptText]) => {
+                    const actual = (FIELD_WHITELIST[module] && FIELD_WHITELIST[module][type] || []).join(',');
+                    if (actual !== fields) throw new Error('whitelist changed: ' + module + '/' + type + '=' + actual);
+                    if (!PARSE_SYSTEM_PROMPT.includes(promptText)) throw new Error('Prompt missing: ' + promptText);
+                });
+            });
+            await case_('T16 AI空卡+needClarify→保留AI追问且不落地本地兜底', async () => {
+                const savedCallDeepSeekRaw = callDeepSeekRaw;
+                try {
+                    state.aiConfig.apiKey = 'stage2-test-key';
+                    callDeepSeekRaw = async () => JSON.stringify({ cards: [], needClarify: true, question: 'AI 追问：请补充具体时间。' });
+                    const r = await Core.parse('随便说点什么');
+                    if (r.cards.length !== 0) throw new Error('cards not empty');
+                    if (r.needClarify !== true) throw new Error('AI needClarify lost');
+                    if (r.question !== 'AI 追问：请补充具体时间。') throw new Error('AI question lost: ' + r.question);
+                } finally {
+                    callDeepSeekRaw = savedCallDeepSeekRaw;
+                    state.aiConfig.apiKey = '';
+                }
             });
             state.aiConfig.apiKey = savedKey;
             const passed = results.filter(x => x.pass).length;
@@ -2614,12 +2662,14 @@ const MODULES = [
 function buildNav() {
     const seg = qs('.seg');
     if (!seg) return;
+    const activeTab = document.querySelector('.tab-content.active');
+    const activeId = activeTab && activeTab.id.indexOf('tab-') === 0 ? activeTab.id.slice(4) : 'secretary';
     seg.innerHTML = '';
     const primary = MODULES.filter(m => !m.legacy);
     const legacy = MODULES.filter(m => m.legacy);
-    primary.forEach((m, i) => {
+    primary.forEach(m => {
         const btn = document.createElement('button');
-        btn.className = 'seg-item nav-btn' + (i === 0 ? ' active' : '');
+        btn.className = 'seg-item nav-btn' + (m.id === activeId ? ' active' : '');
         btn.dataset.tab = m.id;
         btn.textContent = m.icon + ' ' + m.label;
         seg.appendChild(btn);
@@ -2631,7 +2681,7 @@ function buildNav() {
     seg.appendChild(sbtn);
     if (uiFullMode) legacy.forEach(m => {
         const btn = document.createElement('button');
-        btn.className = 'seg-item nav-btn';
+        btn.className = 'seg-item nav-btn' + (m.id === activeId ? ' active' : '');
         btn.dataset.tab = m.id;
         btn.textContent = m.icon + ' ' + m.label;
         seg.appendChild(btn);
@@ -4033,86 +4083,112 @@ function updateOtherInputs() {
     if (so) so.classList.toggle('hidden', !selectedSignals.has('other'));
 }
 
+/* 核心写路径：健康记录（表单与秘书共用，不弹窗、不操作 DOM） */
+async function _addHealthCore(type, payload) {
+    const listKey = HEALTH_LIST_MAP[type];
+    if (!listKey || type === 'ai') return { ok: false, error: '未知动作：health/' + type };
+    const p = payload && typeof payload === 'object' ? payload : {};
+    const date = p.date || todayStr();
+    if (!isValidDay(date)) return { ok: false, error: '日期格式无效' };
+    const rec = { date, ts: Date.now() };
+    if (type === 'sleep') {
+        if (!p.start || !p.end) return { ok: false, error: '请填写入睡和醒来时间' };
+        rec.start_time = p.start; rec.end_time = p.end; rec.feeling = p.feeling || 'ok'; rec.note = p.note || '';
+    } else if (type === 'energy') {
+        rec.am_score = parseInt(p.am_score, 10) || 5; rec.pm_score = parseInt(p.pm_score, 10) || 5; rec.note = p.note || '';
+    } else if (type === 'exercise') {
+        rec.type = p.type || 'other'; rec.duration = parseInt(p.duration, 10); rec.note = p.note || '';
+        if (!(rec.duration > 0)) return { ok: false, error: '请填写时长' };
+    } else if (type === 'meal') {
+        rec.breakfast = p.breakfast || ''; rec.lunch = p.lunch || ''; rec.dinner = p.dinner || ''; rec.snack = p.snack || ''; rec.water = parseInt(p.water, 10) || 0;
+        if (!rec.breakfast && !rec.lunch && !rec.dinner && !rec.snack) return { ok: false, error: '至少填一餐' };
+    } else if (type === 'charge') {
+        rec.type = p.type || 'other'; rec.delta = parseInt(p.delta, 10) || 0; rec.note = p.note || '';
+    } else if (type === 'body') {
+        rec.signals = Array.isArray(p.signals) ? p.signals : []; rec.acne = p.acne || null; rec.note = p.note || '';
+        if (!rec.signals.length && !rec.acne) return { ok: false, error: '请至少选择一项或填写痘痘记录' };
+    } else if (type === 'micro') {
+        rec.posture = Array.isArray(p.posture) ? p.posture : []; rec.habits = Array.isArray(p.habits) ? p.habits : []; rec.note = p.note || '';
+        if (!rec.posture.length && !rec.habits.length) return { ok: false, error: '请至少选择一项' };
+    } else if (type === 'innerPeace') {
+        rec.feeling = p.feeling || ''; rec.note = p.note || '';
+        rec.answers = p.answers && typeof p.answers === 'object' ? { ...p.answers } : {};
+        rec.conversation = Array.isArray(p.conversation) ? p.conversation.map(m => ({ ...m })) : [];
+        rec.createdAt = p.createdAt || new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+    const item = await syncRecord(type, date, rec, rec, { silent: true });
+    if (!item && currentUser) return { ok: false, error: '云端写入失败' };
+    const id = item ? item.id : ('local_' + rec.ts);
+    const record = { id, ...rec };
+    Core.state.healthData[listKey].unshift(record);
+    saveCache(); RenderBus.emit('health');
+    return { ok: true, id, _cloudId: id, _recordType: 'health', _recordDate: date, record };
+}
+
 async function addSleep() {
     const start = $('sleep-start').value;
     const end = $('sleep-end').value;
     const feeling = $('sleep-feeling').value;
     const note = $('sleep-note').value.trim();
-    if (!start || !end) return alert('请填写入睡和醒来时间');
-    const rec = { date: currentDay, ts: Date.now(), start_time: start, end_time: end, feeling, note };
-    const item = await syncRecord('sleep', currentDay, rec, rec);
-    if (item) { Core.state.healthData.sleep.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value=''; }
+    const r = await Core._addHealthCore('sleep', { date: currentDay, start, end, feeling, note });
+    if (!r.ok) { alert(r.error); return; }
+    $('sleep-start').value=''; $('sleep-end').value=''; $('sleep-note').value='';
 }
 async function addEnergy() {
     let am = 5, pm = 5;
     $$('#energy-am .score-btn').forEach(b => { if (b.classList.contains('active')) am = parseInt(b.dataset.val,10); });
     $$('#energy-pm .score-btn').forEach(b => { if (b.classList.contains('active')) pm = parseInt(b.dataset.val,10); });
     const note = $('energy-note').value.trim();
-    const rec = { date: currentDay, ts: Date.now(), am_score: am, pm_score: pm, note };
-    const item = await syncRecord('energy', currentDay, rec, rec);
-    if (item) { Core.state.healthData.energy.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('energy-note').value=''; }
+    const r = await Core._addHealthCore('energy', { date: currentDay, am_score: am, pm_score: pm, note });
+    if (!r.ok) { alert(r.error); return; }
+    $('energy-note').value='';
 }
 async function addCharge() {
     const type = $('charge-type').value;
     const delta = parseInt($('charge-delta').value, 10) || 0;
     const note = $('charge-note').value.trim();
-    const rec = { date: currentDay, ts: Date.now(), type, delta, note };
-    const item = await syncRecord('charge', currentDay, rec, rec);
-    if (item) { Core.state.healthData.charge.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('charge-note').value=''; }
+    const r = await Core._addHealthCore('charge', { date: currentDay, type, delta, note });
+    if (!r.ok) { alert(r.error); return; }
+    $('charge-note').value='';
 }
 async function addExercise() {
     const dur = parseInt($('exercise-duration').value, 10);
-    if (!dur || dur <= 0) return alert('请填写时长');
     const type = $('exercise-type').value;
     const note = $('exercise-note').value.trim();
-    const rec = { date: currentDay, ts: Date.now(), type, duration: dur, note };
-    const item = await syncRecord('exercise', currentDay, rec, rec);
-    if (item) { Core.state.healthData.exercise.unshift({ id: item.id, ...rec }); saveCache(); RenderBus.emit('health'); $('exercise-duration').value=''; $('exercise-note').value=''; }
+    const r = await Core._addHealthCore('exercise', { date: currentDay, type, duration: dur, note });
+    if (!r.ok) { alert(r.error); return; }
+    $('exercise-duration').value=''; $('exercise-note').value='';
 }
 async function addMicro() {
-    if (selectedPosture.size === 0 && selectedHabit.size === 0) return alert('请至少选择一项');
     const posture = Array.from(selectedPosture).map(k => k === 'other' ? { key: 'other', custom: $('posture-other').value.trim() } : { key: k });
     const habitsArr = Array.from(selectedHabit).map(k => k === 'other' ? { key: 'other', custom: $('habit-other').value.trim() } : { key: k });
     const note = $('micro-note').value.trim();
-    const rec = { date: currentDay, ts: Date.now(), posture, habits: habitsArr, note };
-    const item = await syncRecord('micro', currentDay, rec, rec);
-    if (item) {
-        Core.state.healthData.microExercise.unshift({ id: item.id, ...rec });
-        saveCache(); RenderBus.emit('health');
-        selectedPosture.clear(); selectedHabit.clear();
-        buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
-        buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
-        $('posture-other').value = ''; $('habit-other').value = ''; $('micro-note').value = '';
-    }
+    const r = await Core._addHealthCore('micro', { date: currentDay, posture, habits: habitsArr, note });
+    if (!r.ok) { alert(r.error); return; }
+    selectedPosture.clear(); selectedHabit.clear();
+    buildChipRow('posture-chips', POSTURE_ISSUES, selectedPosture);
+    buildChipRow('habit-chips', MICRO_HABITS, selectedHabit);
+    $('posture-other').value = ''; $('habit-other').value = ''; $('micro-note').value = '';
 }
 async function addBody() {
     const signals = Array.from(selectedSignals).map(k => k === 'other' ? { key: 'other', custom: $('signal-other').value.trim() } : { key: k });
     const acneLocation = $('acne-location').value;
     const acne = { location: acneLocation, locationCustom: acneLocation === 'other' ? $('acne-location-other').value.trim() : '', type: $('acne-type').value, severity: parseInt($('acne-severity').value, 10) || null, note: $('acne-note').value.trim() };
     const hasAcne = acne.location || acne.type || acne.severity || acne.note;
-    if (signals.length === 0 && !hasAcne) return alert('请至少选择一项或填写痘痘记录');
     const note = $('signal-note').value.trim();
-    const rec = { date: currentDay, ts: Date.now(), signals, acne: hasAcne ? acne : null, note };
-    const item = await syncRecord('body', currentDay, rec, rec);
-    if (item) {
-        Core.state.healthData.bodySignals.unshift({ id: item.id, ...rec });
-        saveCache(); RenderBus.emit('health');
-        selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
-        $('signal-other').value = ''; $('acne-location').value = ''; $('acne-location-other').value = ''; $('acne-location-other-field').style.display = 'none'; $('acne-type').value = ''; $('acne-severity').value = ''; $('acne-note').value = ''; $('signal-note').value = '';
-    }
+    const r = await Core._addHealthCore('body', { date: currentDay, signals, acne: hasAcne ? acne : null, note });
+    if (!r.ok) { alert(r.error); return; }
+    selectedSignals.clear(); buildChipRow('signal-chips', BODY_SIGNALS, selectedSignals);
+    $('signal-other').value = ''; $('acne-location').value = ''; $('acne-location-other').value = ''; $('acne-location-other-field').style.display = 'none'; $('acne-type').value = ''; $('acne-severity').value = ''; $('acne-note').value = ''; $('signal-note').value = '';
 }
 async function addMeal() {
     const meals = { breakfast: $('meal-breakfast').value.trim(), lunch: $('meal-lunch').value.trim(), dinner: $('meal-dinner').value.trim() };
     const water = parseInt($('water-cups').value, 10) || 0;
     const snack = $('snack').value.trim();
-    if (!meals.breakfast && !meals.lunch && !meals.dinner && !snack) return alert('至少填一餐');
-    const rec = { date: currentDay, ts: Date.now(), ...meals, water, snack };
-    const item = await syncRecord('meal', currentDay, rec, rec);
-    if (item) {
-        Core.state.healthData.meal.unshift({ id: item.id, ...rec });
-        saveCache(); RenderBus.emit('health'); showFoodAnalysis(meals, water, snack);
-        ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value = '');
-    }
+    const r = await Core._addHealthCore('meal', { date: currentDay, ...meals, water, snack });
+    if (!r.ok) { alert(r.error); return; }
+    showFoodAnalysis(meals, water, snack);
+    ['meal-breakfast','meal-lunch','meal-dinner','snack','water-cups'].forEach(id => $(id).value = '');
 }
 
 function renderSleep() {
@@ -4321,14 +4397,15 @@ function renderIpChat() {
 
 async function finishIpSession() {
     const now = new Date();
-    const rec = { date: currentDay, ts: Date.now(), feeling: ipAnswers.feeling || '（未记录）', answers: { ...ipAnswers }, conversation: ipConversation.map(m => ({ role: m.role, text: m.text })), createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) };
-    const item = await syncRecord('innerPeace', currentDay, rec, rec);
-    if (item) {
-        Core.state.healthData.innerPeace.unshift({ id: item.id, ...rec });
-        saveCache();
-        renderIpReport(Core.state.healthData.innerPeace[0]);
-        renderInnerPeaceHistory();
-    }
+    const r = await Core._addHealthCore('innerPeace', {
+        date: currentDay,
+        feeling: ipAnswers.feeling || '（未记录）',
+        answers: { ...ipAnswers },
+        conversation: ipConversation.map(m => ({ role: m.role, text: m.text })),
+        createdAt: now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    });
+    if (!r.ok) alert(r.error);
+    else { renderIpReport(r.record); renderInnerPeaceHistory(); }
     ipCurrentKey = null; ipConversation = []; ipAnswers = {}; ipSelectedOption = null;
 }
 
@@ -5841,6 +5918,35 @@ async function saveScheduleCloud() {
     await syncRecord('schedule', todayStr(), Core.state.scheduleData, Core.state.cloudConfigRefs.schedule, { silent: true });
     saveCache();
 }
+/* 核心写路径：日程（表单与秘书共用，不弹窗、不操作 DOM） */
+async function _addScheduleCore(payload) {
+    const p = payload && typeof payload === 'object' ? payload : {};
+    const rawTitle = String(p.title || '').trim();
+    if (!rawTitle) return { ok: false, error: '请填写任务内容' };
+    if (p.date && !isValidDay(p.date)) return { ok: false, error: '日期格式无效' };
+    if (p.time && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(p.time)) return { ok: false, error: '时间格式无效' };
+    const parsed = schParseTitle(rawTitle);
+    const preserveTitle = p.preserveTitle === true;
+    const date = p.date || (!preserveTitle && parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
+    const time = p.time || (!preserveTitle ? parsed.time : '');
+    const task = {
+        id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        title: preserveTitle ? rawTitle : (parsed.clean || rawTitle),
+        date,
+        time: time || '',
+        period: parsed.period,
+        note: p.note || '',
+        priority: p.priority || 'mid',
+        status: 'todo',
+        doneAt: null,
+        smart: schSmart(rawTitle, date, time),
+        createdAt: Date.now()
+    };
+    Core.state.scheduleData.tasks.push(task);
+    await saveScheduleCloud();
+    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
+    return { ok: true, id: task.id, record: task };
+}
 function schAutoFill() {
     const t = $('sch-title');
     const d = $('sch-date');
@@ -5863,33 +5969,21 @@ function renderSchSmart() {
 }
 async function schAdd() {
     const titleEl = $('sch-title');
-    const title = titleEl ? titleEl.value.trim() : '';
-    if (!title) return alert('请填写任务内容');
-    const parsed = schParseTitle(title);
     const dateEl = $('sch-date');
     const timeEl = $('sch-time');
-    const date = (dateEl && dateEl.value) ? dateEl.value : (parsed.offset ? addDays(todayStr(), parsed.offset) : todayStr());
-    const time = (timeEl && timeEl.value) ? timeEl.value : parsed.time;
     const noteEl = $('sch-note');
-    Core.state.scheduleData.tasks.push({
-        id: 'st_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        title: parsed.clean || title,
-        date: date,
-        time: time || '',
-        period: parsed.period,
+    const r = await Core._addScheduleCore({
+        title: titleEl ? titleEl.value.trim() : '',
+        date: dateEl ? dateEl.value : '',
+        time: timeEl ? timeEl.value : '',
         note: noteEl ? noteEl.value.trim() : '',
-        priority: $('sch-priority').value,
-        status: 'todo',
-        doneAt: null,
-        smart: schSmart(title, date, time),
-        createdAt: Date.now()
+        priority: $('sch-priority').value
     });
-    await saveScheduleCloud();
+    if (!r.ok) { alert(r.error); return; }
     if (titleEl) titleEl.value = '';
     if (dateEl) dateEl.value = '';
     if (timeEl) timeEl.value = '';
     if (noteEl) noteEl.value = '';
-    RenderBus.emitAll(['schedule', 'execution', 'secretary']);
     renderSchSmart();
 }
 async function schToggleDone(id) {
@@ -6035,6 +6129,16 @@ function legacyFormTag() {
 
 /* ================= 秘书（对话式入口：Core.parse 卡片流） ================= */
 let secretaryChat = [];
+let secretaryBusy = false;
+const secCardPending = new WeakMap();
+
+function secSetSecretaryBusy(busy) {
+    secretaryBusy = !!busy;
+    const btn = $('secretary-send');
+    if (btn) { btn.disabled = secretaryBusy; btn.textContent = secretaryBusy ? '处理中…' : '发送'; }
+    const inp = $('secretary-input');
+    if (inp) inp.setAttribute('aria-busy', secretaryBusy ? 'true' : 'false');
+}
 
 function secretaryFacts() {
     const today = todayStr();
@@ -6216,7 +6320,9 @@ function secFieldValue(card, k) {
 function renderCard(card, mi, ci) {
     const spec = SEC_FIELD_SPECS[card.module + '/' + card.type];
     const locked = card.status === 'committed';
-    const disabledAll = card.status === 'revoked';
+    const busyAction = secCardPending.get(card) || '';
+    const busy = !!busyAction;
+    const disabledAll = card.status === 'revoked' || busy;
     const isAuto = card.status === 'committed' && card.autoRecorded;
     let badge = '';
     if (card.status === 'pending') badge = '<span class="sec-badge sec-badge-pending">待确认</span>';
@@ -6250,23 +6356,27 @@ function renderCard(card, mi, ci) {
     const confCls = confPct >= 85 ? 'hi' : (confPct >= 60 ? 'mid' : 'lo');
     let clarifyHtml = '';
     if (card.needClarify && card.status === 'pending') {
+        const clarifyDis = busy ? ' disabled' : '';
         clarifyHtml = '<div class="sec-card-clarify"><div class="sec-clarify-q">🤔 ' + esc(card.clarifyQuestion || '这条信息不够完整，能补充一下吗？') + '</div>' +
-            '<div class="sec-clarify-row"><input type="text" data-sec-clarify-input placeholder="补充说明…"><button class="btn btn-primary btn-sm" data-action="sec-card-clarify" data-mi="' + mi + '" data-ci="' + ci + '">提交澄清</button></div></div>';
+            '<div class="sec-clarify-row"><input type="text" data-sec-clarify-input placeholder="补充说明…"' + clarifyDis + '><button class="btn btn-primary btn-sm" data-action="sec-card-clarify" data-mi="' + mi + '" data-ci="' + ci + '"' + clarifyDis + '>' + (busyAction === 'clarify' ? '澄清中…' : '提交澄清') + '</button></div></div>';
     }
     let errHtml = '';
     if (card.status === 'error' && card.error) errHtml = '<div class="sec-card-err">' + esc(card.error) + '</div>';
-    const canConfirm = card.status === 'pending' || card.status === 'error';
-    const canModify = card.status === 'committed' && !disabledAll;
-    const canRevoke = (card.status === 'pending' || card.status === 'committed' || card.status === 'error') && !disabledAll;
+    const canConfirm = !busy && (card.status === 'pending' || card.status === 'error');
+    const canModify = !busy && card.status === 'committed' && !disabledAll;
+    const canRevoke = !busy && (card.status === 'pending' || card.status === 'committed' || card.status === 'error') && !disabledAll;
+    const confirmText = busyAction === 'commit' ? '提交中…' : (card.status === 'error' ? '重试' : '确认');
+    const modifyText = busyAction === 'modify' ? '修改中…' : '修改';
+    const revokeText = busyAction === 'revoke' ? '撤销中…' : '撤销';
     let footNote = '';
     if (card.tip) footNote += '<div class="sec-foot-msg ' + (card.tipOk ? 'ok' : 'err') + '">' + esc(card.tip) + '</div>';
     return '<div class="sec-card' + (card.status === 'revoked' ? ' revoked' : '') + '" data-mi="' + mi + '" data-ci="' + ci + '">' +
         '<div class="sec-card-head"><span class="sec-badge sec-badge-mod">' + (SEC_MODULE_BADGE[card.module] || esc(card.module)) + '</span><span class="sec-card-title">' + esc(card.title || '') + '</span>' + badge + '</div>' +
         fieldsHtml + clarifyHtml + errHtml +
         '<div class="sec-card-foot"><span class="sec-src">来源：' + esc(card.sourceText || '') + '</span><span class="sec-conf ' + confCls + '">置信度 ' + confPct + '%</span>' +
-        '<button class="btn btn-primary" data-action="sec-card-confirm" data-mi="' + mi + '" data-ci="' + ci + '"' + (canConfirm ? '' : ' disabled') + '>' + (card.status === 'error' ? '重试' : '确认') + '</button>' +
-        '<button class="btn btn-secondary" data-action="sec-card-modify" data-mi="' + mi + '" data-ci="' + ci + '"' + (canModify ? '' : ' disabled') + '>修改</button>' +
-        '<button class="btn btn-danger" data-action="sec-card-revoke" data-mi="' + mi + '" data-ci="' + ci + '"' + (canRevoke ? '' : ' disabled') + '>撤销</button></div>' +
+        '<button class="btn btn-primary" data-action="sec-card-confirm" data-mi="' + mi + '" data-ci="' + ci + '"' + (canConfirm ? '' : ' disabled') + '>' + confirmText + '</button>' +
+        '<button class="btn btn-secondary" data-action="sec-card-modify" data-mi="' + mi + '" data-ci="' + ci + '"' + (canModify ? '' : ' disabled') + '>' + modifyText + '</button>' +
+        '<button class="btn btn-danger" data-action="sec-card-revoke" data-mi="' + mi + '" data-ci="' + ci + '"' + (canRevoke ? '' : ' disabled') + '>' + revokeText + '</button></div>' +
         footNote +
         '</div>';
 }
@@ -6314,69 +6424,100 @@ function secDiffFields(card, vals) {
 }
 async function secAutoCommitCards(cards) {
     for (const card of cards || []) {
-        if (!(card.autoConfirm && !card.needClarify)) continue;
-        const res = await Core.commit(card);
-        if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.autoRecorded = true; }
-        else { card.status = 'error'; card.error = res.error || '记录失败'; }
+        if (!card || card.status !== 'pending' || secCardPending.has(card) || !(card.autoConfirm && !card.needClarify)) continue;
+        secCardPending.set(card, 'commit');
         renderSecretary();
+        try {
+            const res = await Core.commit(card);
+            if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.autoRecorded = true; }
+            else { card.status = 'error'; card.error = res.error || '记录失败'; }
+        } finally {
+            secCardPending.delete(card);
+            renderSecretary();
+        }
     }
 }
 async function secCardConfirm(mi, ci) {
     const card = secGetCard(mi, ci);
-    if (!card) return;
+    if (!card || (card.status !== 'pending' && card.status !== 'error') || secCardPending.has(card)) return;
     const el = secCardEl(mi, ci);
     Object.assign(card.fields, secReadFields(card, el));
     card.tip = '';
     card.tipOk = false;
-    const res = await Core.commit(card);
-    if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.error = ''; }
-    else { card.status = 'error'; card.error = res.error || '记录失败'; }
+    secCardPending.set(card, 'commit');
     renderSecretary();
+    try {
+        const res = await Core.commit(card);
+        if (res.ok) { card.status = 'committed'; card.id = res.id; card.committedAt = Date.now(); card.error = ''; }
+        else { card.status = 'error'; card.error = res.error || '记录失败'; }
+    } finally {
+        secCardPending.delete(card);
+        renderSecretary();
+    }
 }
 async function secCardModify(mi, ci) {
     const card = secGetCard(mi, ci);
-    if (!card || card.status !== 'committed') return;
+    if (!card || card.status !== 'committed' || secCardPending.has(card)) return;
     const vals = secReadFields(card, secCardEl(mi, ci));
     const diff = secDiffFields(card, vals);
     if (!Object.keys(diff).length) { card.tip = '没有改动'; card.tipOk = false; renderSecretary(); return; }
-    const res = await Core.update(card.id, { fields: diff });
-    if (res.ok) { Object.assign(card.fields, diff); card.tip = '✓ 已修改，记入修正记录'; card.tipOk = true; card.error = ''; }
-    else { card.tip = res.error || '修改失败'; card.tipOk = false; }
+    secCardPending.set(card, 'modify');
     renderSecretary();
+    try {
+        const res = await Core.update(card.id, { fields: diff });
+        if (res.ok) { Object.assign(card.fields, diff); card.tip = '✓ 已修改，记入修正记录'; card.tipOk = true; card.error = ''; }
+        else { card.tip = res.error || '修改失败'; card.tipOk = false; }
+    } finally {
+        secCardPending.delete(card);
+        renderSecretary();
+    }
 }
 async function secCardRevoke(mi, ci) {
     const card = secGetCard(mi, ci);
-    if (!card) return;
+    if (!card || secCardPending.has(card)) return;
     if (card.status === 'pending' || card.status === 'error') { card.status = 'revoked'; card.revokedAt = Date.now(); renderSecretary(); return; }
     if (card.status === 'committed') {
-        const res = await Core.revoke(card.id);
-        if (res.ok) { card.status = 'revoked'; card.revokedAt = Date.now(); card.error = ''; }
-        else { card.tip = res.error || '撤销失败'; card.tipOk = false; }
+        secCardPending.set(card, 'revoke');
         renderSecretary();
+        try {
+            const res = await Core.revoke(card.id);
+            if (res.ok) { card.status = 'revoked'; card.revokedAt = Date.now(); card.error = ''; }
+            else { card.tip = res.error || '撤销失败'; card.tipOk = false; }
+        } finally {
+            secCardPending.delete(card);
+            renderSecretary();
+        }
     }
 }
 async function secCardClarify(mi, ci, btnEl) {
     const card = secGetCard(mi, ci);
-    if (!card) return;
+    if (!card || card.status !== 'pending' || secCardPending.has(card)) return;
     const cardEl = btnEl ? btnEl.closest('.sec-card') : secCardEl(mi, ci);
     const inp = cardEl ? cardEl.querySelector('[data-sec-clarify-input]') : null;
     const val = inp ? inp.value.trim() : '';
     if (!val) { card.tip = '请先输入补充说明'; card.tipOk = false; renderSecretary(); return; }
     const combined = (card.sourceText ? card.sourceText + '，' : '') + val;
-    const r = await Core.parse(combined);
-    const m = secretaryChat[mi];
-    if (!m || !m.cards) return;
-    const idx = m.cards.indexOf(card);
-    if (idx === -1) return;
-    if (r.cards && r.cards.length) {
-        m.cards.splice(idx, 1, ...r.cards);
-        m.text = secSummarizeCards(m.cards);
-    } else {
-        m.cards.splice(idx, 1);
-        m.text = r.question || '还是没太明白，能再说具体一点吗？';
-    }
+    secCardPending.set(card, 'clarify');
     renderSecretary();
-    await secAutoCommitCards(r.cards || []);
+    try {
+        const r = await Core.parse(combined);
+        const m = secretaryChat[mi];
+        if (!m || !m.cards) return;
+        const idx = m.cards.indexOf(card);
+        if (idx === -1) return;
+        if (r.cards && r.cards.length) {
+            m.cards.splice(idx, 1, ...r.cards);
+            m.text = secSummarizeCards(m.cards);
+        } else {
+            m.cards.splice(idx, 1);
+            m.text = r.question || '还是没太明白，能再说具体一点吗？';
+        }
+        renderSecretary();
+        await secAutoCommitCards(r.cards || []);
+    } finally {
+        secCardPending.delete(card);
+        renderSecretary();
+    }
 }
 
 /* —— 目标访谈（替代 6 步向导：一次一问，纯规则，无 API 也能用） —— */
@@ -6423,48 +6564,61 @@ function secGoalFinishInterview() {
 }
 
 /* —— 发送流程 —— */
+function secretarySubmit() {
+    if (secretaryBusy) return;
+    const inp = $('secretary-input');
+    const v = inp ? inp.value : '';
+    if (!v.trim()) return;
+    inp.value = '';
+    return secretaryAsk(v);
+}
 async function secretaryAsk(text) {
     const t = String(text || '').trim();
-    if (!t) return;
-    secretaryChat.push({ role: 'user', text: t });
-    renderSecretary();
-    /* 目标访谈进行中：逐问收集，一次一个问题 */
-    if (secGoalInterview) {
-        if (/^(算了|取消|不弄了|退出|不用了)$/.test(t)) { secGoalInterview = null; secretaryChat.push({ role: 'sys', text: '好，先不创建目标。' }); renderSecretary(); return; }
-        const g = secGoalInterview;
-        if (!g.title) g.title = t;
-        else if (!g.why) g.why = t;
-        else if (!g.deadline) g.deadline = secGoalParseDeadline(t);
-        else if (!g.done) g.done = t;
-        else if (!g.week) g.week = t;
-        const next = secGoalNextQuestion();
-        if (next) { secretaryChat.push({ role: 'sys', text: next }); renderSecretary(); return; }
-        secGoalFinishInterview();
-        return;
-    }
-    let r;
-    try { r = await Core.parse(t); }
-    catch (err) {
-        console.error('[秘书] parse 失败', err);
-        secretaryChat.push({ role: 'sys', text: '⚠️ 解析出错了：' + (err.message || err) + '\n换个说法试试。' });
+    if (!t || secretaryBusy) return;
+    secSetSecretaryBusy(true);
+    try {
+        secretaryChat.push({ role: 'user', text: t });
         renderSecretary();
-        return;
-    }
-    if (r.cards && r.cards.length) secretaryChat.push({ role: 'sys', text: secSummarizeCards(r.cards), cards: r.cards });
-    else if (r.needClarify && r.question) {
-        /* 目标创建意图 → 进入 4 问访谈 */
-        if (SEC_GOAL_INTENT_RE.test(t) && !SEC_GOAL_RECORD_GUARD.test(t)) {
-            const extracted = t.replace(/^(我)?(想|要|准备|打算|计划|决定)/, '').replace(/^(一个|个|创建|新建|建立|添加|定)/, '').replace(/[。！!？?]+$/, '').trim();
-            secGoalInterview = (extracted && !/^(目标|梦想|愿望|一个目标)$/.test(extracted)) ? { title: extracted } : {};
-            secretaryChat.push({ role: 'sys', text: secGoalNextQuestion() });
+        /* 目标访谈进行中：逐问收集，一次一个问题 */
+        if (secGoalInterview) {
+            if (/^(算了|取消|不弄了|退出|不用了)$/.test(t)) { secGoalInterview = null; secretaryChat.push({ role: 'sys', text: '好，先不创建目标。' }); renderSecretary(); return; }
+            const g = secGoalInterview;
+            if (!g.title) g.title = t;
+            else if (!g.why) g.why = t;
+            else if (!g.deadline) g.deadline = secGoalParseDeadline(t);
+            else if (!g.done) g.done = t;
+            else if (!g.week) g.week = t;
+            const next = secGoalNextQuestion();
+            if (next) { secretaryChat.push({ role: 'sys', text: next }); renderSecretary(); return; }
+            secGoalFinishInterview();
+            return;
+        }
+        let r;
+        try { r = await Core.parse(t); }
+        catch (err) {
+            console.error('[秘书] parse 失败', err);
+            secretaryChat.push({ role: 'sys', text: '⚠️ 解析出错了：' + (err.message || err) + '\n换个说法试试。' });
             renderSecretary();
             return;
         }
-        secretaryChat.push({ role: 'sys', text: r.question });
+        if (r.cards && r.cards.length) secretaryChat.push({ role: 'sys', text: secSummarizeCards(r.cards), cards: r.cards });
+        else if (r.needClarify && r.question) {
+            /* 目标创建意图 → 进入 4 问访谈 */
+            if (SEC_GOAL_INTENT_RE.test(t) && !SEC_GOAL_RECORD_GUARD.test(t)) {
+                const extracted = t.replace(/^(我)?(想|要|准备|打算|计划|决定)/, '').replace(/^(一个|个|创建|新建|建立|添加|定)/, '').replace(/[。！!？?]+$/, '').trim();
+                secGoalInterview = (extracted && !/^(目标|梦想|愿望|一个目标)$/.test(extracted)) ? { title: extracted } : {};
+                secretaryChat.push({ role: 'sys', text: secGoalNextQuestion() });
+                renderSecretary();
+                return;
+            }
+            secretaryChat.push({ role: 'sys', text: r.question });
+        }
+        else secretaryChat.push({ role: 'sys', text: '收到。' });
+        renderSecretary();
+        await secAutoCommitCards(r.cards || []);
+    } finally {
+        secSetSecretaryBusy(false);
     }
-    else secretaryChat.push({ role: 'sys', text: '收到。' });
-    renderSecretary();
-    await secAutoCommitCards(r.cards || []);
 }
 
 /* ================= 今天页（聚合只读视图） ================= */
@@ -6520,8 +6674,10 @@ function renderToday() {
         hb.innerHTML = rows.join('');
     }
     const st = $('td-review-status');
-    const revs = Core.state.reviewHistory.filter(x => x.date === q.date);
-    if (st) st.textContent = revs.length ? '今日已复盘 ' + revs.length + ' 条，最新：' + revs[revs.length - 1].text.slice(0, 40) : '';
+    const review = Core.state.goalData.dailyReviews.find(x => x.date === q.date);
+    const answers = review && review.answers ? review.answers : {};
+    const reviewText = [answers.done, answers.fail, answers.adjust].map(x => String(x || '').trim()).filter(Boolean).join('；');
+    if (st) st.textContent = reviewText ? '今日已复盘，最新：' + reviewText.slice(0, 40) : '';
 }
 function tdOpenReview() {
     const m = $('td-review-modal');
@@ -6531,12 +6687,16 @@ function tdCloseReview() {
     const m = $('td-review-modal');
     if (m) m.classList.remove('active');
 }
-function tdSaveReview() {
+async function tdSaveReview() {
     const ta = $('td-review-text');
     const text = ta ? ta.value.trim() : '';
     if (!text) { alert('写点什么再保存'); return; }
-    Core.state.reviewHistory.push({ date: todayStr(), time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), text: text, ts: Date.now() });
-    saveCache();
+    const r = await Core.commit({
+        module: 'goal', type: 'review', title: '今日复盘',
+        fields: { done: text },
+        time: todayStr(), confidence: 1, sourceText: text, status: 'confirmed'
+    });
+    if (!r.ok) { alert(r.error || '复盘保存失败'); return; }
     if (ta) ta.value = '';
     tdCloseReview();
     renderToday();
@@ -6797,7 +6957,7 @@ setInterval(secTick, 30000);
 
 /* ================= Core 挂载区（现有函数转发给内核，逻辑不重写） ================= */
 Object.assign(Core, {
-    _addExpenseCore, _addIncomeCore, _addTransferCore, _deleteLogCore, _confirmOutfitCore,
+    _addExpenseCore, _addIncomeCore, _addTransferCore, _addScheduleCore, _addHealthCore, _deleteLogCore, _confirmOutfitCore,
     syncRecord, deleteHealthRecord,
     /* 数据读取 */
     goalById, krLocate, planLocate, krPct, goalPct, goalTodayPlans,
@@ -6856,15 +7016,130 @@ function updateExpenseSubcatVisibility(v) {
 
 // 导航与设置
 bindEvent('.nav-btn', 'click', (e, el) => switchTab(el.dataset.tab));
+
+/* 设置：解析规则持久化 + 既有诊断数据展示 */
+const CORE_RULES_KEY = 'core_rules_v1';
+function coreRulesNormalize(candidate) {
+    const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+    if (!isObj(candidate)) throw new Error('规则必须是对象');
+    const base = Core.rules;
+    const cleanMap = (value, name, accounts) => {
+        if (!isObj(value)) throw new Error(name + '必须是 JSON 对象');
+        const out = {};
+        Object.entries(value).forEach(([k, v]) => {
+            const key = String(k).trim();
+            if (!key || typeof v !== 'string' || !v.trim()) throw new Error(name + '的键和值必须是非空字符串');
+            const val = v.trim();
+            if (accounts && !accounts.includes(val)) throw new Error(name + '包含无效账户：' + val);
+            out[key] = val;
+        });
+        return out;
+    };
+    const categoryMap = cleanMap(candidate.categoryMap, '分类映射');
+    const accountDefault = cleanMap(candidate.accountDefault, '默认账户', ['survival', 'stable', 'develop']);
+    const time = isObj(candidate.timeDefault) ? candidate.timeDefault : {};
+    const noTime = String(time.noTime || '');
+    if (noTime !== '' && noTime !== 'today') throw new Error('无日期默认值无效');
+    const conf = isObj(candidate.confidence) ? candidate.confidence : {};
+    const autoConfirm = Number(conf.autoConfirm);
+    const mustConfirm = Number(conf.mustConfirm);
+    if (String(conf.autoConfirm).trim() === '' || String(conf.mustConfirm).trim() === '' || !Number.isFinite(autoConfirm) || !Number.isFinite(mustConfirm)) throw new Error('置信度阈值必须是数字');
+    if (autoConfirm < 0 || autoConfirm > 1 || mustConfirm < 0 || mustConfirm > 1) throw new Error('置信度阈值必须在 0～1 之间');
+    if (mustConfirm > autoConfirm) throw new Error('强制澄清阈值不能高于自动确认阈值');
+    return {
+        ...base,
+        categoryMap,
+        accountDefault,
+        timeDefault: { ...base.timeDefault, noTime },
+        confidence: { ...base.confidence, autoConfirm, mustConfirm }
+    };
+}
+function loadCoreRulesLocal() {
+    try {
+        const raw = localStorage.getItem(CORE_RULES_KEY);
+        if (raw) Core.rules = coreRulesNormalize(JSON.parse(raw));
+    } catch (e) {}
+}
+loadCoreRulesLocal();
+function renderCoreRulesPanel() {
+    const r = Core.rules;
+    $('rules-category-map').value = JSON.stringify(r.categoryMap || {}, null, 2);
+    $('rules-account-map').value = JSON.stringify(r.accountDefault || {}, null, 2);
+    $('rules-no-time').value = r.timeDefault && r.timeDefault.noTime === 'today' ? 'today' : '';
+    $('rules-auto-confirm').value = r.confidence ? r.confidence.autoConfirm : '';
+    $('rules-must-confirm').value = r.confidence ? r.confidence.mustConfirm : '';
+    const status = $('rules-save-status');
+    if (status) { status.textContent = ''; status.style.color = ''; }
+}
+function saveCoreRulesPanel() {
+    const status = $('rules-save-status');
+    try {
+        const next = coreRulesNormalize({
+            categoryMap: JSON.parse($('rules-category-map').value),
+            accountDefault: JSON.parse($('rules-account-map').value),
+            timeDefault: { noTime: $('rules-no-time').value },
+            confidence: { autoConfirm: $('rules-auto-confirm').value, mustConfirm: $('rules-must-confirm').value }
+        });
+        Core.rules = next;
+        try { localStorage.setItem(CORE_RULES_KEY, JSON.stringify(next)); }
+        catch (e) {
+            if (status) { status.textContent = '规则已生效，但本地保存失败'; status.style.color = '#b87000'; }
+            return;
+        }
+        if (status) { status.textContent = '解析规则已保存并生效 ✓'; status.style.color = 'var(--accent)'; }
+    } catch (e) {
+        if (status) { status.textContent = '保存失败：' + (e.message || e); status.style.color = '#c0392b'; }
+    }
+}
+function coreDiagText(v) {
+    if (v === undefined) return '—';
+    if (typeof v === 'string') return v;
+    try { return JSON.stringify(v); } catch (e) { return String(v); }
+}
+function coreDiagTime(t) {
+    const d = new Date(Number(t));
+    return isNaN(d.getTime()) ? '' : d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+function renderCoreDebugPanel() {
+    const logs = Array.isArray(Core.state.debugLogs) ? Core.state.debugLogs : [];
+    const count = $('debug-count');
+    if (count) count.textContent = logs.length ? '（共 ' + logs.length + ' 条）' : '';
+    const list = $('debug-log-list');
+    if (!list) return;
+    list.innerHTML = logs.length ? logs.slice(0, 20).map(log => '<details style="padding:8px 0;border-bottom:1px solid var(--border);"><summary style="cursor:pointer;font-size:12px;font-weight:600;">' + esc(log.action || 'log') + ' · ' + esc(coreDiagTime(log.t)) + '</summary><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;color:var(--text2);margin-top:8px;">' + esc(coreDiagText(log.detail)) + '</pre></details>').join('') : '<div class="empty-hint">暂无调试日志</div>';
+}
+function renderCoreCorrectionsPanel() {
+    const list = Array.isArray(Core.state.corrections) ? Core.state.corrections : [];
+    const labels = { finance: '财务', schedule: '日程', goal: '目标', health: '健康', habit: '习惯', wardrobe: '衣橱', news: '世事' };
+    const count = $('correction-count');
+    if (count) count.textContent = list.length ? '（共 ' + list.length + ' 次）' : '';
+    const totals = {};
+    list.forEach(c => { totals[c.module] = (totals[c.module] || 0) + 1; });
+    const stats = $('correction-stats');
+    if (stats) stats.innerHTML = list.length ? '<div class="chip-row">' + Object.entries(totals).map(([k, v]) => '<span class="tag tag-neutral">' + esc(labels[k] || k || '未知') + ' ' + v + ' 次</span>').join('') + '</div>' : '<div class="empty-hint">暂无修正记录</div>';
+    const recent = $('correction-list');
+    if (!recent) return;
+    recent.innerHTML = list.slice(-10).reverse().map(c => {
+        const changes = Object.entries(c.patch || {}).map(([k, v]) => '<div style="margin-top:4px;"><b>' + esc(k) + '</b>：' + esc(coreDiagText(c.from && c.from[k])) + ' → ' + esc(coreDiagText(v)) + '</div>').join('');
+        return '<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);"><div style="font-weight:600;color:var(--text);">' + esc(labels[c.module] || c.module || '未知') + ' / ' + esc(c.type || '') + ' · ' + esc(coreDiagTime(c.t)) + '</div>' + changes + '</div>';
+    }).join('');
+}
+function renderCoreDiagnostics() {
+    renderCoreRulesPanel();
+    renderCoreDebugPanel();
+    renderCoreCorrectionsPanel();
+}
+
 function openSettingsModal() {
     const m = $('settings-modal');
     const cb = $('guide-enable'); if (cb) cb.checked = guideEnabled;
-    secSyncSettingsUI(); applyUiPrefs();
+    secSyncSettingsUI(); applyUiPrefs(); renderCoreDiagnostics();
     if (m) m.classList.add('active');
 }
 bindEvent('#open-settings-btn', 'click', openSettingsModal);
 bindEvent('#nav-settings-btn', 'click', openSettingsModal);
 bindEvent('#close-settings-btn', 'click', () => { const m = $('settings-modal'); if (m) m.classList.remove('active'); });
+bindEvent('#rules-save', 'click', saveCoreRulesPanel);
 bindEvent('#ai-save-config', 'click', async () => {
     Core.state.aiConfig.apiKey = $('ai-api-key').value.trim();
     Core.state.aiConfig.apiUrl = $('ai-api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
@@ -6929,8 +7204,8 @@ bindEvent('#guide-skip', 'click', guideSkip);
 bindEvent('#guide-enable', 'change', (e, el) => { guideEnabled = el.checked; saveGuidePrefs(); });
 
 // 秘书
-bindEvent('#secretary-send', 'click', () => { const inp = $('secretary-input'); const v = inp ? inp.value : ''; if (!v.trim()) return; inp.value = ''; secretaryAsk(v); });
-bindEvent('#secretary-input', 'keydown', (e) => { if (e.key === 'Enter') { const v = $('secretary-input').value; if (v.trim()) { $('secretary-input').value = ''; secretaryAsk(v); } } });
+bindEvent('#secretary-send', 'click', secretarySubmit);
+bindEvent('#secretary-input', 'keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); secretarySubmit(); } });
 bindEvent('[data-action="sec-quick"]', 'click', (e, el) => {
     const inp = $('secretary-input');
     if (!inp) return;
